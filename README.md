@@ -2,6 +2,8 @@
 Clone of teklib project at http://hg.neoscientists.org/teklib 
 from 2012 for Archive
 
+See also Branch Teklib3 for a newer Version
+
 --
 
 == TEKlib virtual operating system and middleware project ==
