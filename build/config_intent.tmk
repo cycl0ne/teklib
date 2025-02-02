@@ -1,0 +1,176 @@
+
+[body name="help"]
+	help:
+	\t#
+	\t#   intent_vpcc supported builds:
+	\t#   all        - build linklibs, modules, tests, tools
+	\t#   libs       - build linklibs
+	\t#   modules    - build modules
+	\t#   tools      - build tests, tools
+	\t#   install    - install modules in the system
+	\t#   clean      - clean
+	\t#   help       - this help
+	\t#
+[/body]
+
+[body name="config"]
+
+	#
+	#\tintent_vpcc makefile - automatically generated
+	#
+
+	PLATFORM	= intent
+	HOST        = intent
+
+	PARENT      = ../
+	DEF			= -DTEKLIB -DTSYS_INTENT $(EXTRADEFS)
+	WARN		= -Wall
+
+	MKDIR        = mkdir -p
+	RM           = rm -f
+	RMDIR        = rm -rf
+	CC           = vpcc
+	CP           = cp -R
+	AR           = vpar rc
+
+	LIBPREFIX    = lib
+	LIBSUFFIX    = a
+	MODSUFFIX    = 00
+
+	[switch]
+		[case config="_release"]
+			OPT 	= -O2
+		[/case]
+		[case config="_debug"]
+			OPT 	= -O1
+			DEBUG	= -DTDEBUG=5 -g
+		[/case]
+		[default]
+			OPT 	= -O2
+			DEBUG	= -DTDEBUG=10 -g
+		[/default]
+	[/switch]
+
+	[embed body="help"/]
+
+[/body]
+
+[body name="paths"]
+
+	INCL		 = -I$(TEKLIB) -I.
+	LIBDIR       = lib/$(PLATFORM)
+	INTENTBINDIR = /lib/tek/bin
+	MODDIR       = /lib/tek/mod
+	MODINSTDIR	 = lib/tek/mod
+
+	#
+
+	$(INTENTBINDIR):
+		\t-$(MKDIR) $(INTENTBINDIR)
+		\t-$(MKDIR) $(MODDIR)
+	$(LIBDIR):
+		\t-$(MKDIR) $(LIBDIR)
+
+[/body]
+
+
+[!---------- toolbuild ------------]
+
+[body name="tools"]
+	TOOLS = \\
+		$(INTENTBINDIR)/%n.00
+[/body]
+
+[body name="toolbuild"]
+	TOOLCFLAGS	= $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+	TOOLLIBS	= -L$(TEKLIB)lib/$(PLATFORM) -ltekcmain $(EXTRATOOLLIBS)
+	tools: $(TOOLS)
+[/body]
+
+[body name="tooldep"]
+	%1: %2 %3
+		\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="toollink"]
+	$(INTENTBINDIR)/%1.00: $(LIBDIR) $(INTENTBINDIR) %2
+		\t$(CC) $(TOOLCFLAGS) %2 -o $@ $(TOOLLIBS) 
+[/body]
+
+
+[!---------- libbuild ------------]
+
+[body name="libs"]
+	LIBS = \\
+		$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+[/body]
+
+[body name="libbuild"]
+	LIBCFLAGS	= $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+	libs: $(LIBS)
+	$(TEKLIB)$(LIBDIR):
+		\t-$(MKDIR) $(TEKLIB)$(LIBDIR)
+[/body]
+
+[body name="libdep"]
+	%1: %2 %3
+		\t$(CC) $(LIBCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="liblink"]
+	$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): $(LIBDIR) $(TEKLIB)$(LIBDIR) %2
+		\t$(AR) $@ %2
+[/body]
+
+
+[!---------- modbuild ------------]
+
+[body name="mods"]
+	MODS = \\
+		$(MODDIR)/%n.$(MODSUFFIX)
+[/body]
+
+[body name="modbuild"]
+
+	MODCFLAGS	= $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+	MODLIBS		= -L$(TEKLIB)lib/$(PLATFORM) -ltek $(EXTRAMODLIBS)
+	modules: $(MODS)
+	install: modules
+
+[/body]
+
+[body name="moddep"]
+	%1: %2 %3
+		\t$(CC) $(MODCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="modlink"]
+	$(MODDIR)/%1.$(MODSUFFIX): $(LIBDIR) $(INTENTBINDIR) %2
+		\t$(CC) $(MODCFLAGS) %2 -T -t $(MODINSTDIR)/%1 $(MODLIBS) -e tek_init_%1
+[/body]
+
+
+[!---------- metabuild ------------]
+
+[body name="metabuild"]
+	[embed body="help"/]
+	all: libs modules tools
+	modules tools install clean libs:
+[/body]
+
+[body name="meta"]
+	\tcd %1; $(MAKE) -f build/tmk_%0 $@
+[/body]
+
+
+
+[!---------- masterbuild ------------]
+
+[body name="masterbuild"]
+
+	all: $(MODS) $(LIBS) $(TOOLS)
+
+	clean:
+		\t-$(RMDIR) $(LIBDIR) $(MODS) $(TOOLS) $(LIBS)
+
+[/body]

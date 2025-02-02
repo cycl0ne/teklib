@@ -1,0 +1,98 @@
+#------------------------------------------------------------------------
+#
+#  $Id: render.vsm,v 1.1 2005/10/05 22:11:26 fschulze Exp $
+#  teklib/mods/ps2/tests/render.vsm
+#
+#  Written by Franciska Schulze <fschulze at neoscientists.org>
+#  See copyright notice in teklib/COPYRIGHT
+#------------------------------------------------------------------------
+
+.global My_dma_start
+
+.data
+.DmaPackVif 0
+.align 0
+
+My_dma_start:
+DMAnext *, dummy
+
+MPG 0, *
+
+########################################################################
+
+;------------------------------------------------------
+; preload section
+;------------------------------------------------------
+	nop				nop
+	nop				nop
+
+	nop[e]				nop
+	nop				nop
+;------------------------------------------------------
+	
+start:
+	nop				xtop vi4
+	nop				iaddiu vi1,vi4,1
+	nop				iaddiu vi3,vi4,65
+	nop				lq vf3, 0(vi0)		; load pos, rot, SYMMETRY, SCALE
+
+loopuv:
+	nop				lq vf4, 0(vi1)
+	nop				lq vf5, 2(vi1)
+	nop				lq vf6, 4(vi1)
+	nop				lq vf7, 6(vi1)
+	
+	add.xy vf4xy,vf4xy,vf3xy	nop			; u += pos; v += rot;
+	add.xy vf5xy,vf5xy,vf3xy	nop
+	add.xy vf6xy,vf6xy,vf3xy	nop
+	add.xy vf7xy,vf7xy,vf3xy	nop
+	
+	mulz.y vf4y, vf4y,vf3z		nop			; v * 1/2 * scrh / (TPI * 2);
+	mulz.y vf5y, vf5y,vf3z		nop
+	mulz.y vf6y, vf6y,vf3z		nop
+	mulz.y vf7y, vf7y,vf3z		nop
+	
+	ftoi4 vf8,vf4			iaddiu vi1,vi1,8
+	ftoi4 vf9,vf5			nop
+	ftoi4 vf10,vf6			nop
+	ftoi4 vf11,vf7			nop
+	
+	nop				sq vf8, -8(vi1)
+	nop				sq vf9, -6(vi1)
+	nop				sq vf10,-4(vi1)
+	nop				sq vf11,-2(vi1)
+	
+	nop				ibne vi1,vi3,loopuv
+	nop				nop
+	
+	nop				xgkick vi4
+
+end:	nop[e]  			nop   
+	nop				nop
+	
+	nop				b start
+	nop				nop
+	
+########################################################################
+
+.EndMPG
+
+BASE 1			; sets the vif1 base register
+OFFSET 65		; sets the vif1 offset register
+MSCAL 0
+.EndDmaData
+
+########################################################################
+
+dummy:			; gets overriden by MakeVuPacket()				
+
+
+#------------------------------------------------------------------------
+#
+#  Revision History
+#  $Log: render.vsm,v $
+#  Revision 1.1  2005/10/05 22:11:26  fschulze
+#  added
+#
+#
+#

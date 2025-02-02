@@ -1,0 +1,70 @@
+TEKlib for Playstation 2
+=========================
+
+REQUIREMENTS
+
+You'll need a PS2 cross development setup including
+
+    * EE GCC 2.95.2 
+      => http://ps2dev.sourceforge.net/downloads/ee/gnu-ee-binutils-gcc-1.1.tar.gz
+    
+    * Ps2lib 2.1
+      => http://ps2dev.sourceforge.net/downloads/ps2lib/ps2lib-2.1.tar.gz
+      
+    * Newlib 1.10.0 
+      => http://ps2dev.sourceforge.net/downloads/ps2lib/ee-newlib-binary-1.81.tar.gz
+
+Instructions on setting up the compiler and libs can be found here:
+ => http://ps2dev.sourceforge.net/downloads/ps2dev_guide.txt
+
+You could also download our precompiled Linux/x86 package
+ => ftp://ftp.neoscientists.org/ps2dev/ps2dev-toolchain_20050313.tar.gz
+
+To install the package become superuser and type
+
+	# tar xzvf ps2dev-toolchain_20050313.tar.gz -C /
+
+Now append the following to e.g. your /etc/profile
+
+	PS2DEV=/usr/local/ps2dev
+	EE=$PS2DEV/ee
+	PS2LIB=$PS2DEV/ps2lib
+	PATH=$PATH:$PS2DEV/bin:$EE/bin
+	export PS2DEV EE PS2LIB PATH 
+
+-----------------------------------------------------------------------------------------------
+
+INSTALL
+
+Get your copy of TEKlib here:
+ => http://teklib.org/current/teklib.tar.gz
+
+	$ tar xzvf teklib.tar.gz
+	$ cd teklib
+	$ make ps2_gcc 
+
+Start your favourite loader and try some of the tests in teklib/bin/ps2.
+
+-----------------------------------------------------------------------------------------------
+
+STATUS
+
+An overview of available modules can be found here:
+ => http://teklib.org/index.shtml?section=status
+
+The following modules are currently not available:
+
+	* audio 
+	* displays 
+	* gldisplay 
+	* truetype 
+	* visual (work in progress) 
+
+Dynamic loading of modules is not yet supported; modules are linked statically.
+
+-----------------------------------------------------------------------------------------------
+
+CONTACT
+
+To contact the author mail to <fschulze at neoscientists.org>
+

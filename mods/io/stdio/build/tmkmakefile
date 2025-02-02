@@ -1,0 +1,44 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(PLATFORM)
+[/body]
+
+[body name="modtargets"]
+
+	[!-- modules to be built --]
+	[embed body="mods"]		iohnd_stdio					[/embed]
+
+	[!-- link modules. first argument: modname, second: objects --]
+	[embed body="modlink"]	iohnd_stdio
+							$(LIBDIR)/iohnd_stdio.o		[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[switch]
+		[case config="darwin"]
+			[embed body="moddep"]	$(LIBDIR)/iohnd_stdio.o
+									posix/iohnd_stdio.c		[/embed]
+		[/case]
+		[default]
+			[embed body="moddep"]	$(LIBDIR)/iohnd_stdio.o
+									$(HOST)/iohnd_stdio.c		[/embed]
+		[/default]
+	[/switch]
+
+[/body]
+
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] 
+	makefile_modules
+[/render]
+

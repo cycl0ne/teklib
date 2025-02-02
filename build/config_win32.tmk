@@ -1,0 +1,537 @@
+
+[!-------------------------------------------------------------------------
+
+	$Id: config_win32.tmk,v 1.8.2.1 2005/12/04 22:27:44 tmueller Exp $
+	tmkmf configuration for the win32 platform. Supported contexts:
+
+    MS Visual C++ compiler:
+
+    win32_vcpp                  - debug symbols, debug level 10
+    win32_vcpp_debug            - debug symbols, debug level 5
+    win32_vcpp_release          - no debug symbols, optimized
+    
+    mingw/gcc:
+
+    win32_gcc                   - debug symbols, debug level 10
+    win32_gcc_debug             - debug symbols, debug level 5
+    win32_gcc_release           - no debug symbols, optimized
+
+    Note: installation is currently unsupported in the local builds.
+    Use the top-level Makefile for installation.
+	
+--------------------------------------------------------------------------]
+
+[switch]
+
+	[!--------------------------------------------------------------------
+	                                vcpp
+	---------------------------------------------------------------------]
+
+	[case config="_vcpp"]
+
+		[body name="help"]
+		help:
+			\t@echo ===================================================================
+			\t@echo ==
+			\t@echo == win32_vcpp supported builds
+			\t@echo == ---------------------------
+			\t@echo == all ............... build linklibs, modules, executables
+			\t@echo == libs .............. build linklibs
+			\t@echo == modules ........... build shared modules
+			\t@echo == tools ............. build executables (tests, tools)
+			\t@echo == clean ............. clean
+			\t@echo == help .............. this help
+			\t@echo ==
+			\t@echo ===================================================================
+		[/body]
+
+
+		[body name="config"]
+
+			#
+			#\tTEKlib win32_vcpp makefile
+			#\tAutomatically generated with tmkmf TEKlib Makefile generator
+			#
+
+			PLATFORM	= win32
+			HOST        = win32
+
+			PARENT      = ../
+			DEF			= /D "TEKLIB" /D "TSYS_WIN32" $(EXTRADEFS)
+			WARN		= /W2
+
+			MKDIR       = mkdir
+			RM          = erase /S
+			RMDIR       = rmdir /S /Q
+			CC          = cl /nologo /D "WIN32" /GX
+			CP          = copy /Y
+
+			LIBPREFIX   = 
+			LIBSUFFIX   = lib
+			MODSUFFIX   = dll
+
+			[switch]
+				[case config="_release"]
+					OPT            = /G5 /Ox
+					EXTRALIBFLAGS  = /ML
+					EXTRATOOLFLAGS = /ML
+					EXTRAGUITOOLFLAGS = /ML
+					EXTRAMODFLAGS  = /MT /GD
+					EXTRALINKFLAGS = /OPT:NOWIN98 /pdb:none /incremental:no /nodefaultlib:libcmt 
+				[/case]
+				[case config="_debug"]
+					DEBUG          = /D "TDEBUG=5" /Zi
+					EXTRALIBFLAGS  = /MLd
+					EXTRATOOLFLAGS = /MLd
+					EXTRAGUITOOLFLAGS = /MLd
+					EXTRAMODFLAGS  = /MTd
+					EXTRALINKFLAGS = /debug /incremental:no /nodefaultlib:libcd /nodefaultlib:libcmtd 
+				[/case]
+				[default]
+					DEBUG          = /D "TDEBUG=10" /Zi
+					EXTRALIBFLAGS  = /MLd
+					EXTRATOOLFLAGS = /MLd
+					EXTRAGUITOOLFLAGS = /MLd
+					EXTRAMODFLAGS  = /MTd
+					EXTRALINKFLAGS = /debug /incremental:no /nodefaultlib:libcd /nodefaultlib:libcmtd 
+				[/default]
+			[/switch]
+
+			AR          = link -lib /nologo
+			LD          = link /nologo $(EXTRALINKFLAGS)
+
+			WINLIBS		= libc.lib kernel32.lib user32.lib advapi32.lib shell32.lib msvcrt.lib
+	
+			LIBCFLAGS	= $(EXTRALIBFLAGS) /D "_MBCS" /D "_LIB" $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+
+			MODCFLAGS	= $(EXTRAMODFLAGS) /D "_USRDLL" /D "_WINDOWS" $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+			MODLIBS		= $(WINLIBS) "$(TEKLIB)$(LIBDIR)/tek.lib"
+
+			TOOLCFLAGS	= $(EXRATOOLFLAGS) /D "_CONSOLE" $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+			TOOLLIBS	= $(WINLIBS) "$(TEKLIB)$(LIBDIR)/tekcmain.lib"
+
+			GUITOOLCFLAGS	= $(EXRAGUITOOLFLAGS) /D "_WINDOWS" $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+			GUITOOLLIBS		= $(WINLIBS) "$(TEKLIB)$(LIBDIR)/tekwmain.lib"
+			
+			[embed body="help"/]
+
+		[/body]
+
+
+		[body name="paths"]
+
+			INCL		 = /I$(TEKLIB) /I. /Iinclude
+			LIBDIR       = lib/$(PLATFORM)
+			MODDIR       = $(BINDIR)/mod
+
+			#
+
+			$(BINDIR):
+				\t-$(MKDIR) "$(BINDIR)"
+				\t-$(MKDIR) "$(BINDIR)/mod"
+			$(LIBDIR):
+				\t-$(MKDIR) "$(LIBDIR)"
+
+		[/body]
+
+
+		[!---------- guitoolbuild ------------]
+		
+		[body name="guitools"]
+			GUITOOLS = \\
+				"$(BINDIR)\\%n.exe"
+		[/body]
+		
+		[body name="guitoolbuild"]
+			guitools: $(BINDIR) $(LIBDIR) libs $(GUITOOLS)
+		[/body]
+		
+		[body name="guitooldep"]
+			%1: %2 %3
+				#\t@echo --- (COMPILE) %2
+				\t$(CC) $(GUITOOLCFLAGS) /c %2 /Fo$@ /Fd%1.pdb
+		[/body]
+		
+		[body name="guitoollink"]
+			"$(BINDIR)/%1.exe": %2
+				\t@echo --- (GUITOOLINK) %1.exe
+				\t$(LD) /subsystem:windows $(GUITOOLLIBS) $(EXTRATOOLLIBS) %2 /out:$(BINDIR)/%1.exe
+		[/body]
+		
+		
+		[!---------- toolbuild ------------]
+
+		[body name="tools"]
+			TOOLS = \\
+				"$(BINDIR)\\%n.exe"
+		[/body]
+
+		[body name="toolbuild"]
+			tools: guitools $(BINDIR) $(LIBDIR) libs $(TOOLS)
+		[/body]
+
+		[body name="tooldep"]
+			%1: %2 %3
+	    	#\t@echo --- (COMPILE) %2
+				\t$(CC) $(TOOLCFLAGS) /c %2 /Fo$@ /Fd%1.pdb
+		[/body]
+
+		[body name="toollink"]
+			"$(BINDIR)/%1.exe": %2
+				\t@echo --- (TOOLINK) %1.exe
+				\t$(LD) /subsystem:console $(TOOLLIBS) $(EXTRATOOLLIBS) %2 /out:$(BINDIR)/%1.exe
+		[/body]
+
+
+		[!---------- libbuild ------------]
+
+		[body name="libs"]
+			LIBS = \\
+				"$(TEKLIB)$(LIBDIR)\\$(LIBPREFIX)%n.$(LIBSUFFIX)"
+		[/body]
+
+		[body name="libbuild"]
+			"$(TEKLIB)$(LIBDIR)":
+				\t-$(MKDIR) "$(TEKLIB)$(LIBDIR)"
+			libs: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(LIBS)
+		[/body]
+
+		[body name="libdep"]
+			%1: %2 %3
+				#\t@echo --- (COMPILE) %2
+				\t$(CC) $(LIBCFLAGS) /c %2 /Fo$@ /Fd%1.pdb
+		[/body]
+
+		[body name="liblink"]
+			"$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX)": %2
+				\t@echo --- (ARCHIVE) %1.$(LIBSUFFIX)
+				\t$(AR) %2 /out:"$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX)"
+		[/body]
+
+
+		[!---------- modbuild ------------]
+
+		[body name="mods"]
+			MODS = \\
+				"$(MODDIR)\\%n.$(MODSUFFIX)"
+		[/body]
+
+		[body name="modbuild"]
+			modules: $(LIBDIR) $(BINDIR) $(MODS)
+			install: libs modules
+				\t@echo --- (INSTALL) installation is currently unsupported in Windows
+		[/body]
+
+		[body name="moddep"]
+			%1: %2 %3
+				\t$(CC) $(MODCFLAGS) /c %2 /Fo$@ /Fd%1.pdb
+		[/body]
+
+		[body name="modlink"]
+			"$(MODDIR)/%1.$(MODSUFFIX)": %2
+				\t@echo --- (MODLINK) %1.$(MODSUFFIX)
+				\t$(LD) $(MODLIBS) $(EXTRAMODLIBS) /dll %2 /out:$(MODDIR)/%1.$(MODSUFFIX)
+		[/body]
+
+
+		[!---------- metabuild ------------]
+
+		[body name="metabuild"]
+			[embed body="help"/]
+			all: libs modules tools
+			modules tools install clean libs:
+		[/body]
+
+		[body name="meta"]
+			\t@cd %1
+			\t@$(MAKE) /nologo /s /f build/tmk_%0 $@
+			\t@cd ..
+		[/body]
+
+
+		[!---------- masterbuild ------------]
+
+		[body name="masterbuild"]
+
+			all: modules libs tools
+
+			clean:
+				\t-$(RM) "$(LIBDIR)\\*.o" "$(LIBDIR)\\*.o.pdb"
+				\t-$(RM) $(LIBS) $(MODS) $(TOOLS)
+
+		[/body]
+
+	[/case]
+
+
+
+	[!--------------------------------------------------------------------
+	                                gcc
+	---------------------------------------------------------------------]
+
+	[case config="_gcc"]
+
+		[body name="help"]
+			help:
+				\t@echo "==================================================================="
+				\t@echo "=="
+				\t@echo "== win32_gcc supported builds"
+				\t@echo "== --------------------------"
+				\t@echo "== all ............... build linklibs, modules, executables"
+				\t@echo "== libs .............. build linklibs"
+				\t@echo "== modules ........... build shared modules"
+				\t@echo "== tools ............. build executables (tests, tools)"
+				\t@echo "== clean ............. clean"
+				\t@echo "== help .............. this help"
+				\t@echo "=="
+				\t@echo "==================================================================="
+		[/body]
+
+		[body name="config"]
+
+			#
+			#\tTEKlib win32_gcc makefile
+			#\tAutomatically generated with tmkmf TEKlib Makefile generator
+			#
+
+			PLATFORM	= win32
+			HOST      = win32
+
+			PARENT      = ../
+			DEF			= -DTEKLIB -DTSYS_WIN32 $(EXTRADEFS)
+			WARN		= -Wall
+			LINKFLAGS = -Xlinker --enable-stdcall-fixup -mms-bitfields
+
+			CC          = gcc -mno-cygwin -DWIN32
+			MKDIR       = mkdir -p
+			CP          = cp 
+			RMDIR       = rmdir 
+			RM          = rm
+
+			LIBPREFIX   = lib
+			LIBSUFFIX   = a
+			MODSUFFIX   = dll
+
+			[switch]
+				[case config="_release"]
+					OPT            = -O3 -fomit-frame-pointer
+				[/case]
+				[case config="_debug"]
+					OPT			   = -O1
+					DEBUG          = -DTDEBUG=5 -g
+				[/case]
+				[default]
+					OPT			   = -O2
+					DEBUG          = -DTDEBUG=10 -g
+				[/default]
+			[/switch]
+
+			AR          = ar.exe r
+			WINLIBS		= -lmsvcrt -lkernel32 -luser32 -lshell32 -ladvapi32
+					
+			LIBCFLAGS	= $(EXTRALIBFLAGS) -D_MBCS -D_LIB $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+
+			MODCFLAGS	= $(EXTRAMODFLAGS) -D_USRDLL -D_WINDOWS $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+
+			MODLIBS		= $(WINLIBS) -L$(TEKLIB)$(LIBDIR) -ltek
+
+			[embed body="help"/]
+
+		[/body]
+
+		[body name="paths"]
+
+			INCL		= -I$(TEKLIB)/. -I. -I./include
+			LIBDIR  = lib/$(PLATFORM)
+			MODDIR  = $(BINDIR)/mod
+
+			TEKSYSDIR = $(COMMONPROGRAMFILES)/tek
+			MODINSTDIR = $(TEKSYSDIR)/tek
+
+			$(BINDIR):
+				\t-$(MKDIR) "$(BINDIR)"
+				\t-$(MKDIR) "$(MODDIR)"
+			$(LIBDIR):
+				\t-$(MKDIR) "$(LIBDIR)"
+
+		[/body]
+
+
+		[!---------- guitoolbuild ------------]
+		
+		[body name="guitools"]
+			GUITOOLS = \\
+				$(BINDIR)/%n.exe
+		[/body]
+		
+		[body name="guitoolbuild"]
+			GUITOOLCFLAGS = $(EXTRATOOLFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) $(EXTRATOOLINCL)
+			GUITOOLLIBS	= $(WINLIBS) -L$(TEKLIB)$(LIBDIR) -ltekcmain
+			guitools: $(BINDIR) $(LIBDIR) libs $(TOOLS)
+		[/body]
+		
+		[body name="guitooldep"]
+			%1: %2 %3
+				#\techo "--- (COMPILE)" %2
+				\t$(CC) $(GUITOOLCFLAGS) %2 -c -o $@
+		[/body]
+		
+		[body name="guitoollink"]
+			$(BINDIR)/%1.exe: %2
+				\techo "--- (TOOLINK)" %1.exe
+				\t$(CC) %2 $(TOOLLIBS) $(EXTRATOOLLIBS) $(LINKFLAGS) -o $(BINDIR)/%1.exe
+			[if config="_release"]
+				\tstrip $(BINDIR)/%1.exe
+			[/if]
+		[/body]
+		
+		
+		[!---------- toolbuild ------------]
+
+		[body name="tools"]
+			TOOLS = \\
+			$(BINDIR)/%n.exe
+		[/body]
+
+		[body name="toolbuild"]
+			TOOLCFLAGS	= $(EXTRATOOLFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) $(EXTRATOOLINCL)
+			TOOLLIBS	= $(WINLIBS) -L$(TEKLIB)$(LIBDIR) -ltekcmain
+			tools: guitools $(BINDIR) $(LIBDIR) libs $(TOOLS)
+		[/body]
+
+		[body name="tooldep"]
+			%1: %2 %3
+				#\techo "--- (COMPILE)" %2
+				\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="toollink"]
+			$(BINDIR)/%1.exe: %2
+				\techo "--- (TOOLINK)" %1.exe
+				\t$(CC) %2 $(TOOLLIBS) $(EXTRATOOLLIBS) $(LINKFLAGS) -o $(BINDIR)/%1.exe
+			
+			[if config="_release"]
+				\tstrip $(BINDIR)/%1.exe
+			[/if]
+		[/body]
+
+
+		[!---------- libbuild ------------]
+
+		[body name="libs"]
+			LIBS = \\
+				$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+		[/body]
+
+		[body name="libbuild"]
+			$(TEKLIB)$(LIBDIR):
+				\t-$(MKDIR) "$(TEKLIB)$(LIBDIR)"
+			libs: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(LIBS)
+		[/body]
+
+		[body name="libdep"]
+			%1: %2 %3
+				#\techo "--- (COMPILE)" %2
+				\t$(CC) $(LIBCFLAGS) -c %2 -o $@ 
+		[/body]
+
+		[body name="liblink"]
+			$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+				\techo "--- (ARCHIVE)" %1.$(LIBSUFFIX)
+				\t$(AR) $(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX) %2
+		[/body]
+
+
+		[!---------- modbuild ------------]
+
+		[body name="mods"]
+			MODS = \\
+				$(MODDIR)/%n.$(MODSUFFIX)
+		[/body]
+
+		[body name="modbuild"]
+			modules: $(LIBDIR) $(BINDIR) $(MODS)
+			install: libs modules
+				\t@echo "--- (INSTALL)" installation is currently unsupported in Windows
+		[/body]
+
+		[body name="moddep"]
+			%1: %2 %3
+				\t$(CC) $(MODCFLAGS) -c %2 -o $@ 
+		[/body]
+
+		[body name="modlink"]
+			$(MODDIR)/%1.$(MODSUFFIX): %2
+				\techo "--- (MODLINK)" %1.$(MODSUFFIX)
+				\t$(CC) %2 $(MODLIBS) $(EXTRAMODLIBS) $(LINKFLAGS) -shared -o $(MODDIR)/%1.$(MODSUFFIX)
+		[/body]
+
+
+		[!---------- metabuild ------------]
+
+		[body name="metabuild"]
+			[embed body="help"/]
+			all: libs modules tools
+			modules tools install clean libs:
+		[/body]
+
+		[body name="meta"]
+			\t$(MAKE) -s -C %1 -f build/tmk_%0 $@
+		[/body]
+
+
+		[!---------- masterbuild ------------]
+
+		[body name="masterbuild"]
+
+			all: modules libs tools
+
+			clean:
+				\t-$(RM) $(LIBDIR)/*.o
+				\t-$(RM) $(BINDIR)/*.exe
+				\t-$(RM) $(MODDIR)/*.$(MODSUFFIX)
+				\t-$(RM) *.o
+		[/body]
+
+	[/case]
+
+[/switch]
+
+[!-------------------------------------------------------------------------
+
+	Revision History
+	$Log: config_win32.tmk,v $
+	Revision 1.8.2.1  2005/12/04 22:27:44  tmueller
+	C++ support improved
+	
+	Revision 1.8  2005/09/26 19:02:02  tschwinger
+	win32_gcc update
+	
+	Revision 1.7  2005/06/29 13:23:34  tschwinger
+	MinGW build issues (preliminary commit -- still incomplete).
+	
+	Revision 1.6  2005/05/09 18:30:54  tmueller
+	added libc.lib to WINLIBS
+	
+	Revision 1.5  2005/01/29 22:24:10  tmueller
+	added MSVC6 debug build config
+	
+	Revision 1.4  2004/05/05 04:27:45  tmueller
+	Added a special "guitool" target to tmkmf configs and the visual module
+	
+	Revision 1.3  2004/01/14 22:17:19  tschwinger
+	win32_gcc: introduced LINKFLAGS for compatiblity, added EXTRATOOLFLAGS override
+	
+	Revision 1.2  2004/01/14 20:48:19  tschwinger
+	win32_gcc release build fixed
+	
+	Revision 1.1.1.1  2003/12/11 07:22:04  tmueller
+	Krypton import
+	
+	Revision 1.11  2003/10/27 22:45:43  tmueller
+	CVS headers added, various cleanup
+	
+	Revision 1.10  2003/10/16 17:36:57  tmueller
+	CVS header added, some cleanup
+
+--------------------------------------------------------------------------]

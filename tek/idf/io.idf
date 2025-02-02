@@ -1,0 +1,67 @@
+
+;
+;	$Id: io.idf,v 1.6.2.1 2005/12/04 22:30:14 tmueller Exp $
+;	teklib/tek/idf/time.idf - Io interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name io					; as in tek_init_exec
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix TIO					; name prefix heading non-inline functions
+
+.defv TVOID					; aliases for void
+.defp TAPTR, TSTRPTR		; pointer types
+.defi TINT, TUINT, TBOOL	; 32bit integer types
+
+.iprefix T
+.ibase TAPTR TIOBase
+.inline on
+
+.offset 9
+TAPTR LockFile(TSTRPTR name, TUINT mode, TTAGITEM *tags)
+TVOID UnlockFile(TAPTR lock)
+TAPTR OpenFile(TSTRPTR name, TUINT mode, TTAGITEM *tags)
+TBOOL CloseFile(TAPTR fh)
+TINT Read(TAPTR fh, TAPTR buf, TINT len)
+TINT Write(TAPTR fh, TAPTR buf, TINT len)
+TBOOL Flush(TAPTR fh)
+TUINT Seek(TAPTR fh, TINT offs, TINT *offshi, TINT mode)
+TINT FPutC(TAPTR fh, TINT c)
+TINT FGetC(TAPTR fh)
+TBOOL FEoF(TAPTR fh)
+TINT FRead(TAPTR fh, TAPTR buf, TINT len)
+TINT FWrite(TAPTR fh, TAPTR buf, TINT len)
+TINT Examine(TAPTR lock, TTAGITEM *tags)
+TINT ExNext(TAPTR lock, TTAGITEM *tags)
+TAPTR ChangeDir(TAPTR lock)
+TAPTR ParentDir(TAPTR lock)
+TINT NameOf(TAPTR lock, TSTRPTR buf, TINT len)
+TAPTR DupLock(TAPTR lock)
+TAPTR OpenFromLock(TAPTR lock)
+TINT AddPart(TSTRPTR p1, TSTRPTR p2, TSTRPTR buf, TINT len)
+TBOOL AssignLate(TSTRPTR name, TSTRPTR path)
+TBOOL AssignLock(TSTRPTR name, TAPTR lock)
+TBOOL Rename(TSTRPTR name, TSTRPTR newname)
+TAPTR MakeDir(TSTRPTR name, TTAGITEM *tags)
+TBOOL DeleteFile(TSTRPTR name)
+TINT SetIOErr(TINT newerr)
+TINT GetIOErr()
+TAPTR ObtainPacket(TSTRPTR path, TSTRPTR *namepart)
+TVOID ReleasePacket(TAPTR packet)
+TINT Fault(TINT err, TSTRPTR buf, TINT len, TTAGITEM *tags)
+TBOOL WaitChar(TAPTR fh, TINT timeout)
+TBOOL IsInteractive(TAPTR fh)
+TAPTR OutputFH()
+TAPTR InputFH()
+TAPTR ErrorFH()
+TINT MakeName(TSTRPTR name, TSTRPTR dest, TINT dlen, TINT mode, TTAGITEM *tags)
+TBOOL Mount(TSTRPTR name, TINT action, TTAGITEM *tags)
+TINT FUngetC(TAPTR fh, TINT c)
+TINT FPutS(TAPTR fh, TSTRPTR s)
+TSTRPTR FGetS(TAPTR fh, TSTRPTR buf, TINT len)
+TBOOL SetFileDate(TSTRPTR name, TDATE *date)
+
+.end

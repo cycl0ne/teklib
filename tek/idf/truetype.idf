@@ -1,0 +1,28 @@
+
+;
+;	$Id: truetype.idf,v 1.3 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/truetype.idf - Truetype interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name truetype				; as in tek_init_...
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix truetype_			; name prefix heading non-inline functions
+
+.defv TVOID					; aliases for void
+.defp TAPTR, TSTRPTR		; pointer types
+.defi TINT, TUINT, TBOOL	; 32bit integer types
+.defb TINT8
+
+TINT init(TTFONT *font, TSTRPTR name)
+TVOID close(TTFONT *font)
+TINT getchar(TTFONT *font, TINT8 char, TTVERT *vert)
+TVOID freevert(TTVERT *vert)
+TINT getstring(TTFONT *font, TSTRPTR string, TTSTR *tstr)
+TVOID freetstr(TTSTR *tstr)
+
+.end
+

@@ -1,0 +1,15 @@
+
+$Id: README,v 1.1 2005/05/08 19:11:45 tmueller Exp $
+teklib/mods/lua/README - Notes about the Lua module
+
+2005-04-30 [tmueller]
+
+This port of Lua (as a fully-featured TEKlib module) requires a patch
+and some reorganisation of header files in the source tree.
+
+* unpack the Lua source code distribution here
+* apply the patch: patch -p0 < patchfile
+* rename the Lua directory (e.g. "lua-5.1-work5") to "lua"
+* move the following files to the "include" directory:
+  lua/src/lauxlib.h, lua/src/lua.h,
+  lua/src/luaconf.h, lua/src/lualib.h

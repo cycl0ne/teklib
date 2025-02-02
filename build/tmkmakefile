@@ -1,0 +1,20 @@
+
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="metatargets"]
+
+	[embed body="meta"]		boot				[/embed]
+	[embed body="meta"]		mods				[/embed]
+	[embed body="meta"]		apps				[/embed]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                include makefile templates and render
+---------------------------------------------------------------------]
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] makefile_meta [/render]

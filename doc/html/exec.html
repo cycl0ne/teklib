@@ -1,0 +1,5588 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>exec</title>
+		<style type="text/css">
+			<!--
+				body { background-color: #fff; color: #000; }
+				a:link { color: #00e; }
+				a:visited { color: #44d; }
+				a:hover { color: #700; background-color: #ffb; }
+				body,td,dfn,div,li { font-family: Arial, Helvetica,
+					Geneva, sans-serif; }
+				div.block, li { margin-bottom: 0.4em; }
+				dfn { font-weight: bold; }
+				pre { background-color: #eef7df; border-style: solid;
+					border-width: 1px; padding: 0.4em; }
+				td { padding: 2px; }
+				td.noborder { padding: 0.1em 0.4em;
+					background-color: #fceed2; }
+				table.noborder { border-style: none; border-spacing: 4px;
+					margin-bottom: 0.4em; }
+				li.soft { list-style-type: none; }
+				ul { margin-left: 0cm; padding: 0cm;
+					list-style-position: inside; }
+				table.head { background-color: #d7d7f5; }
+			//-->
+		</style>
+	</head>
+	<body>
+		<hr><a name="INDEX"></a><table width="100%" class="head"><tr><td width="100%"><strong>exec : Index</strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h2>
+				TEKlib / Exec module reference manual
+			</h2>
+			<div class="block">
+				By Timm S. M&#252;ller -
+				Copyright &#169; 2005 TEK neoscientists. All rights reserved.
+			</div>
+			<hr>
+			<table class="noborder">
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Background</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetExecBase">TGetExecBase</a> 
+					</td>
+					<td class="noborder">
+						Get Execbase pointer from an Exec object
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Overview</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#Memory">Memory</a> 
+					</td>
+					<td class="noborder">
+						Memory managers, allocation and manipulation
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#Modules">Modules</a> 
+					</td>
+					<td class="noborder">
+						Module opening, closing and instances
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#Tasks">Tasks</a> 
+					</td>
+					<td class="noborder">
+						Tasks, signals and waiting
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#Locking">Locking</a> 
+					</td>
+					<td class="noborder">
+						Locks and named atoms
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#Ports">Ports</a> 
+					</td>
+					<td class="noborder">
+						Ports, messages and I/O requests
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#Internal">Internal</a> 
+					</td>
+					<td class="noborder">
+						Exec-internal functions
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr><a name="Memory"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#Memory">Memory</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<table class="noborder">
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Standard allocation</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TAlloc">TAlloc</a> 
+					</td>
+					<td class="noborder">
+						Allocate from memory manager
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TFree">TFree</a> 
+					</td>
+					<td class="noborder">
+						Return memory to memory manager
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TRealloc">TRealloc</a> 
+					</td>
+					<td class="noborder">
+						Resize an allocation made from a memory manager
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetSize">TGetSize</a> 
+					</td>
+					<td class="noborder">
+						Get size of an allocation
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetMMU">TGetMMU</a> 
+					</td>
+					<td class="noborder">
+						Get MMU to which an allocation belongs
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TAllocMsg">TAllocMsg</a> 
+					</td>
+					<td class="noborder">
+						Allocate memory for a message
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Memory managers</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCreateMMU">TCreateMMU</a> 
+					</td>
+					<td class="noborder">
+						Create a memory manager
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetTaskMMU">TGetTaskMMU</a> 
+					</td>
+					<td class="noborder">
+						Get a task's inbuilt memory manager
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCreatePool">TCreatePool</a> 
+					</td>
+					<td class="noborder">
+						Create a memory pool
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TAllocPool">TAllocPool</a> 
+					</td>
+					<td class="noborder">
+						Allocate from a pool
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TReallocPool">TReallocPool</a> 
+					</td>
+					<td class="noborder">
+						Resize a pool allocation
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TFreePool">TFreePool</a> 
+					</td>
+					<td class="noborder">
+						Free pool allocation
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Memory manipulation</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCopyMem">TCopyMem</a> 
+					</td>
+					<td class="noborder">
+						Copy memory
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TFillMem">TFillMem</a> 
+					</td>
+					<td class="noborder">
+						Fill memory
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TFillMem32">TFillMem32</a> 
+					</td>
+					<td class="noborder">
+						Fill memory with a 32bit value
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr><a name="Modules"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#Modules">Modules</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<table class="noborder">
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Modules</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TOpenModule">TOpenModule</a> 
+					</td>
+					<td class="noborder">
+						Open a shared module (or instance)
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCloseModule">TCloseModule</a> 
+					</td>
+					<td class="noborder">
+						Close a module (or instance)
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr><a name="Tasks"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#Tasks">Tasks</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<table class="noborder">
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Tasks</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCreateTask">TCreateTask</a> 
+					</td>
+					<td class="noborder">
+						Create a task at a function
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TFindTask">TFindTask</a> 
+					</td>
+					<td class="noborder">
+						Find a named task
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TSetTaskData">TSetTaskData</a> 
+					</td>
+					<td class="noborder">
+						Set task's user data packet
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetTaskData">TGetTaskData</a> 
+					</td>
+					<td class="noborder">
+						Get task's user data packet
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetUserPort">TGetUserPort</a> 
+					</td>
+					<td class="noborder">
+						Get a task's inbuilt message port
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetSyncPort">TGetSyncPort</a> 
+					</td>
+					<td class="noborder">
+						Get a task's inbuilt sync/reply port
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetTaskMMU">TGetTaskMMU</a> 
+					</td>
+					<td class="noborder">
+						Get a task's inbuilt memory manager
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Signals</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TAllocSignal">TAllocSignal</a> 
+					</td>
+					<td class="noborder">
+						Allocate user signal
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TFreeSignal">TFreeSignal</a> 
+					</td>
+					<td class="noborder">
+						Release user signal
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TSignal">TSignal</a> 
+					</td>
+					<td class="noborder">
+						Send signal to a task
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TSetSignal">TSetSignal</a> 
+					</td>
+					<td class="noborder">
+						Get/set task's signal state
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TWait">TWait</a> 
+					</td>
+					<td class="noborder">
+						Suspend task to wait for a signal
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetPortSignal">TGetPortSignal</a> 
+					</td>
+					<td class="noborder">
+						Get a message port's signal
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr><a name="Locking"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#Locking">Locking</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<table class="noborder">
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Locks</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCreateLock">TCreateLock</a> 
+					</td>
+					<td class="noborder">
+						Create locking object
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TLock">TLock</a> 
+					</td>
+					<td class="noborder">
+						Lock
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TUnlock">TUnlock</a> 
+					</td>
+					<td class="noborder">
+						Unlock
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Atoms</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TLockAtom">TLockAtom</a> 
+					</td>
+					<td class="noborder">
+						Create/obtain a named atom
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TUnlockAtom">TUnlockAtom</a> 
+					</td>
+					<td class="noborder">
+						Release/destroy a named atom
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TSetAtomData">TSetAtomData</a> 
+					</td>
+					<td class="noborder">
+						Attach data packet to a named atom
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetAtomData">TGetAtomData</a> 
+					</td>
+					<td class="noborder">
+						Get data packet from a named atom
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr><a name="Ports"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#Ports">Ports</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<table class="noborder">
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Ports</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCreatePort">TCreatePort</a> 
+					</td>
+					<td class="noborder">
+						Create a message port
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TWaitPort">TWaitPort</a> 
+					</td>
+					<td class="noborder">
+						Wait for a port to become non-empty
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetUserPort">TGetUserPort</a> 
+					</td>
+					<td class="noborder">
+						Get a task's inbuilt message port
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetSyncPort">TGetSyncPort</a> 
+					</td>
+					<td class="noborder">
+						Get a task's inbuilt sync/reply port
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetPortSignal">TGetPortSignal</a> 
+					</td>
+					<td class="noborder">
+						Get a message port's signal
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Messages</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TAllocMsg">TAllocMsg</a> 
+					</td>
+					<td class="noborder">
+						Allocate memory for a message
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TPutMsg">TPutMsg</a> 
+					</td>
+					<td class="noborder">
+						Put a message to a port, asynchronously
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetMsg">TGetMsg</a> 
+					</td>
+					<td class="noborder">
+						Get message from a port
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TAckMsg">TAckMsg</a> 
+					</td>
+					<td class="noborder">
+						Acknowledge message to sender
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TReplyMsg">TReplyMsg</a> 
+					</td>
+					<td class="noborder">
+						Reply message to sender
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TDropMsg">TDropMsg</a> 
+					</td>
+					<td class="noborder">
+						Abandon message, make it fail at sender
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TSendMsg">TSendMsg</a> 
+					</td>
+					<td class="noborder">
+						Send a message, synchronously
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>I/O requests</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TDoIO">TDoIO</a> 
+					</td>
+					<td class="noborder">
+						Do an I/O request synchronously
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TPutIO">TPutIO</a> 
+					</td>
+					<td class="noborder">
+						Send an I/O request asynchronously
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TWaitIO">TWaitIO</a> 
+					</td>
+					<td class="noborder">
+						Wait for completion of an I/O request
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TAbortIO">TAbortIO</a> 
+					</td>
+					<td class="noborder">
+						Try to abort an I/O request
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCheckIO">TCheckIO</a> 
+					</td>
+					<td class="noborder">
+						Check for completion of an I/O request
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr><a name="Internal"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#Internal">Internal</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<table class="noborder">
+				<tr>
+					<td class="noborder">
+					</td>
+					<td class="noborder">
+						<strong>Internal</strong> 
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TGetHALBase">TGetHALBase</a> 
+					</td>
+					<td class="noborder">
+						Get HAL module base pointer
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TDoExec">TDoExec</a> 
+					</td>
+					<td class="noborder">
+						Run the Execbase context
+					</td>
+				</tr>
+				<tr>
+					<td class="noborder">
+						<a href="#TCreateSysTask">TCreateSysTask</a> 
+					</td>
+					<td class="noborder">
+						Create an Exec-internal task
+					</td>
+				</tr>
+			</table>
+		</div>
+		<hr><a name="TGetExecBase"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetExecBase">TGetExecBase</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetExecBase - Get Exec module base pointer
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecBase = TGetExecBase(object)
+TAPTR                    TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This macro retrieves a pointer to the Exec module base from an Exec
+						object. Objects provided by the Exec module are <a href="#Tasks">Tasks</a>,
+						<a href="#Ports">Ports</a>, <a href="#Memory">MMUs</a>, <a href="#Locking">Atoms</a>,
+						<a href="#Locking">Locks</a> and <a href="#Modules">Modules</a> themselves.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								object
+							</td>
+							<td class="noborder">
+								Pointer to an Exec object
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								TExecBase
+							</td>
+							<td class="noborder">
+								Pointer to Exec module base
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>BACKGROUND</dfn>
+				<blockquote>
+					<div class="block">
+						The TEKlib framework is free of global data and carefully designed
+						to be fully reentrant. It is the programmer's choice to put module
+						base pointers into global variables.
+					</div>
+					<div class="block">
+						Initially, an application is entered with a task handle only. It
+						is usually required to query the Exec base pointer from that handle
+						before anything useful can be done. The module base pointer can
+						then be stored in a global variable, if desired.
+					</div>
+					<div class="block">
+						A typical application startup may look like this:
+					</div>
+					<blockquote>
+<pre>
+TAPTR TExecBase;
+TAPTR TUtilBase;
+
+TTASKENTRY TVOID
+TEKMain(TAPTR entrytask)
+{
+    TExecBase = TGetExecBase(entrytask);
+    TUtilBase = TOpenModule("util", ...
+    ...
+}
+</pre>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetHALBase">TGetHALBase</a>, <a href="module_writing.html#INDEX">Module writing tutorial</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetHALBase"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetHALBase">TGetHALBase</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetHALBase - Get HAL module base pointer
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+THALBase = TExecGetHALBase(TExecBase)
+TAPTR                      TAPTR
+
+THALBase = TGetHALBase()
+TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Return a pointer to the HAL module. Access to the HAL layer can
+						be required in device driver implementations. It is normally not
+						needed in regular applications.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								THALBase
+							</td>
+							<td class="noborder">
+								HAL module base pointer
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetExecBase">TGetExecBase</a>, <a href="#Internal">Internal</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCreateSysTask"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCreateSysTask">TCreateSysTask</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCreateSysTask - create system internal task
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+task = TExecCreateSysTask(TExecBase, func,     tags)
+TAPTR                     TAPTR      TTASKFUNC TTAGITEM*
+
+task = TCreateSysTask(func,     tags)
+TAPTR                 TTASKFUNC TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Create an Exec-internal task. If func is TNULL then a TEKlib task
+						is placed into the caller's context, otherwise a new thread of
+						execution is started at the given function.
+					</div>
+					<div class="block">
+						This function is used to setup an initial TEKlib context (or an
+						Exec task) before TEKlib is fully initialized. This function is
+						not entirely safe in regular applications and the only sanctioned
+						use is in startup libraries.
+					</div>
+					<div class="block">
+						Applications use <a href="#TCreateTask">TCreateTask</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								func
+							</td>
+							<td class="noborder">
+								Pointer to function, or TNULL for current context
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								tags
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						TTask_Name, (TSTRPTR)
+					</div>
+					<blockquote>
+						<div class="block">
+							Pointer to a string for the task name. default: TNULL
+						</div>
+					</blockquote>
+					<div class="block">
+						TTask_UserData, (TAPTR)
+					</div>
+					<blockquote>
+						<div class="block">
+							Pointer to an initial user data packet. default: TNULL
+						</div>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task handle, or TNULL if initialization failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TCreateTask">TCreateTask</a>, 
+						<a href="#TDoExec">TDoExec</a>, 
+						<a href="#Internal">Internal</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TOpenModule"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TOpenModule">TOpenModule</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TOpenModule - Open a module
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+modbase = TExecOpenModule(TExecBase, name,   version, tags)
+TAPTR                     TAPTR      TSTRPTR TUINT16  TTAGITEM*
+
+modbase = TOpenModule(name,   version, tags)
+TAPTR                 TSTRPTR TUINT16  TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Open a module or a module instance. When the module's version is
+						greater or equal the requested version and when the module can be
+						loaded and initialized successfully then a pointer to the module
+						base (or to a module instance) will be returned to the caller.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								name
+							</td>
+							<td class="noborder">
+								Name of the module
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								version
+							</td>
+							<td class="noborder">
+								Minimal module version for the open to succeed
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								tags
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						Tags passed to <a href="#TOpenModule">TOpenModule</a> can be intercepted in the module
+						open function and be used like a variable list of arguments to a
+						constructor. There are currently no tags defined for <a href="#TOpenModule">TOpenModule</a> 
+						itself. See the <a href="module_writing.html#INDEX">module writing tutorial</a> 
+						for further details.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								modbase
+							</td>
+							<td class="noborder">
+								Module base or TNULL
+							</td>
+						</tr>
+					</table>
+					<div class="block">
+						Returns TNULL if the module could not be found, when it failed to
+						initialize or when it was in memory already, but the version
+						requirement could not be satisfied.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<div class="block">
+						Each successful open to a module must be paired with exactly one
+						matching call to <a href="#TCloseModule">TCloseModule</a>, or TEKlib will panic (raise a
+						fatal exception, "crash"...) at exit.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TCloseModule">TCloseModule</a>, 
+						<a href="#TGetExecBase">TGetExecBase</a>, 
+						<a href="#Modules">Modules</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCloseModule"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCloseModule">TCloseModule</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCloseModule - Close a module
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecCloseModule(TExecBase, modbase)
+                 TAPTR      TAPTR
+
+TCloseModule(modbase)
+             TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Close a module or module instance. When applied to the last
+						reference or instance open then the module will be deinitalized,
+						unloaded and freed.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								module
+							</td>
+							<td class="noborder">
+								Module or module instance. It is safe to pass TNULL.
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TOpenModule">TOpenModule</a>, 
+						<a href="#Modules">Modules</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCopyMem"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCopyMem">TCopyMem</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCopyMem - Copy a block of memory
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecCopyMem(TExecBase, source, dest, numbytes)
+             TAPTR      TAPTR   TAPTR TUINT
+
+TCopyMem(source, dest, numbytes)
+         TAPTR   TAPTR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Copy the given number of bytes from a source to destination address
+						in memory.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								source
+							</td>
+							<td class="noborder">
+								Source address
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								dest
+							</td>
+							<td class="noborder">
+								Destination address
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								numbytes
+							</td>
+							<td class="noborder">
+								Number of bytes to copy
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							You cannot rely on overlapping copies to work with this function.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TFillMem">TFillMem</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TFillMem"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TFillMem">TFillMem</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TFillMem - Fill a block of memory
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecFillMem(TExecBase, start, numbytes, fillval)
+             TAPTR      TAPTR  TUINT     TUINT8
+
+TFillMem(start, numbytes, fillval)
+         TAPTR  TUINT     TUINT8
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Fill a range of memory with a byte value.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								start
+							</td>
+							<td class="noborder">
+								Start address
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								numbytes
+							</td>
+							<td class="noborder">
+								Number of bytes to fill
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								fillval
+							</td>
+							<td class="noborder">
+								byte value
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TFillMem32">TFillMem32</a>, 
+						<a href="#TCopyMem">TCopyMem</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TFillMem32"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TFillMem32">TFillMem32</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TFillMem32 - Fill a block of memory, 32bit aligned
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecFillMem32(TExecBase, start, numbytes, fillval)
+               TAPTR      TAPTR  TUINT     TUINT
+
+TFillMem32(start, numbytes, fillval)
+           TAPTR  TUINT     TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Fill a range of memory with a 32 bit value. The start address
+						must be 32bit aligned and numbytes must be evenly divisable
+						by four.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								start
+							</td>
+							<td class="noborder">
+								Start address
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								numbytes
+							</td>
+							<td class="noborder">
+								Number of bytes to fill
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								fillval
+							</td>
+							<td class="noborder">
+								32 bit value
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TFillMem">TFillMem</a>, 
+						<a href="#TCopyMem">TCopyMem</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCreateMMU"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCreateMMU">TCreateMMU</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCreateMMU - Create a memory manager
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+mmu = TExecCreateMMU(TExecBase, allocator, type, tags)
+TAPTR                TAPTR      TAPTR      TUINT TTAGITEM*
+
+mmu = TCreateMMU(allocator, type, tags)
+TAPTR            TAPTR      TUINT TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Create a memory manager, also known as a MMU. A memory manager can
+						be passed to <a href="#TAlloc">TAlloc</a> for allocations with features such as leak
+						tracking, automatic cleanup, cross-task protection etc.
+					</div>
+					<div class="block">
+						The purpose of memory managers is to hook special capabilities into
+						a particular domain of code, when it is suspected to leak memory for
+						example. Memory managers can be stacked on top of each other.
+					</div>
+					<div class="block">
+						TNULL is always a valid memory manager. A TNULL MMU will cause
+						<a href="#TAlloc">TAlloc</a> to direct requests to the general purpose allocator.
+					</div>
+					<div class="block">
+						Only a TNULL MMU is intrinsically safe to use in a multitasking
+						environment. Other allocators must implement cross-task protection
+						explicitely. See the TMMUT_TaskSafe flag for details.
+					</div>
+					<div class="block">
+						A MMU is destroyed with a call to <a href="teklib.html#TDestroy">teklib:TDestroy</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								allocator
+							</td>
+							<td class="noborder">
+								Parent MMU, underlying allocator or TNULL
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								type
+							</td>
+							<td class="noborder">
+								Type of MMU to be created
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								tags
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items
+							</td>
+						</tr>
+					</table>
+					<div class="block">
+						Types:
+					</div>
+					<div class="block">
+						TMMUT_MMU
+					</div>
+					<blockquote>
+						<div class="block">
+							Setup a MMU on top of another MMU, implementing no
+							additional functionality. Allocator must be TNULL or point
+							to another MMU. An underlying TNULL MMU results in a
+							memory manager that is equivalent to a TNULL MMU.
+						</div>
+					</blockquote>
+					<div class="block">
+						TMMUT_TaskSafe
+					</div>
+					<blockquote>
+						<div class="block">
+							Setup a MMU on top of another MMU, implementing safe
+							accesses across tasks, that is, multiple tasks are allowed to
+							operate on the resulting MMU in parallel. Allocator must
+							be TNULL or point to another MMU.
+						</div>
+					</blockquote>
+					<div class="block">
+						TMMUT_Tracking
+					</div>
+					<blockquote>
+						<div class="block">
+							Setup a tracking MMU on top of another MMU. Allocator must
+							be TNULL or point to another MMU. The resulting MMU will
+							return all pending allocations to its parent when it is
+							being destroyed, at the cost of extra performance and
+							memory consumption. This type can be combined with
+							TMMUT_TaskSafe.
+						</div>
+					</blockquote>
+					<div class="block">
+						TMMUT_Static
+					</div>
+					<blockquote>
+						<div class="block">
+							The resulting MMU will manage a static block of memory.
+							When the block is exhausted or fragmented then further
+							allocations will fail, as no attempts are made to get more
+							storage from the outside. Allocator is expected to be a
+							pointer to a block of memory or TNULL. The tag
+							TMem_StaticSize must be specified in the taglist (see
+							below). This type can be combined with TMMUT_TaskSafe.
+						</div>
+					</blockquote>
+					<div class="block">
+						TMMUT_Pooled
+					</div>
+					<blockquote>
+						<div class="block">
+							The resulting MMU will group small allocations into larger
+							ones. All pending allocations will be freed when the MMU
+							is being destroyed. Allocator must be a pointer to a pool
+							created with <a href="#TCreatePool">TCreatePool</a> or TNULL. In the latter case a
+							pooled allocator will be created and maintained internally
+							with the resulting MMU, and pool-specific tags passed to
+							<a href="#TCreateMMU">TCreateMMU</a> will be used accordingly. See <a href="#TCreatePool">TCreatePool</a> 
+							for details. This type can be combined with TMMUT_TaskSafe.
+						</div>
+					</blockquote>
+					<div class="block">
+						TMMUT_Void
+					</div>
+					<blockquote>
+						<div class="block">
+							The resulting MMU will be incapable of allocating memory.
+							Attempts to do so will always return a TNULL pointer.
+							This type can be useful for debugging purposes.
+						</div>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						TMem_StaticSize, (TUINT)
+					</div>
+					<blockquote>
+						<div class="block">
+							This argument is mandatory when type is TMMUT_Static. It
+							specifies the size of a static block of memory to be managed.
+							Allocator is expected to be a pointer to a block of memory of
+							the specified size, or TNULL. In the latter case a block of
+							this size will be allocated and maintained internally and
+							freed when the resulting MMU is being destroyed. Default: 0
+						</div>
+					</blockquote>
+					<div class="block">
+						TMem_LowFrag, (TBOOL)
+					</div>
+					<blockquote>
+						<div class="block">
+							This tag is considered when type is TMMUT_Static and it will
+							cause the resulting MMU to use an allocation strategy that may
+							help to reduce internal fragmentation at the cost of extra
+							performance. This is also known as the 'best match' strategy.
+							The default is the 'first match' strategy. Default: TFALSE
+						</div>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mmu
+							</td>
+							<td class="noborder">
+								Memory manager, or TNULL if initialization failed.
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Tracking MMUs return all memory to their parent when they are
+							being destroyed. The number of pending allocations will be reported
+							to stderr (or to a platform-specific debug channel) when a debug
+							build of the Exec module is used.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="teklib.html#TDestroy">teklib:TDestroy</a>, 
+						<a href="#TAlloc">TAlloc</a>, <a href="#TAllocMsg">TAllocMsg</a>,
+						<a href="#TCreatePool">TCreatePool</a>, 
+						<a href="#TGetTaskMMU">TGetTaskMMU</a>, 
+						<a href="#Memory">Memory</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAlloc"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAlloc">TAlloc</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAlloc - Allocate memory
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+mem = TExecAlloc(TExecBase, mmu,  size)
+TAPTR            TAPTR      TAPTR TUINT
+
+mem = TAlloc(mmu,  size)
+TAPTR        TAPTR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function allocates a block of memory from a memory manager.
+						A pointer to the allocated block of memory is returned, or TNULL
+						when the request cannot be satisfied.
+					</div>
+					<div class="block">
+						A TNULL memory manager is valid and directs requests to the
+						system's general purpose allocator.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mmu
+							</td>
+							<td class="noborder">
+								Pointer to a memory manager, or TNULL
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								size
+							</td>
+							<td class="noborder">
+								Size of the allocation [bytes]
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Pointer to a block of memory, or TNULL if out of memory
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Never rely on allocations made with this function to be filled
+							with all bytes set to zero. use <a href="#TAlloc0">TAlloc0</a> to get a blank allocation.
+						</li>
+						<li class="bullets">
+							Memory for messages must be allocated from a special class of
+							memory manager. See <a href="#TAllocMsg">TAllocMsg</a> for details.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TFree">TFree</a>, 
+						<a href="#TRealloc">TRealloc</a>, 
+						<a href="#TAlloc0">TAlloc0</a>, <a href="#TCreateMMU">TCreateMMU</a>,
+						<a href="#TAllocMsg">TAllocMsg</a>, 
+						<a href="#TGetSize">TGetSize</a>, 
+						<a href="#TGetMMU">TGetMMU</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAlloc0"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAlloc0">TAlloc0</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAlloc0 - Allocate from a memory manager, blank
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+mem = TExecAlloc0(TExecBase, mmu,  size)
+TAPTR             TAPTR      TAPTR TUINT
+
+mem = TAlloc0(mmu,  size)
+TAPTR         TAPTR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Allocate a blank block of memory from a memory manager. This
+						function is equivalent to <a href="#TAlloc">TAlloc</a> except for that the returned
+						memory is guaranteed to be filled with all bytes set to zero.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mmu
+							</td>
+							<td class="noborder">
+								Pointer to a memory manager or TNULL
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								size
+							</td>
+							<td class="noborder">
+								Size of the allocation [bytes]
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Pointer to a block of memory, or TNULL if out of memory
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAlloc">TAlloc</a>, 
+						<a href="#TFree">TFree</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAllocMsg"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAllocMsg">TAllocMsg</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAllocMsg - Allocate memory for a message
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+msg = TExecAllocMsg(TExecBase, size)
+TAPTR               TAPTR      TUINT
+
+msg = TAllocMsg(size)
+TAPTR           TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Allocate memory for a message. Message allocations behave largely
+						like regular allocations. Use <a href="#TFree">TFree</a> to return a message to
+						its memory manager. 
+						<a href="#TGetSize">TGetSize</a> and <a href="#TGetMMU">TGetMMU</a> are valid also.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								size
+							</td>
+							<td class="noborder">
+								Size of the requested block of memory [bytes]
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Pointer to message memory, or TNULL if failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Messages cannot be reallocated. The result from attempts
+							to do so will always return TNULL.
+						</li>
+						<li class="bullets">
+							Never rely on allocations made with this function to be
+							filled with all bytes set to zero. Use <a href="#TAllocMsg0">TAllocMsg0</a> to get a
+							blank allocation.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAllocMsg0">TAllocMsg0</a>, 
+						<a href="#TAlloc">TAlloc</a>, 
+						<a href="#TFree">TFree</a>, <a href="#TPutMsg">TPutMsg</a>,
+						<a href="#TCreateMMU">TCreateMMU</a>, 
+						<a href="#Memory">Memory</a>, <a href="#Ports">Ports</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAllocMsg0"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAllocMsg0">TAllocMsg0</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAllocMsg0 - Allocate memory for a message, blank
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+msg = TExecAllocMsg0(TExecBase, size)
+TAPTR                TAPTR      TUINT
+
+msg = TAllocMsg0(size)
+TAPTR            TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Allocate memory for a message, blank. This function is equivalent
+						to <a href="#TAllocMsg">TAllocMsg</a>, except for that the returned memory is
+						guaranteed to be filled with all bytes set to zero.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								size
+							</td>
+							<td class="noborder">
+								Size of the requested block of memory [bytes]
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Pointer to message memory, or TNULL if failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAllocMsg">TAllocMsg</a>, 
+						<a href="#Memory">Memory</a>, <a href="#Ports">Ports</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TFree"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TFree">TFree</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TFree - Return memory to its memory manager
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecFree(TExecBase, mem)
+          TAPTR      TAPTR
+
+TFree(mem)
+      TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Return a block of memory to the memory manager from which it has
+						been allocated.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Block of memory to be freed. It is safe to pass TNULL.
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							This function is responsible for freeing memory that has been
+							allocated using 
+							<a href="#TAlloc">TAlloc</a> and <a href="#TAllocMsg">TAllocMsg</a>. It cannot be used for
+							freeing memory that has been allocated with <a href="#TAllocPool">TAllocPool</a>. For
+							the latter see <a href="#TFreePool">TFreePool</a>.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAlloc">TAlloc</a>, 
+						<a href="#TAllocMsg">TAllocMsg</a>, 
+						<a href="#TGetSize">TGetSize</a>, <a href="#TGetMMU">TGetMMU</a>,
+						<a href="#TRealloc">TRealloc</a>, 
+						<a href="#TCreateMMU">TCreateMMU</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TRealloc"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TRealloc">TRealloc</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TRealloc - Resize an allocation
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+newmem = TRealloc(oldmem, newsize)
+TAPTR             TAPTR   TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Resize a block of memory that has been allocated from a memory
+						manager. If newsize is zero then the allocation will be freed
+						and the result will be TNULL.
+					</div>
+					<div class="block">
+						This function departs from the standard realloc semantics;
+						When a TNULL pointer is passed in the oldmem argument then this
+						function will always return TNULL; it cannot be used to allocate
+						a fresh block of memory.
+					</div>
+					<div class="block">
+						If a reallocation fails and the return value is TNULL then the
+						old block is still allocated.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								oldmem
+							</td>
+							<td class="noborder">
+								Pointer to memory allocated
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								newsize
+							</td>
+							<td class="noborder">
+								New size for the allocation or 0
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								newmem
+							</td>
+							<td class="noborder">
+								Pointer to memory reallocated to newsize, or TNULL
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Reallocation may require that the given block of memory needs
+							to be moved in memory, that is, pointers to this area may become
+							invalid. Consider this.
+						</li>
+						<li class="bullets">
+							This function is responsible for resizig allocations that have
+							been made using <a href="#TAlloc">TAlloc</a>. It cannot be used for allocations
+							made from pools. For the latter, see <a href="#TReallocPool">TReallocPool</a>.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAlloc">TAlloc</a>, 
+						<a href="#TFree">TFree</a>, 
+						<a href="#TGetSize">TGetSize</a>, <a href="#TGetMMU">TGetMMU</a>,
+						<a href="#TCreateMMU">TCreateMMU</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetSize"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetSize">TGetSize</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetSize - Get size of an allocation
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+size = TExecGetSize(TExecBase, mem)
+TUINT               TAPTR      TAPTR
+
+size = TGetSize(mem)
+TUINT           TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Get the size of a block of memory in bytes that has been allocated
+						from a memory manager.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Pointer to a block of memory
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								size
+							</td>
+							<td class="noborder">
+								size of the allocation [bytes]
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetMMU">TGetMMU</a>, 
+						<a href="#TAlloc">TAlloc</a>, 
+						<a href="#TCreateMMU">TCreateMMU</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetMMU"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetMMU">TGetMMU</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetMMU - Get an allocation's memory manager
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+mmu = TExecGetMMU(TExecBase, mem)
+TAPTR             TAPTR      TAPTR
+
+mmu = TGetMMU(mem)
+TAPTR         TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Return a pointer to the memory manager an allocation was
+						made from.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Pointer to a block of memory
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mmu
+							</td>
+							<td class="noborder">
+								Pointer to a memory manager
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							TNULL is a valid memory manager, referring to
+							the system's general-purpose allocator.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetSize">TGetSize</a>, 
+						<a href="#TAlloc">TAlloc</a>, 
+						<a href="#TCreateMMU">TCreateMMU</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCreateLock"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCreateLock">TCreateLock</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCreateLock - Create a lock
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+lock = TExecCreateLock(TExecBase, tags)
+TAPTR                  TAPTR      TTAGITEM*
+
+lock = TCreateLock(tags)
+TAPTR              TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Create a locking object. A lock is a mechanism to protect
+						resources from simultaneous accesses from multiple tasks.
+						Only one accessor can hold the same lock at a given time.
+					</div>
+					<div class="block">
+						A lock is destroyed with a call to <a href="teklib.html#TDestroy">teklib:TDestroy</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								tags
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						None defined yet.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								lock
+							</td>
+							<td class="noborder">
+								Lock created, or TNULL if creation failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Results are undefined if a lock is destroyed in locked state.
+							Each call to <a href="#TLock">TLock</a> per calling task must be paired with
+							exactly one matching call to <a href="#TUnlock">TUnlock</a>.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TLock">TLock</a>, 
+						<a href="#TUnlock">TUnlock</a>, 
+						<a href="teklib.html#TDestroy">teklib:TDestroy</a>, 
+						<a href="#Locking">Locking</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TLock"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TLock">TLock</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TLock - Gain exclusive access to a lock
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecLock(TExecBase, lock)
+          TAPTR      TAPTR
+
+TLock(lock)
+      TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Gain exclusive access to a lock. If another task is currenty
+						holding the lock then the caller will block until the lock is
+						free. If no other task holds the lock then this function returns
+						immediately with exclusive access.
+					</div>
+					<div class="block">
+						This function is recursive (or 'nesting'), i.e. it may be called
+						subsequently when the lock is already held by the current owner.
+						In that case an internal counter is increased and this function
+						returns immediately.
+					</div>
+					<div class="block">
+						Each call per task must be paired with exactly one matching call
+						to <a href="#TUnlock">TUnlock</a>, which will decrease the counter. When the counter
+						reaches zero then the control is handed over to the next waiter,
+						or in case there are no waiters the lock is being released.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								lock
+							</td>
+							<td class="noborder">
+								Pointer to a lock created with <a href="#TCreateLock">TCreateLock</a> 
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TUnlock">TUnlock</a>, 
+						<a href="#TCreateLock">TCreateLock</a>, 
+						<a href="#Locking">Locking</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TUnlock"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TUnlock">TUnlock</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TUnlock - Release access to a lock
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecUnlock(TExecBase, lock)
+            TAPTR      TAPTR
+
+TUnlock(lock)
+        TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Release access to a lock which was previously obtained with
+						a call to <a href="#TLock">TLock</a>. The next task currently suspended waiting
+						for the lock will gain exclusive access to the resource and
+						resume.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								lock
+							</td>
+							<td class="noborder">
+								Pointer to a locking object in locked state
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TLock">TLock</a>, 
+						<a href="#TCreateLock">TCreateLock</a>, 
+						<a href="#Locking">Locking</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAllocSignal"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAllocSignal">TAllocSignal</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAllocSignal - Allocate a single or a set of signals
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+signals = TExecAllocSignal(TExecBase, prefsignals)
+TUINT                      TAPTR      TUINT
+
+signals = TAllocSignal(prefsignals)
+TUINT                  TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Allocate a signal (or a set of preferred signals) from the
+						current task. If prefsignals is 0 then this function will try to
+						reserve any single free signal. Otherwise this function tries to
+						reserve the exact set specified and returns 0 if any of the
+						specified signals are already in use.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								prefsignals
+							</td>
+							<td class="noborder">
+								Preferred set of signals or 0 for any free signal
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								signals
+							</td>
+							<td class="noborder">
+								Signals allocated
+							</td>
+						</tr>
+					</table>
+					<div class="block">
+						Zero if out of signals, or when any of the signal bits in
+						prefsignals are already in use.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Signals no longer needed should be freed using <a href="#TFreeSignal">TFreeSignal</a>.
+						</li>
+						<li class="bullets">
+							In the current implementation of the Exec module, up to 28
+							signals per task can be allocated by the user. It is guaranteed
+							that there will be always at least 20 signals per task available
+							for the user.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TFreeSignal">TFreeSignal</a>, 
+						<a href="#TSignal">TSignal</a>, 
+						<a href="#TSetSignal">TSetSignal</a>, 
+						<a href="#TWait">TWait</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TFreeSignal"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TFreeSignal">TFreeSignal</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TFreeSignal - Free signals
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecFreeSignal(TExecBase, signals)
+                TAPTR      TUINT
+
+TFreeSignal(signals)
+            TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Free a single or a set of signals and return them to a task's
+						signal pool.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								signals
+							</td>
+							<td class="noborder">
+								Signal mask to be freed. It is safe to pass 0.
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAllocSignal">TAllocSignal</a>, 
+						<a href="#TWait">TWait</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TSignal"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TSignal">TSignal</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TSignal - Submit signals to a task
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecSignal(TExecBase, task, signals)
+            TAPTR      TAPTR TUINT
+
+TSignal(task, signals)
+        TAPTR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Submit signals to a task. The signal(s) will show up in the
+						signalled task. When the task was suspended waiting for any of
+						the specified signals then it will resume its operation.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task to be signalled
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								signals
+							</td>
+							<td class="noborder">
+								A set of signals to be submitted
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TSetSignal">TSetSignal</a>, 
+						<a href="#TWait">TWait</a>, 
+						<a href="#TAllocSignal">TAllocSignal</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TSetSignal"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TSetSignal">TSetSignal</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TSetSignal - Set and get task's signal state
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+oldsignals = TExecSetSignal(TExecBase, newsignals, sigmask)
+TUINT                       TAPTR      TUINT       TUINT
+
+oldsignals = TSetSignal(newsignals, sigmask)
+TUINT                   TUINT       TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Set the current task's signal state to the signal bits in
+						newsignals, masked through the bits in the sigmask argument,
+						and return the old state of the tasks's signals.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								newsignals
+							</td>
+							<td class="noborder">
+								New set of signals
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								sigmask
+							</td>
+							<td class="noborder">
+								Signal bits to be affected
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>EXAMPLES</dfn>
+				<blockquote>
+<pre>
+/* get the current state of all signals, but do not modify them */
+signals = TSetSignal(0, 0);
+
+/* clear the TTASK_SIG_ABORT signal */
+TSetSignal(0, TTASK_SIG_ABORT);
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TSignal">TSignal</a>, 
+						<a href="#TWait">TWait</a>, 
+						<a href="#TAllocSignal">TAllocSignal</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TWait"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TWait">TWait</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TWait - Wait for signals
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+signals = TExecWait(TExecBase, sigmask)
+TUINT               TAPTR      TUINT
+
+signals = TWait(sigmask)
+TUINT           TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Suspend the current task to wait for one or more of the specified
+						signals to arrive. Those bits will be cleared from the task's signal
+						state and returned to the caller when the function returns. If
+						sigmask is 0 then this function will immediately return 0.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								sigmask
+							</td>
+							<td class="noborder">
+								Set of signals to wait for
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								signals
+							</td>
+							<td class="noborder">
+								Signals that caused returning
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							For waiting with timeout see <a href="time.html#TWaitTime">time:TWaitTime</a>.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TWaitPort">TWaitPort</a>, 
+						<a href="#TSignal">TSignal</a>, 
+						<a href="#TSetSignal">TSetSignal</a>, 
+						<a href="#TAllocSignal">TAllocSignal</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCreatePort"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCreatePort">TCreatePort</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCreatePort - Create a message port
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+port = TExecCreatePort(TExecBase, tags)
+TAPTR                  TAPTR      TTAGITEM*
+
+port = TCreatePort(tags)
+TAPTR              TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Create a message port owned by the current task.
+					</div>
+					<div class="block">
+						A message port is an access point for messages between tasks. It
+						can be synchronized on using 
+						<a href="#TWaitPort">TWaitPort</a>. Use <a href="#TGetPortSignal">TGetPortSignal</a> 
+						to retrieve a port's underlying signal bit. Using this signal
+						one or more message ports can be synchronized on using <a href="#TWait">TWait</a>.
+					</div>
+					<div class="block">
+						A message port is destroyed with a call to <a href="teklib.html#TDestroy">teklib:TDestroy</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								tags
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						None defined yet
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								port
+							</td>
+							<td class="noborder">
+								Message port created, or TNULL for failure
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Every task has an inbuilt user message port already. See
+							<a href="#TGetUserPort">TGetUserPort</a> for details. Use <a href="#TCreatePort">TCreatePort</a> to create more
+							ports if necessary.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TWaitPort">TWaitPort</a>, 
+						<a href="#TWait">TWait</a>, 
+						<a href="#TPutMsg">TPutMsg</a>, <a href="#TGetMsg">TGetMsg</a>,
+						<a href="teklib.html#TDestroy">teklib:TDestroy</a>, 
+						<a href="#TGetPortSignal">TGetPortSignal</a>, <a href="#TGetUserPort">TGetUserPort</a>,
+						<a href="#TGetSyncPort">TGetSyncPort</a>, 
+						<a href="#Ports">Ports</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TWaitPort"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TWaitPort">TWaitPort</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TWaitPort - Wait for a message port to become non-empty
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+msg = TExecWaitPort(TExecBase, port)
+TAPTR               TAPTR      TAPTR
+
+msg = TWaitPort(port)
+TAPTR           TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Suspend the current task to wait for a message to arrive at the
+						given message port. When a message is already present then this
+						function returns immediately. A pointer to the next pending
+						message is returned to the caller, but it is not removed from
+						the queue. Use <a href="#TGetMsg">TGetMsg</a> to unlink the next message from a port.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								port
+							</td>
+							<td class="noborder">
+								Message port
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Next pending message in the queue
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							The port must have been created in and be owned by the caller's task
+							context.
+						</li>
+						<li class="bullets">
+							Message ports in local address space have no timeout. If no message
+							arrives at the specified port then this function will wait and block
+							eternally.
+						</li>
+						<li class="bullets">
+							Use <a href="#TGetUserPort">TGetUserPort</a> to combine the signals from multiple
+							message ports and synchronize on them using <a href="#TWait">TWait</a>.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TCreatePort">TCreatePort</a>, 
+						<a href="#TWait">TWait</a>, <a href="#TGetPortSignal">TGetPortSignal</a>,
+						<a href="#TGetMsg">TGetMsg</a>, 
+						<a href="#Ports">Ports</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAckMsg"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAckMsg">TAckMsg</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAckMsg - Acknowledge message to its sender
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecAckMsg(TExecBase, msg)
+            TAPTR      TAPTR
+
+TAckMsg(msg)
+        TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Acknowledge a two-way message to its sender, i.e. return it to the
+						replyport that was specified by the sender when the message was sent.
+					</div>
+					<div class="block">
+						It is safe to apply this function to one-way messages as well; if
+						the message was sent without a reply or acknowledgement expected
+						then it will be silently returned to its memory manager.
+					</div>
+					<div class="block">
+						When a message is returned with this function then the sender must
+						not rely on modifications made inside the message body. If you send
+						a message back after you changed its contents then <a href="#TReplyMsg">TReplyMsg</a> 
+						should be used instead.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Message to be acknowledged or to be freed, transparently
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							The difference between <a href="#TAckMsg">TAckMsg</a> and <a href="#TReplyMsg">TReplyMsg</a> is meaningless
+							in local address space, but it may become useful in the future.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TReplyMsg">TReplyMsg</a>, 
+						<a href="#TDropMsg">TDropMsg</a>, 
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#TAllocMsg">TAllocMsg</a>, <a href="#Ports">Ports</a>,
+						<a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TReplyMsg"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TReplyMsg">TReplyMsg</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TReplyMsg - Reply message to its sender
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecReplyMsg(TExecBase, msg)
+              TAPTR      TAPTR
+
+TReplyMsg(msg)
+          TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Reply a two-way message to its sender, i.e. return it to the
+						replyport that was specified by the sender when the message was sent.
+					</div>
+					<div class="block">
+						It is safe to apply this function to one-way messages as well; if
+						the message was sent without a reply or acknowledgement expected
+						then this function will silently return the message to the memory
+						manager it was allocated from.
+					</div>
+					<div class="block">
+						Use this function for transferring a modified message body back to
+						its sender. If the message was not modified and it is only required
+						to inform the sender that it has been processed then <a href="#TAckMsg">TAckMsg</a> 
+						should be preferred.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Message to be replied (or to be freed, transparently)
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							The difference between <a href="#TAckMsg">TAckMsg</a> and <a href="#TReplyMsg">TReplyMsg</a> is meaningless
+							in local address space, but it may become useful in the future.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAckMsg">TAckMsg</a>, 
+						<a href="#TDropMsg">TDropMsg</a>, 
+						<a href="#TPutMsg">TPutMsg</a>, <a href="#TAllocMsg">TAllocMsg</a>,
+						<a href="#Ports">Ports</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TDropMsg"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TDropMsg">TDropMsg</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TDropMsg - Abandon a message
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecDropMsg(TExecBase, msg)
+             TAPTR      TAPTR
+
+TDropMsg(msg)
+         TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Abandon a two-way message, i.e. return it to its replyport with the
+						internal message status set to TMSG_STATUS_FAILED. This function is
+						not guaranteed to return any modifications made inside the message
+						body, it will only indicate failure.
+					</div>
+					<div class="block">
+						It is safe to apply this function to one-way messages as well; if the
+						message was sent without a reply or acknowledgement expected then it
+						will be silently returned to its memory manager.
+					</div>
+					<div class="block">
+						In local address space this function is particularly useful for
+						indicating failure to a synchronized message sent with <a href="#TSendMsg">TSendMsg</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Message to be abandoned (or to be freed, transparently)
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TSendMsg">TSendMsg</a>, 
+						<a href="#TAckMsg">TAckMsg</a>, 
+						<a href="#TReplyMsg">TReplyMsg</a>, <a href="#TPutMsg">TPutMsg</a>,
+						<a href="#TAllocMsg">TAllocMsg</a>, 
+						<a href="#Ports">Ports</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TPutMsg"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TPutMsg">TPutMsg</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TPutMsg - Send a message asynchronously
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecPutMsg(TExecBase, port, replyport, msg)
+            TAPTR      TAPTR TAPTR      TAPTR
+
+TPutMsg(port, replyport, msg)
+        TAPTR TAPTR      TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Put a message to a message port. If a replyport is specified then
+						the message will be sent two-way and there will be a reply expected
+						at the replyport. If replyport is TNULL then the message will be sent
+						one-way and does not return to the sender.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								port
+							</td>
+							<td class="noborder">
+								Addressed message port
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								replyport
+							</td>
+							<td class="noborder">
+								Replyport or TNULL if no reply is expected
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Message to be sent
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetMsg">TGetMsg</a>, 
+						<a href="#TAckMsg">TAckMsg</a>, 
+						<a href="#TReplyMsg">TReplyMsg</a>, <a href="#TDropMsg">TDropMsg</a>,
+						<a href="#TSendMsg">TSendMsg</a>, 
+						<a href="#TAllocMsg">TAllocMsg</a>, 
+						<a href="#Ports">Ports</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetMsg"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetMsg">TGetMsg</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetMsg - Get message
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+msg = TExecGetMsg(TExecBase, port)
+TAPTR             TAPTR      TAPTR
+
+msg = TGetMsg(port)
+TAPTR         TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Unlink the next pending message from a port's message queue and
+						return it to the caller. This function does not block; if the
+						message queue is empty then this function returns immediately with
+						TNULL.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								port
+							</td>
+							<td class="noborder">
+								Message port to get next message from
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Next pending message or TNULL if the queue was empty
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#TAckMsg">TAckMsg</a>, 
+						<a href="#TReplyMsg">TReplyMsg</a>, <a href="#TDropMsg">TDropMsg</a>,
+						<a href="#TAllocMsg">TAllocMsg</a>, 
+						<a href="#Ports">Ports</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TSendMsg"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TSendMsg">TSendMsg</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TSendMsg - Send a message, synchronized
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+status = TExecSendMsg(TExecBase, port, msg)
+TUINT                 TAPTR      TAPTR TAPTR
+
+status = TSendMsg(port, msg)
+TUINT             TAPTR TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function sends a message two-way, synchronized, waiting for
+						a reply or an acknowledgement before it returns to the caller.
+					</div>
+					<div class="block">
+						The return value will be set to zero (TMSG_STATUS_FAILED) if the
+						message has been dropped, or, depending on the return method,
+						TMSG_STATUS_REPLIED or TMSG_STATUS_ACKD if it returned
+						successfully.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								port
+							</td>
+							<td class="noborder">
+								Message port to send message to
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								msg
+							</td>
+							<td class="noborder">
+								Message to be sent
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+				<div class="block">
+					RETURNS
+				</div>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								status
+							</td>
+							<td class="noborder">
+								delivery status of the message
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+							</td>
+							<td class="noborder">
+								TMSG_STATUS_FAILED if the message was dropped
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+							</td>
+							<td class="noborder">
+								TMSG_STATUS_REPLIED if replied
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+							</td>
+							<td class="noborder">
+								TMSG_STATUS_ACKD if acknowledged
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<div class="block">
+						Message ports in local address space have no timeout. If the
+						message is not being dropped, replied or acknowledged then
+						this function blocks eternally.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#TAckMsg">TAckMsg</a>, 
+						<a href="#TReplyMsg">TReplyMsg</a>, <a href="#TDropMsg">TDropMsg</a>,
+						<a href="#TAllocMsg">TAllocMsg</a>, 
+						<a href="#TGetSyncPort">TGetSyncPort</a>, 
+						<a href="#Ports">Ports</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetPortSignal"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetPortSignal">TGetPortSignal</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetPortSignal - Get a message port's signal
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+signal = TExecGetPortSignal(TExecBase, port)
+TUINT                       TAPTR      TAPTR
+
+signal = TGetPortSignal(port)
+TUINT                   TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function retrieves a message port's underlying signal.
+						The typical use of that signal is to use <a href="#TWait">TWait</a> to combine
+						waiting for messages from multiple ports.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								port
+							</td>
+							<td class="noborder">
+								Message port to get signal from
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								signal
+							</td>
+							<td class="noborder">
+								The signal that shows up in the port's task
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TCreatePort">TCreatePort</a>, 
+						<a href="#TWait">TWait</a>, 
+						<a href="#TWaitPort">TWaitPort</a>, <a href="#Ports">Ports</a>,
+						<a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetUserPort"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetUserPort">TGetUserPort</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetUserPort - get a task's userport
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+userport = TExecGetUserPort(TExecBase, task)
+TAPTR                       TAPTR      TAPTR
+
+userport = TGetUserPort(task)
+TAPTR                   TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Get a pointer to a task's primary, asynchronous message port
+						which is reserved for the user. If the task argument is TNULL
+						then the caller's own task will be queried.
+					</div>
+					<div class="block">
+						Each task is supplied with an user port upon creation. More
+						message ports can be created using <a href="#TCreatePort">TCreatePort</a> during a
+						task's lifetime.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task handle, or TNULL
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								userport
+							</td>
+							<td class="noborder">
+								Pointer to task's userport
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							The user port's underlying signal bit is TTASK_SIG_USER.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetSyncPort">TGetSyncPort</a>, 
+						<a href="#TCreatePort">TCreatePort</a>, 
+						<a href="#TGetPortSignal">TGetPortSignal</a>, <a href="#Tasks">Tasks</a> 
+						<a href="#Ports">Ports</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetSyncPort"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetSyncPort">TGetSyncPort</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetSyncPort - Get a task's syncport
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+syncport = TExecGetSyncPort(TExecBase, task)
+TAPTR                       TAPTR      TAPTR
+
+syncport = TGetSyncPort(task)
+TAPTR                   TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Get a pointer to a task's inbuilt syncport. If task is TNULL then
+						the caller's own task will be addressed.
+					</div>
+					<div class="block">
+						The syncport is reserved for synchronized message replies; It
+						can be employed by the user if its usage remains strictly limited
+						to that purpose.
+					</div>
+					<div class="block">
+						For instance, it is not allowed to send messages using <a href="#TPutMsg">TPutMsg</a> 
+						expecting a reply at a syncport. This would break Exec functions
+						that might use the syncport or the syncport's signal internally.
+						For asynchronous message communication use the task's userport,
+						or create a new port using <a href="#TCreatePort">TCreatePort</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task handle, or TNULL
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								syncport
+							</td>
+							<td class="noborder">
+								Pointer to task's syncport
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetUserPort">TGetUserPort</a>, 
+						<a href="#TCreatePort">TCreatePort</a>, <a href="#TGetPortSignal">TGetPortSignal</a>,
+						<a href="#Tasks">Tasks</a>, <a href="#Ports">Ports</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCreateTask"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCreateTask">TCreateTask</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCreateTask - Create task
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+task = TExecCreateTask(TExecBase, function, initfunc, taglist)
+TAPTR                  TAPTR      TTASKFUNC TINITFUNC TTAGITEM*
+
+task = TCreateTask(function, initfunc, taglist)
+TAPTR              TTASKFUNC TINITFUNC TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Create a task and launch a new thread of execution at the
+						specified function.
+					</div>
+					<div class="block">
+						The initfunc argument is optional and can be used for calling
+						a function in the child context that will be in synchronization
+						with the caller. The main function will be entered only if
+						initfunc returns TTRUE, otherwise task creation will be
+						abandoned and <a href="#TCreateTask">TCreateTask</a> returns TNULL.
+					</div>
+					<div class="block">
+						A task handle is destroyed with a call to <a href="teklib.html#TDestroy">teklib:TDestroy</a>.
+						This will synchronize on the task's completion and free its
+						resources. TEKlib tasks must always leave gently through their
+						function exit and all task must be synchronized on properly,
+						or the TEKlib framework may panic (raise a fatal exception,
+						"crash"...) at exit.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								function
+							</td>
+							<td class="noborder">
+								Main function to call in child context. May be TNULL.
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								initfunc
+							</td>
+							<td class="noborder">
+								Init function in child context. May be TNULL.
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								taglist
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items.
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						TTask_UserData, TAPTR
+					</div>
+					<blockquote>
+						<div class="block">
+							Pointer to a initial user data pointer that will be supplied
+							to the newly created task. It can be queried from the task
+							handle using <a href="#TGetTaskData">TGetTaskData</a>. Default: TNULL
+						</div>
+					</blockquote>
+					<div class="block">
+						TTask_Name, TSTRPTR
+					</div>
+					<blockquote>
+						<div class="block">
+							Pointer to the task's name. If supplied then the task can be
+							found system-wide using <a href="#TFindTask">TFindTask</a>. Default: TNULL
+						</div>
+					</blockquote>
+					<div class="block">
+						TTask_CurrentDir, TAPTR
+					</div>
+					<blockquote>
+						<div class="block">
+							With this argument you can specify a directory lock that will
+							be duplicated and used as the new task's current directory.
+							By default, tasks inherit their current directory from their
+							parent. Default: Caller's current directory
+						</div>
+					</blockquote>
+					<div class="block">
+						TTask_InputFH, (TAPTR),
+						TTask_OutputFH, (TAPTR),
+						TTask_ErrorFH, (TAPTR),
+					</div>
+					<blockquote>
+						<div class="block">
+							These tags allow the caller to pass filehandles to the newly
+							created task for standard input, ouput and error, respectively.
+							By default, the I/O handles for newly created tasks are unset
+							and opened on demand, that is, by the I/O module in an attempt
+							to open the devices "stdio:in", "stdio:out" or "stdio:err",
+							respectively.
+						</div>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task, or TNULL if the task could not be established
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="teklib.html#TDestroy">teklib:TDestroy</a>, 
+						<a href="#TFindTask">TFindTask</a>, <a href="#TGetTaskData">TGetTaskData</a>,
+						<a href="#TGetUserPort">TGetUserPort</a>, 
+						<a href="#TCreateSysTask">TCreateSysTask</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TFindTask"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TFindTask">TFindTask</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TFindTask - Find a task
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+task = TExecFindTask(TExecBase, name)
+TAPTR                TAPTR      TSTRPTR
+
+task = TFindTask(name)
+TAPTR            TSTRPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Find a named task in the system. If name is TNULL then this function
+						will return a pointer to the caller's own task.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								name
+							</td>
+							<td class="noborder">
+								Name of a task or TNULL for finding the caller's own task
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Pointer to a task handle or TNULL if not found
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TCreateTask">TCreateTask</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetTaskData"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetTaskData">TGetTaskData</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetTaskData - Get task userdata
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+userdata = TExecGetTaskData(TExecBase, task)
+TAPTR                       TAPTR      TAPTR
+
+userdata = TGetTaskData(task)
+TAPTR                   TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Get a pointer to a task's userdata. A userdata pointer can be
+						supplied upon task creation using the TTask_UserData tag, and set
+						with <a href="#TSetTaskData">TSetTaskData</a> during a task's lifetime.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task handle or TNULL to query the caller's own task
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								userdata
+							</td>
+							<td class="noborder">
+								Pointer to a task's userdata
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TSetTaskData">TSetTaskData</a>, 
+						<a href="#TCreateTask">TCreateTask</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TSetTaskData"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TSetTaskData">TSetTaskData</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TSetTaskData - Set task userdata
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+olddata = TExecSetTaskData(TExecBase, task, userdata)
+TAPTR                      TAPTR      TAPTR TAPTR
+
+olddata = TSetTaskData(task, userdata)
+TAPTR                  TAPTR TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Set a task's userdata pointer and return the previous userdata
+						pointer to the caller.
+					</div>
+					<div class="block">
+						A userdata pointer can be supplied upon task creation using the
+						TTask_UserData tag and queried with <a href="#TGetTaskData">TGetTaskData</a> during a task's
+						lifetime.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task handle or TNULL to address the caller's own task
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								userdata
+							</td>
+							<td class="noborder">
+								New data to associate with the task
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								olddata
+							</td>
+							<td class="noborder">
+								Pointer to task's previous userdata
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetTaskData">TGetTaskData</a>, 
+						<a href="#TCreateTask">TCreateTask</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetTaskMMU"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetTaskMMU">TGetTaskMMU</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetTaskMMU - Get a task's memory manager
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+mmu = TExecGetTaskMMU(TExecBase, task)
+TAPTR                 TAPTR      TAPTR
+
+mmu = TGetTaskMMU(task)
+TAPTR             TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Get a pointer to a task's inbuilt memory manager. Allocations
+						made from this memory manager are automatically freed when the
+						task exits.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								task
+							</td>
+							<td class="noborder">
+								Task handle, or TNULL to query the caller's own task
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mmu
+							</td>
+							<td class="noborder">
+								Task's memory manager
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAlloc">TAlloc</a>, 
+						<a href="#TCreateMMU">TCreateMMU</a>, 
+						<a href="#Tasks">Tasks</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TLockAtom"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TLockAtom">TLockAtom</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TLockAtom - Create, obtain, destroy an atom
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+atom = TExecLockAtom(TExecBase, data, mode)
+TAPTR                TAPTR      TATPR TUINT
+
+atom = TLockAtom(data, mode)
+TAPTR            TATPR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Depending on the mode argument this function creates, obtains or
+						destroys a named atom. Atoms are an extension to locks, allowing
+						multiple lockers to create, locate and access resources by name. In
+						addition to locks atoms allow shared locking and locking attempts.
+					</div>
+					<div class="block">
+						Atoms are recursive. This means the same task holding a lock on an
+						atom is allowed to claim it subsequently, and this function
+						immediately returns with a nesting lock. All locks per task must be
+						paired with exactly one matching unlock operation.
+					</div>
+					<div class="block">
+						Once locked by the caller, a data field can be associcated with an
+						atom using 
+						<a href="#TSetAtomData">TSetAtomData</a> and retrieved with <a href="#TGetAtomData">TGetAtomData</a>.
+					</div>
+					<div class="block">
+						The mode argument determines the kind of action to be taken:
+					</div>
+					<div class="block">
+						TATOMF_NAME
+					</div>
+					<blockquote>
+						<div class="block">
+							This flag indicates that the data argument is expected to be a
+							pointer to a name. Otherwise it's expected to be a pointer to
+							an existing atom.
+						</div>
+					</blockquote>
+					<div class="block">
+						TATOMF_KEEP
+					</div>
+					<blockquote>
+						<div class="block">
+							If data is a pointer to a name and if no atom of that name
+							existed, TNULL is returned. Otherwise this function returns
+							with a lock on the atom. Atom is returned.
+						</div>
+					</blockquote>
+					<div class="block">
+						TATOMF_CREATE
+					</div>
+					<blockquote>
+						<div class="block">
+							If combined with TATOMF_NAME and when an atom of that name did
+							not exist, it is created and returned in locked state. Returns
+							TNULL if out of memory.
+						</div>
+					</blockquote>
+					<div class="block">
+						TATOMF_DESTROY
+					</div>
+					<blockquote>
+						<div class="block">
+							If the atom exists then it is locked and destroyed. If the atom
+							does not exist or if the mode is combined with TATOMF_TRY and
+							the atom is in use elsewhere, TNULL is returned. Otherwise a
+							non-TNULL value is returned.
+						</div>
+					</blockquote>
+					<div class="block">
+						TATOMF_TRY
+					</div>
+					<blockquote>
+						<div class="block">
+							If the atom is currently locked exclusively then returns
+							immediately with TNULL. If the atom is currently locked shared
+							then attempts to lock it exclusively return immediately with
+							TNULL. Also returns TNULL if combined with TATOMF_CREATE and
+							TATOMF_NAME and when an atom of that name already exists.
+						</div>
+					</blockquote>
+					<div class="block">
+						TATOMF_SHARED
+					</div>
+					<blockquote>
+						<div class="block">
+							Lock in shared mode. Multiple tasks claiming a shared lock at
+							the same time can succeed. If an atom is currently held
+							exclusively then all shared lockers will block until the
+							exclusive lock is released. If an atom is locked in shared
+							mode then attempts to lock it exclusively will block until the
+							atom is free.
+						</div>
+						<div class="block">
+							By special convention, TATOMF_CREATE|TATOMF_SHARED returns with
+							a shared lock only if an atom of that name already existed. When
+							an atom of that name did not exist then it is created and returned
+							in exclusively locked state; this allows to safely associate an
+							initial data packet to an atom that is used in shared mode later on.
+						</div>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								data
+							</td>
+							<td class="noborder">
+								Pointer to an existing atom, or to a name
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								mode
+							</td>
+							<td class="noborder">
+								Access flags, see above
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								atom
+							</td>
+							<td class="noborder">
+								Pointer to an atom in locked state, or TNULL if failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							If the caller holds an exclusive lock on an atom then it is
+							possible to request a subsequent shared lock. The result will be
+							another nesting lock on the atom.
+						</li>
+						<li class="bullets">
+							If the caller holds a shared lock on the atom then it is not
+							allowed to request a subsequent exclusive lock. The results will
+							be undefined.
+						</li>
+						<li class="bullets">
+							Not all possible combinations of the mode flags make sense;
+							TATOMF_CREATE without TATOMF_NAME will currently return TNULL.
+							The combination of TATOMF_CREATE and TATOMF_DESTROY is undefined.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>BUGS</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Prior to Exec v3, TATOMF_DESTROY always returned TNULL and the
+							combination with TATOMF_TRY was not documented.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TUnlockAtom">TUnlockAtom</a>, 
+						<a href="#TSetAtomData">TSetAtomData</a>, <a href="#TGetAtomData">TGetAtomData</a>,
+						<a href="#TCreateLock">TCreateLock</a>, <a href="#Locking">Locking</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TUnlockAtom"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TUnlockAtom">TUnlockAtom</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TUnlockAtom - Release access to an atom
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecUnlockAtom(TExecBase, atom, mode)
+                TAPTR      TAPTR TUINT
+
+TUnlockAtom(atom, mode)
+            TAPTR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Release access to an atom that has been locked with <a href="#TLockAtom">TLockAtom</a>.
+						Modes:
+					</div>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								TATOMF_KEEP
+							</td>
+							<td class="noborder">
+								Release only
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								TATOMF_DESTROY
+							</td>
+							<td class="noborder">
+								Release and destroy the atom
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								atom
+							</td>
+							<td class="noborder">
+								Atom previously locked
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								mode
+							</td>
+							<td class="noborder">
+								Unlocking mode, see above
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TLockAtom">TLockAtom</a>, <a href="#Locking">Locking</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TSetAtomData"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TSetAtomData">TSetAtomData</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TSetAtomData - Set an atom's data tag
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+olddata = TExecSetAtomData(TExecBase, atom, data)
+TTAG                       TAPTR      TAPTR TTAG
+
+olddata = TSetAtomData(atom, data)
+TTAG                   TAPTR TTAG
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Associate a user data tag with an atom. The atom should be in
+						exclusively locked state and currently being owned by the caller.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								atom
+							</td>
+							<td class="noborder">
+								Atom, as returned by <a href="#TLockAtom">TLockAtom</a> 
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								data
+							</td>
+							<td class="noborder">
+								User data tag to be associated
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								olddata
+							</td>
+							<td class="noborder">
+								Previous data tag
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>BUGS</dfn>
+				<blockquote>
+					<div class="block">
+						The return value and data argument were of type TAPTR in Exec 1.0.
+						This has been fixed in 2.0. This change could break binaries written
+						for Exec 1.0 on some architectures.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TGetAtomData">TGetAtomData</a>, 
+						<a href="#TLockAtom">TLockAtom</a>, <a href="#Locking">Locking</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TGetAtomData"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TGetAtomData">TGetAtomData</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TGetAtomData - Query an atom's data tag
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+data = TExecGetAtomData(TExecBase, atom)
+TTAG                    TAPTR      TAPTR
+
+data = TGetAtomData(atom)
+TTAG                TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Query an atom's user data tag. The atom should be in
+						locked state and currently being owned by the caller.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								atom
+							</td>
+							<td class="noborder">
+								Atom, as returned by <a href="#TLockAtom">TLockAtom</a> 
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								data
+							</td>
+							<td class="noborder">
+								Atom's user data
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>BUGS</dfn>
+				<blockquote>
+					<div class="block">
+						The return value was of type TAPTR in Exec 1.0. This has been
+						changed in 2.0.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TSetAtomData">TSetAtomData</a>, 
+						<a href="#TLockAtom">TLockAtom</a>, <a href="#Locking">Locking</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCreatePool"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCreatePool">TCreatePool</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCreatePool - Create a memory pool
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+pool = TExecCreatePool(TExecBase, tags)
+TAPTR                  TAPTR      TTAGITEM*
+
+pool = TCreatePool(tags)
+TAPTR              TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Create a memory pool. A pool is an allocator that groups small
+						allocations into larger ones. All pending allocations made from
+						a pool will be returned to the pool's underlying memory manager
+						once the pool is being destroyed with a call to <a href="teklib.html#TDestroy">teklib:TDestroy</a>.
+					</div>
+					<div class="block">
+						Pools grow and shrink on demand. Two parameters constitute
+						their behavior:
+					</div>
+					<ul>
+						<li class="soft">
+							Pudsize is the size of a 'puddle', i.e. a regular chunk of
+							memory that will be allocated from an underlying memory manager
+							when a request cannot be satisfied from the current set of
+							puddles. Many small allocations can fit into a puddle.
+						</li>
+						<li class="soft">
+							Thressize is the maximum size of allocations that go into
+							regular puddles. Allocations larger than that will go into
+							puddles of their own. Thressize must be less or equal pudsize.
+							Both pudsize and thressize can be supplied in taglist arguments
+							and remain constant during a pool's lifetime. By default, though,
+							TEKlib pools try to determine appropriate settings for pudsize
+							and thressize during a pool's lifetime and adapt these parameters
+							dynamically.
+							Pools can be useful for sections of code that mainly deal with
+							many objects of relatively constant sizes. Allocations in a pool
+							are more tightly packed and on smaller boundaries than
+							general-purpose allocations.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								tags
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						TPool_MMU, (TAPTR)
+					</div>
+					<blockquote>
+						<div class="block">
+							Pool's underlying memory manager - this is where puddles
+							will be allocated from.
+						</div>
+					</blockquote>
+					<div class="block">
+						TPool_PudSize, (TUINT)
+					</div>
+					<blockquote>
+						<div class="block">
+							Initial size of puddles [bytes]. When TPool_AutoAdapt is
+							enabled then this value can change during a pool's lifetime.
+							Default: 1024
+						</div>
+					</blockquote>
+					<div class="block">
+						TPool_ThresSize, (TUINT)
+					</div>
+					<blockquote>
+						<div class="block">
+							Initial threshold size for allocations that go into regular
+							puddles [bytes]. This value must be less than or equal pudsize.
+							When TPool_AutoAdapt is enabled then this value can change
+							during a pool's lifetime. Default: 256
+						</div>
+					</blockquote>
+					<div class="block">
+						TPool_AutoAdapt, (TBOOL)
+					</div>
+					<blockquote>
+						<div class="block">
+							Use a simple load analysis to adapt a pool's pudsize and
+							thressize to the requirements during its lifetime. Currently
+							thressize tends to 4 times the average size of allocations
+							and pudsize tends to 8 times of thressize. Default: TTRUE
+						</div>
+					</blockquote>
+					<div class="block">
+						TMem_LowFrag, (TBOOL)
+					</div>
+					<blockquote>
+						<div class="block">
+							Use an allocation strategy that may help to reduce a pool's
+							internal fragmentation, at the cost of some extra performance.
+							This is also known as the 'best match' strategy. The default
+							is the 'first match' strategy. default: TFALSE
+						</div>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								pool
+							</td>
+							<td class="noborder">
+								Pointer to a pooled allocator or TNULL if failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Pools are not inherently safe to use from multiple tasks at the
+							same time. If multiple tasks wish to access it simultaneously then
+							the pool must be protected with a <a href="#Locking">locking mechanism</a>.
+						</li>
+						<li class="bullets">
+							A pool itself can serve the underlying allocator for a memory
+							manager. See <a href="#TCreateMMU">TCreateMMU</a> for details.
+						</li>
+						<li class="bullets">
+							One of the possible benefits of pools is that the efficiency of
+							<a href="#TReallocPool">TReallocPool</a> is the same on all platforms, while the efficiency
+							of <a href="#TRealloc">TRealloc</a> with a TNULL memory manager can significantly differ.
+						</li>
+						<li class="bullets">
+							As a rule of thumb, use a general-purpose allocator when the
+							exact requirements, costs and benefits of a special allocator
+							cannot be estimated.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAllocPool">TAllocPool</a>, 
+						<a href="#TFreePool">TFreePool</a>, 
+						<a href="#TReallocPool">TReallocPool</a>, <a href="teklib.html#TDestroy">teklib:TDestroy</a>,
+						<a href="#TCreateMMU">TCreateMMU</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAllocPool"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAllocPool">TAllocPool</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAllocPool - Allocate from a pool
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+mem = TExecAllocPool(TExecBase, pool, size)
+TAPTR                TAPTR      TAPTR TUINT
+
+mem = TAllocPool(pool, size)
+TAPTR            TAPTR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function allocates a block of memory from a pool. A Pointer
+						to the allocated block of memory is returned, or TNULL when the
+						request cannot be satisfied.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								pool
+							</td>
+							<td class="noborder">
+								Pointer to a pool created with <a href="#TCreatePool">TCreatePool</a> 
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								size
+							</td>
+							<td class="noborder">
+								Size of the allocation [bytes]
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Pointer to a block of memory, or TNULL if out of memory
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TFreePool">TFreePool</a>, 
+						<a href="#TReallocPool">TReallocPool</a>, 
+						<a href="#TCreatePool">TCreatePool</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TFreePool"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TFreePool">TFreePool</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TFreePool - Return memory to a pool
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecFreePool(TExecBase, pool, mem,  size)
+              TAPTR      TAPTR TAPTR TUINT
+
+TFreePool(pool, mem,  size)
+          TAPTR TAPTR TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Return a block of memory to the pool from which it was allocated.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								pool
+							</td>
+							<td class="noborder">
+								Pointer to the pool the allocation was made from
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								mem
+							</td>
+							<td class="noborder">
+								Block of memory to be freed
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								size
+							</td>
+							<td class="noborder">
+								Size of the allocation
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAllocPool">TAllocPool</a>, 
+						<a href="#TReallocPool">TReallocPool</a>, 
+						<a href="#TCreatePool">TCreatePool</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TReallocPool"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TReallocPool">TReallocPool</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TReallocPool - Resize a pool allocation
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+newmem = TExecReallocPool(TExecBase, pool, oldmem, oldsize, newsize)
+TAPTR                     TAPTR      TAPTR TAPTR   TUINT    TUINT
+
+newmem = TReallocPool(pool, oldmem, oldsize, newsize)
+TAPTR                 TAPTR TAPTR   TUINT    TUINT
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Resize a block of memory that has been allocated from a pool. If
+						newsize is zero then the allocation will be freed, and the result
+						will be TNULL. If oldmem is TNULL and oldsize is zero then a new
+						block will be allocated.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								pool
+							</td>
+							<td class="noborder">
+								Pointer to the pool the allocation was made from
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								oldmem
+							</td>
+							<td class="noborder">
+								Pointer to memory allocated
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								oldsize
+							</td>
+							<td class="noborder">
+								Previous size of the allocation
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								newsize
+							</td>
+							<td class="noborder">
+								New size for the allocation
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								newmem
+							</td>
+							<td class="noborder">
+								Pointer to resized block, or TNULL if failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Reallocation may require that the given block of memory needs to
+							be moved in memory and pointers to this area may become invalid.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TAllocPool">TAllocPool</a>, 
+						<a href="#TFreePool">TFreePool</a>, 
+						<a href="#TCreatePool">TCreatePool</a>, <a href="#Memory">Memory</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TDoExec"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TDoExec">TDoExec</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TDoExec - Run an Execbase context
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+success = TExecDoExec(TExecBase, tags)
+TBOOL                 TAPTR      TTAGITEM*
+
+success = TDoExec(tags)
+TBOOL             TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Run or initialize an Exec context. <a href="#TDoExec">TDoExec</a> services module opens,
+						module loading, task creation and atom lookups. This function is of
+						any use only for implementors of startup libraries.
+					</div>
+					<div class="block">
+						<a href="#TDoExec">TDoExec</a> is expected to be called in a task previously initialized
+						by the caller using <a href="#TCreateSysTask">TCreateSysTask</a>. The name of the task in which
+						it is called determines what kind of service will be provided:
+					</div>
+					<ul>
+						<li class="bullets">
+							If the calling task's name is TTASKNAME_EXEC ("exec") then this
+							function will serve module opens, task creation and atom lookups,
+							requested through the message port execbase-&#062;texb_ExecPort. It
+							returns to the caller when it receives the signal TTASK_SIG_ABORT.
+						</li>
+						<li class="bullets">
+							If the name is TTASKNAME_RAMLIB ("ramlib") then this function
+							will serve requests for module loading, submitted to the task's
+							userport. It returns when it receives the signal TTASK_SIG_ABORT.
+						</li>
+						<li class="bullets">
+							If the name is TTASKNAME_ENTRY ("entry") then this function will
+							perform initializations that qualify the current context as TEKlib's
+							initial application task.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								tags
+							</td>
+							<td class="noborder">
+								Pointer to an array of tag items
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						Currently none defined
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								success
+							</td>
+							<td class="noborder">
+								Boolean
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TCreateSysTask">TCreateSysTask</a>, 
+						<a href="#TCreateTask">TCreateTask</a>, 
+						<a href="#Internal">Internal</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TPutIO"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TPutIO">TPutIO</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TPutIO - Put I/O request to a device, asynchronously
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+TExecPutIO(TExecBase, ioreq)
+           TAPTR      struct TIORequest *
+
+TPutIO(ioreq)
+       struct TIORequest *
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function puts an I/O request to the device or handler
+						specified in the ioreq-&#062;io_Device field.
+					</div>
+					<div class="block">
+						<a href="#TPutIO">TPutIO</a> clears the TIOF_QUICK flag from the ioreq-&#062;io_Flags
+						field, indicating that it prefers asynchronous execution, and
+						forwards the request through the "BeginIO"-vector of the device.
+					</div>
+					<div class="block">
+						Whether or not the request will be executed asynchronously remains
+						transparent to the caller. After the request has been processed,
+						it will return to the replyport specified in ioreq-&#062;io_ReplyPort
+						and cause the replyport's signal to show up in the caller's task.
+						Always use <a href="#TWaitIO">TWaitIO</a> to synchronize on completion of an I/O
+						request and its removal from the replyport queue.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								iorequest
+							</td>
+							<td class="noborder">
+								I/O request message to be processed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TWaitIO">TWaitIO</a>, 
+						<a href="#TDoIO">TDoIO</a>, 
+						<a href="#TCheckIO">TCheckIO</a>, <a href="#TAbortIO">TAbortIO</a>,
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#Ports">Ports</a>, 
+						<a href="#Modules">Modules</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TWaitIO"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TWaitIO">TWaitIO</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TWaitIO - Wait for completion of an I/O request
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+error = TExecWaitIO(TExecBase, ioreq)
+TINT                TAPTR      struct TIORequest*
+
+error = TWaitIO(ioreq)
+TINT            struct TIORequest*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function waits for an I/O request to complete and unlinks it
+						from its ioreq-&#062;io_ReplyPort. If the request has already finished
+						or was processed synchronously then <a href="#TWaitIO">TWaitIO</a> drops through
+						immediately.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								iorequest
+							</td>
+							<td class="noborder">
+								I/O request message to be processed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								error
+							</td>
+							<td class="noborder">
+								Contents of the iorequest's io_Error field
+							</td>
+						</tr>
+					</table>
+					<div class="block">
+						A return value of zero indicates success.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TPutIO">TPutIO</a>, 
+						<a href="#TDoIO">TDoIO</a>, 
+						<a href="#TCheckIO">TCheckIO</a>, <a href="#TAbortIO">TAbortIO</a>,
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#Ports">Ports</a>, 
+						<a href="#Modules">Modules</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TDoIO"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TDoIO">TDoIO</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TDoIO - Perform an I/O request synchronously
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+error = TExecDoIO(TExecBase, ioreq)
+TINT              TAPTR      struct TIORequest *
+
+error = TDoIO(ioreq)
+TINT          struct TIORequest *
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function performs an I/O request and waits for completion.
+						<a href="#TDoIO">TDoIO</a> indicates that it prefers synchronous execution by
+						setting the TIOF_QUICK flag in the ioreq-&#062;io_Flags field before
+						the request is forwarded through the "BeginIO"-vector of the
+						device.
+					</div>
+					<div class="block">
+						A return value of zero indicates success.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								iorequest
+							</td>
+							<td class="noborder">
+								I/O request message to be processed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								error
+							</td>
+							<td class="noborder">
+								Contents of the iorequest's io_Error field
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TPutIO">TPutIO</a>, 
+						<a href="#TWaitIO">TWaitIO</a>, 
+						<a href="#TCheckIO">TCheckIO</a>, <a href="#TAbortIO">TAbortIO</a>,
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#Ports">Ports</a>, 
+						<a href="#Modules">Modules</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TCheckIO"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TCheckIO">TCheckIO</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TCheckIO - Test if an I/O request is complete
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+complete = TExecCheckIO(TExecBase, ioreq)
+TBOOL                   TAPTR      struct TIORequest *
+
+complete = TCheckIO(ioreq)
+TBOOL               struct TIORequest *
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function tests if an I/O request has been completed and
+						returns its status to the caller.
+					</div>
+					<div class="block">
+						Note that a finished I/O request still needs to be removed
+						from the replyport's queue using <a href="#TWaitIO">TWaitIO</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								iorequest
+							</td>
+							<td class="noborder">
+								I/O request message to be processed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<div class="block">
+						complete  - Boolean
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TPutIO">TPutIO</a>, 
+						<a href="#TWaitIO">TWaitIO</a>, 
+						<a href="#TDoIO">TDoIO</a>, <a href="#TAbortIO">TAbortIO</a>,
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#Ports">Ports</a>, 
+						<a href="#Modules">Modules</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TAbortIO"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TAbortIO">TAbortIO</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						TAbortIO - Try to abort an I/O request
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+error = TExecAbortIO(TExecBase, ioreq)
+                     TAPTR      struct TIORequest*
+
+error = TAbortIO(ioreq)
+                 struct TIORequest*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Ask a device to abort an I/O request that has been forwarded
+						to a device using <a href="#TPutIO">TPutIO</a>. Note that abortion is a service that
+						may or may not be granted by the addressed device or handler.
+						You must in no way rely on successful abortion and you still
+						have to synchronize on the I/O request properly using <a href="#TWaitIO">TWaitIO</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								iorequest
+							</td>
+							<td class="noborder">
+								I/O request message to be processed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								error
+							</td>
+							<td class="noborder">
+								0 if the request for abortion succeeded
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+							</td>
+							<td class="noborder">
+								-1 if the request is still pending
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#TPutIO">TPutIO</a>, 
+						<a href="#TWaitIO">TWaitIO</a>, 
+						<a href="#TDoIO">TDoIO</a>, <a href="#TCheckIO">TCheckIO</a>,
+						<a href="#TPutMsg">TPutMsg</a>, 
+						<a href="#Ports">Ports</a>, 
+						<a href="#Modules">Modules</a>, <a href="#Tasks">Tasks</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="ABOUT"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#ABOUT">ABOUT</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>SHORT</dfn>
+				<blockquote>
+					<div class="block">
+						TEKlib Exec module API documentation
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>VERSION</dfn>
+				<blockquote>
+					<div class="block">
+						$Id: exec.html,v 1.15 2005/09/13 01:09:28 tmueller Exp $
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>REVISION HISTORY</dfn>
+				<blockquote>
+					<div class="block">
+						$Log: exec.html,v $
+						Revision 1.15  2005/09/13 01:09:28  tmueller
+						added non-inline calls to synopsis
+						
+						Revision 1.7  2005/07/07 01:43:48  tmueller
+						fixed <a href="#TGetExecBase">TGetExecBase</a> section
+					</div>
+					<div class="block">
+						Revision 1.6  2005/06/29 21:41:02  tmueller
+						minor fixes
+					</div>
+					<div class="block">
+						Revision 1.5  2005/06/22 14:12:15  tmueller
+						typos fixed
+					</div>
+					<div class="block">
+						Revision 1.4  2005/06/22 14:00:57  tmueller
+						improvements, updates, cleanup
+					</div>
+					<div class="block">
+						Revision 1.3  2005/06/20 17:28:37  tmueller
+						updated
+					</div>
+					<div class="block">
+						Revision 1.2  2005/06/20 12:39:10  tmueller
+						converted using gendoc.lua
+					</div>
+					<div class="block">
+						Revision 1.1  2005/06/19 20:42:21  tmueller
+						added
+					</div>
+					<div class="block">
+						Revision 1.9  2004/06/11 17:49:22  tmueller
+						API change in <a href="#TLockAtom">TLockAtom</a> documented
+					</div>
+					<div class="block">
+						Revision 1.8  2004/04/18 16:27:06  tmueller
+						Added notes about API changes in Exec and Util between 1.0 and 2.0
+					</div>
+					<div class="block">
+						Revision 1.7  2004/04/18 13:57:53  tmueller
+						arguments in parseargv, atomdata, gettag changed from TAPTR to TTAG
+					</div>
+					<div class="block">
+						Revision 1.6  2004/01/31 11:32:15  tmueller
+						Typos fixed, slightly improved wording
+					</div>
+					<div class="block">
+						Revision 1.5  2004/01/13 02:12:32  tmueller
+						Cosmetic
+					</div>
+					<div class="block">
+						Revision 1.4  2003/12/13 14:13:51  tmueller
+						More info about pooled allocators added
+					</div>
+					<div class="block">
+						Revision 1.3  2003/12/12 03:48:29  tmueller
+						Major rework, clarifications, better wording
+					</div>
+					<div class="block">
+						Revision 1.2  2003/12/11 14:54:42  tmueller
+						Overhaul
+					</div>
+					<div class="block">
+						Revision 1.1.1.1  2003/12/11 07:17:37  tmueller
+						Krypton import
+					</div>
+					<div class="block">
+						Revision 1.8  2003/10/29 02:03:30  tmueller
+						Autodocs share a common topology now: 0_ABOUT, 1_INDEX
+					</div>
+					<div class="block">
+						Revision 1.7  2003/10/28 21:26:09  tmueller
+						Cosmetic
+					</div>
+					<div class="block">
+						Revision 1.6  2003/10/26 01:37:45  tmueller
+						Documented TDoIO, TPutIO, TWaitIO, TAbortIO, TCheckIO, TDoExec.
+					</div>
+					<div class="block">
+						Revision 1.5  2003/10/25 04:10:03  tmueller
+						Restructuring, typo fixes and cosmetic changes
+					</div>
+					<div class="block">
+						Revision 1.4  2003/10/20 14:21:01  tmueller
+						typos fixed
+					</div>
+					<div class="block">
+						Revision 1.2  2003/09/02 20:08:59  tmueller
+						minor fixes
+					</div>
+					<div class="block">
+						Revision 1.1.1.1  2003/03/08 18:28:40  tmueller
+						Import to new chrooted pserver repository.
+					</div>
+					<div class="block">
+						Revision 1.3  2003/02/02 20:50:21  tmueller
+						<a href="#TLockAtom">TLockAtom</a> documentation updated
+					</div>
+					<div class="block">
+						Revision 1.2  2002/12/03 05:25:46  bifat
+						TNULL task argument is now valid to TAllocTask
+					</div>
+					<div class="block">
+						Revision 1.1.1.1  2002/11/30 05:15:33  bifat
+						import
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TOC"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">exec</a> : <a href="#TOC">Table of contents</a></strong></td></tr></table><p><div class="node">
+			<blockquote>
+				<ul>
+					<li class="soft">
+						<a href="#ABOUT">ABOUT</a>
+					</li>
+					<li class="soft">
+						<a href="#INDEX">Index</a>
+					</li>
+					<li class="soft">
+						<a href="#Internal">Internal</a>
+					</li>
+					<li class="soft">
+						<a href="#Locking">Locking</a>
+					</li>
+					<li class="soft">
+						<a href="#Memory">Memory</a>
+					</li>
+					<li class="soft">
+						<a href="#Modules">Modules</a>
+					</li>
+					<li class="soft">
+						<a href="#Ports">Ports</a>
+					</li>
+					<li class="soft">
+						<a href="#TAbortIO">TAbortIO</a>
+					</li>
+					<li class="soft">
+						<a href="#TAckMsg">TAckMsg</a>
+					</li>
+					<li class="soft">
+						<a href="#TAlloc">TAlloc</a>
+					</li>
+					<li class="soft">
+						<a href="#TAlloc0">TAlloc0</a>
+					</li>
+					<li class="soft">
+						<a href="#TAllocMsg">TAllocMsg</a>
+					</li>
+					<li class="soft">
+						<a href="#TAllocMsg0">TAllocMsg0</a>
+					</li>
+					<li class="soft">
+						<a href="#TAllocPool">TAllocPool</a>
+					</li>
+					<li class="soft">
+						<a href="#TAllocSignal">TAllocSignal</a>
+					</li>
+					<li class="soft">
+						<a href="#TCheckIO">TCheckIO</a>
+					</li>
+					<li class="soft">
+						<a href="#TCloseModule">TCloseModule</a>
+					</li>
+					<li class="soft">
+						<a href="#TCopyMem">TCopyMem</a>
+					</li>
+					<li class="soft">
+						<a href="#TCreateLock">TCreateLock</a>
+					</li>
+					<li class="soft">
+						<a href="#TCreateMMU">TCreateMMU</a>
+					</li>
+					<li class="soft">
+						<a href="#TCreatePool">TCreatePool</a>
+					</li>
+					<li class="soft">
+						<a href="#TCreatePort">TCreatePort</a>
+					</li>
+					<li class="soft">
+						<a href="#TCreateSysTask">TCreateSysTask</a>
+					</li>
+					<li class="soft">
+						<a href="#TCreateTask">TCreateTask</a>
+					</li>
+					<li class="soft">
+						<a href="#TDoExec">TDoExec</a>
+					</li>
+					<li class="soft">
+						<a href="#TDoIO">TDoIO</a>
+					</li>
+					<li class="soft">
+						<a href="#TDropMsg">TDropMsg</a>
+					</li>
+					<li class="soft">
+						<a href="#TFillMem">TFillMem</a>
+					</li>
+					<li class="soft">
+						<a href="#TFillMem32">TFillMem32</a>
+					</li>
+					<li class="soft">
+						<a href="#TFindTask">TFindTask</a>
+					</li>
+					<li class="soft">
+						<a href="#TFree">TFree</a>
+					</li>
+					<li class="soft">
+						<a href="#TFreePool">TFreePool</a>
+					</li>
+					<li class="soft">
+						<a href="#TFreeSignal">TFreeSignal</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetAtomData">TGetAtomData</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetExecBase">TGetExecBase</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetHALBase">TGetHALBase</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetMMU">TGetMMU</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetMsg">TGetMsg</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetPortSignal">TGetPortSignal</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetSize">TGetSize</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetSyncPort">TGetSyncPort</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetTaskData">TGetTaskData</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetTaskMMU">TGetTaskMMU</a>
+					</li>
+					<li class="soft">
+						<a href="#TGetUserPort">TGetUserPort</a>
+					</li>
+					<li class="soft">
+						<a href="#TLock">TLock</a>
+					</li>
+					<li class="soft">
+						<a href="#TLockAtom">TLockAtom</a>
+					</li>
+					<li class="soft">
+						<a href="#TOpenModule">TOpenModule</a>
+					</li>
+					<li class="soft">
+						<a href="#TPutIO">TPutIO</a>
+					</li>
+					<li class="soft">
+						<a href="#TPutMsg">TPutMsg</a>
+					</li>
+					<li class="soft">
+						<a href="#TRealloc">TRealloc</a>
+					</li>
+					<li class="soft">
+						<a href="#TReallocPool">TReallocPool</a>
+					</li>
+					<li class="soft">
+						<a href="#TReplyMsg">TReplyMsg</a>
+					</li>
+					<li class="soft">
+						<a href="#TSendMsg">TSendMsg</a>
+					</li>
+					<li class="soft">
+						<a href="#TSetAtomData">TSetAtomData</a>
+					</li>
+					<li class="soft">
+						<a href="#TSetSignal">TSetSignal</a>
+					</li>
+					<li class="soft">
+						<a href="#TSetTaskData">TSetTaskData</a>
+					</li>
+					<li class="soft">
+						<a href="#TSignal">TSignal</a>
+					</li>
+					<li class="soft">
+						<a href="#TUnlock">TUnlock</a>
+					</li>
+					<li class="soft">
+						<a href="#TUnlockAtom">TUnlockAtom</a>
+					</li>
+					<li class="soft">
+						<a href="#TWait">TWait</a>
+					</li>
+					<li class="soft">
+						<a href="#TWaitIO">TWaitIO</a>
+					</li>
+					<li class="soft">
+						<a href="#TWaitPort">TWaitPort</a>
+					</li>
+					<li class="soft">
+						<a href="#Tasks">Tasks</a>
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<hr>
+		<p align="right">Generated Mon Sep  12 21:26:50 2005 from exec.doc</p>
+	</body>
+</html>

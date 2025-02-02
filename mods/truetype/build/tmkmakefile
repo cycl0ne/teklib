@@ -1,0 +1,57 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(PLATFORM)
+[/body]
+
+[body name="modtargets"]
+
+	[!-- modules to be built --]
+	[embed body="mods"]			truetype		[/embed]
+
+	[!-- objects --]
+	OBJECTS =	$(LIBDIR)/truetype_mod.o
+
+	[!-- link modules. first argument: modname, second: objects --]
+	[embed body="modlink"]		truetype
+								$(OBJECTS)		[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="moddep"]		$(LIBDIR)/truetype_mod.o
+								truetype_mod.c		[/embed]
+
+	[!-- extra configs --]
+	[if config="linux"]
+		EXTRAMODLIBS = -lm
+	[/if]
+
+[/body]
+
+[body name="tooltargets"]
+
+	[!-- all executables must be listed under "TOOLS" --]
+	[embed body="tools"]	truetest				[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="tooldep"]	$(LIBDIR)/truetest.o
+							tests/truetest.c			[/embed]
+
+	[!-- link tools. first argument: target name, second: objects --]
+	[embed body="toollink"]		truetest
+								$(LIBDIR)/truetest.o	[/embed]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] 
+	makefile_modules_and_tools
+[/render]

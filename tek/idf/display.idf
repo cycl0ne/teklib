@@ -1,0 +1,80 @@
+
+;
+;	$Id: display.idf,v 1.3 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/display.idf - Display interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name display				; as in tek_init_...
+.this TAPTR dsph
+
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.defv TVOID
+.defi TBOOL, TINT
+.defp TAPTR, TSTRPTR
+
+.prefix dismod_				; name prefix heading non-inline functions
+
+TBOOL create(TSTRPTR title, TINT x, TINT y, TINT w, TINT h, TINT d, TINT flags)
+TVOID destroy()
+TVOID getproperties(TDISPROPS *props)
+TINT getmodelist(TDISMODE **modelist)
+TVOID waitmsg()
+TBOOL getmsg(TDISMSG *dismsg)
+TVOID setattrs(TTAGITEM *tags)
+.offset 9
+TVOID flush()
+TVOID getcaps(TDISCAPS *caps)
+.offset 20
+TBOOL allocpen(TDISPEN *pen)
+TVOID freepen(TDISPEN *pen)
+TVOID setdpen(TDISPEN *pen)
+TBOOL setpalette(TIMGARGBCOLOR *pal, TINT sp, TINT sd, TINT numentries)
+TBOOL allocbitmap(TDISBITMAP *bitmap, TINT w, TINT h, TINT flags)
+TVOID freebitmap(TDISBITMAP *bitmap)
+.offset 30
+TVOID describe_dis(TDISDESCRIPTOR *desc)
+TVOID describe_bm(TDISBITMAP *bm, TDISDESCRIPTOR *desc)
+TBOOL lock_dis(TIMGPICTURE *img)
+TBOOL lock_bm(TDISBITMAP *bm, TIMGPICTURE *img)
+TVOID unlock_dis()
+TVOID unlock_bm(TDISBITMAP *bm)
+TBOOL begin_dis()
+TBOOL begin_bm(TDISBITMAP *bm)
+TVOID end_dis()
+TVOID end_bm(TDISBITMAP *bm)
+TVOID blit(TDISBITMAP *bm, TDBLITOPS *bops)
+.offset 50
+TVOID textout_dis(TINT8 *txt, TINT row, TINT column)
+TVOID textout_bm(TINT8 *txt, TINT row, TINT column)
+.offset 61
+TVOID putimage_dis(TIMGPICTURE *img, TDISRECT *src, TDISRECT *dst)
+TVOID putimage_bm(TDISBITMAP *bm, TIMGPICTURE *img, TDISRECT *src, TDISRECT *dst)
+TVOID putscaleimage_dis(TIMGPICTURE *img, TDISRECT *src, TDISRECT *dst)
+TVOID putscaleimage_bm(TDISBITMAP *bm, TIMGPICTURE *img, TDISRECT *src, TDISRECT *dst)
+.offset 70
+TVOID fill_dis()
+TVOID fill_bm()
+TVOID plot_dis(TINT x, TINT y)
+TVOID plot_bm(TINT x, TINT y)
+TVOID line_dis(TINT sx, TINT sy, TINT dx, TINT dy)
+TVOID line_bm(TINT sx, TINT sy, TINT dx, TINT dy)
+TVOID box_dis(TINT sx, TINT sy, TINT w, TINT h)
+TVOID box_bm(TINT sx, TINT sy, TINT w, TINT h)
+TVOID boxf_dis(TINT sx, TINT sy, TINT w, TINT h)
+TVOID boxf_bm(TINT sx, TINT sy, TINT w, TINT h)
+TVOID poly_dis(TINT num, TINT *points)
+TVOID poly_bm(TINT num, TINT *points)
+TVOID polyf_dis(TINT num, TINT *points)
+TVOID polyf_bm(TINT num, TINT *points)
+TVOID ellipse_dis(TINT x, TINT y, TINT rx, TINT ry)
+TVOID ellipse_bm(TINT x, TINT y, TINT rx, TINT ry)
+TVOID ellipsef_dis(TINT x, TINT y, TINT rx, TINT ry)
+TVOID ellipsef_bm(TINT x, TINT y, TINT rx, TINT ry)
+TVOID movepixels_dis(TINT sx, TINT sy, TINT dx, TINT dy,TINT w, TINT h)
+TVOID movepixels_bm(TINT sx, TINT sy, TINT dx, TINT dy,TINT w, TINT h)
+
+.end

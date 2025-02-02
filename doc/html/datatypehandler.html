@@ -1,0 +1,404 @@
+<html><head><title>datatypehandler.doc</title></head><body><a name="toc"><font size="+2"><b>datatypehandler.doc</b></font><br>
+<p>Contents</p><a href="#0_ABOUT">0_ABOUT</a><br>
+<a href="#1_INDEX">1_INDEX</a><br>
+<a href="#2_STRUCTURES">2_STRUCTURES</a><br>
+<p>Function reference</p><a href="#DTDescData">DTDescData</a><br>
+<a href="#DTListItem">DTListItem</a><br>
+<a href="#TDthDoMethod">TDthDoMethod</a><br>
+<a href="#TDthGetAttrs">TDthGetAttrs</a><br>
+<a href="#TDthListDatatypes">TDthListDatatypes</a><br>
+<a href="#TDthOpen">TDthOpen</a><br>
+<a href="#TDthSimpleLoadPicture">TDthSimpleLoadPicture</a><br>
+<hr>
+<a name="0_ABOUT"></a>
+<table width="100%"><tr><td><h3>0_ABOUT</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">SHORT</font></b>
+        API documentation for the datatypehandler module.
+
+        The datatypehandler is some kind of a manager for the miscellaneous
+        available datatype modules, managing loading and saving of
+        various types of data. This gives the ability to handle pictures, audio
+        data and other without any deeper knowledge about the current file
+        format.
+
+    <b><font size="+1">VERSION</font></b>
+        $Id: datatypehandler.html,v 1.1 2004/07/01 09:54:25 tmueller Exp $
+
+    <b><font size="+1">REVISION HISTORY</font></b>
+        $Log:
+
+</pre><hr>
+<a name="1_INDEX"></a>
+<table width="100%"><tr><td><h3>1_INDEX</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">FUNCTIONS</font></b>
+        <a href="#TDthOpen">TDthOpen</a>
+        <a href="#TDthGetAttrs">TDthGetAttrs</a>
+        <a href="#TDthDoMethod">TDthDoMethod</a>
+        <a href="#TDthListDatatypes">TDthListDatatypes</a>
+        <a href="#TDthSimpleLoadPicture">TDthSimpleLoadPicture</a>
+
+</pre><hr>
+<a name="2_STRUCTURES"></a>
+<table width="100%"><tr><td><h3>2_STRUCTURES</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <a href="#DTDescData">DTDescData</a>
+    <a href="#DTListItem">DTListItem</a>
+
+</pre><hr>
+<a name="TDthOpen"></a>
+<table width="100%"><tr><td><h3>TDthOpen</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">NAME</font></b>
+        TDthOpen - opens a existing file for loading or a datatype codec for
+        writing
+
+    <b><font size="+1">SYNOPSIS</font></b>
+        dthandle = TDthOpen(dthandler, tags)
+        THNDL*              TAPTR      TTAGITEM*
+
+    <b><font size="+1">FUNCTION</font></b>
+        If the given taglist contains a filehandle, this function opens a
+        existing file for loading data. If there is also an valid datatype
+        name, it will read this file with the given datatype codec.
+        If there is no filehandle inside the taglist, there must be a datatype
+        name, and this datatype module will be opened for writing data.
+
+    <b><font size="+1">INPUT TAGS</font></b>
+        TDOPENTAG_FILEHANDLE, (TAPTR)
+            a filehandle to a allready opened file to reading from
+
+        TDOPENTAG_DTNAME, (TSTRPTR)
+            a name of a datatype module. this name will be used to read a file
+            without preceding file format identification (in some applications
+            this is called "OPEN AS"), or to write as this format, if there is
+            no filehandle.
+
+    <b><font size="+1">RESULTS</font></b>
+        dthandle - a handle to a datatype module or TNULL
+
+    <b><font size="+1">NOTES</font></b>
+        can be closed with TDestroy(), will automagically closed if you close the
+        datatypehandler
+
+    <b><font size="+1">SEE ALSO</font></b>
+        <a href="#TDthDoMethod">TDthDoMethod</a>
+
+
+</pre><hr>
+<a name="TDthGetAttrs"></a>
+<table width="100%"><tr><td><h3>TDthGetAttrs</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">NAME</font></b>
+        TDthGetAttrs - returns a taglist filled up with some informations
+
+    <b><font size="+1">SYNOPSIS</font></b>
+        tags = TDthGetAttrs(dthandler, dthandle)
+        TTAGITEM*           TAPTR      THNDL*
+
+    <b><font size="+1">FUNCTION</font></b>
+        If the datatype module was opened for reading, the returned taglist
+        contains informations about the opened file, depending on the file
+        type.
+        For writing the taglist contains informations about the abilities of
+        the datatype module.
+
+    <b><font size="+1">INPUTS</font></b>
+        dthandle - handle to a opened datatype module
+
+    <b><font size="+1">RESULT TAGS</font></b>
+        TDTAG_CLASS, (TINT)
+                object class, can be one of following:
+                        DTCLASS_PIC             - picture
+                        DTCLASS_SOUND           - audio
+                        DTCLASS_ANIM            - animation
+                        DTCLASS_EXTENDED        - for wild datatype modules
+                        DTCLASS_NONE            - unknown
+
+        TDTAG_FULLNAME, (TSTRPTR)
+                full name of object type
+
+        TDTAG_SHORTNAME, (TSTRPTR)
+                the short name, i.e. "ilbm" for a IFF picture
+
+        TDTAG_COMMENT, (TSTRPTR)
+                file comment
+
+        TDTAG_NUMSUBCLASSES, (TINT)
+                number of subclasses for compounded datatypes, i.e. animation
+                with sound
+
+        tags only concerning DTCLASS_PIC or DTCLASS_ANIM:
+                TDTAG_PICWIDTH, (TINT)
+                        width of a picture or animframe
+
+                TDTAG_PICHEIGHT, (TINT)
+                        height of a picture or animframe
+
+                TDTAG_PICDEPTH, (TINT)
+                        color depth
+
+                TDTAG_PICBYTESPERROW, (TINT)
+                        bytes per row
+
+                TDTAG_PICPIXELWIDTH, (TINT)
+                TDTAG_PICPIXELHEIGHT,   (TINT)
+                        indicate the aspect ration. i.e. a lowres interlaced
+                        ilbm picture will have a PIXELWIDTH of 1 and a
+                        PIXELHEIGHT of 2
+
+                TDTAG_PICFORMAT, (TUINT)
+                        the picture format, see imgproc documentation
+
+
+        tags only concerning DTCLASS_SOUND:
+                TDTAG_SOUND_LENGTH, (TINT)
+                        Number of samples
+
+                TDTAG_SOUND_RATE, (TINT)
+                        Hertz
+
+                TDTAG_SOUND_CHANNELS, (TINT)
+                        Number of channels
+
+                TDTAG_SOUND_FORMAT, (TINT)
+                        As defined in <tek/mod/audio.h>
+
+        tags only concerning DTCLASS_ANIM:
+                TDTAG_ANIMTYP, (TINT)
+                        one of the following:
+                                DTANIM_NODELTA          - every frame is
+                                                          independend from his
+                                                          predecessor
+
+                                DTANIM_SINGLEDELTA      - every frame must be
+                                                          decoded into the same
+                                                          buffer
+
+                                DTANIM_DOUBLEDELTA      - like SINGLEDELTA, just
+                                                          double buffered
+
+                TDTAG_ANIMNUMFRAMES, (TINT)
+                        number of frames
+
+                TDTAG_ANIMFRAMETIME, (TINT)
+                        time to show a single frame in milliseconds
+
+        tags only of use if writing data:
+                TDTAG_CANSAVE, (TBOOL)
+                        indicates if datatype module can write data
+
+                TDTAG_COMPRESSION, (TINT)
+                        maximum value for compression, if 0 no compression is supported
+
+        more picture tags for writing pictures
+                TDTAG_SAVEPICMAXWIDTH, (TINT)
+                        maximum width supported
+
+                TDTAG_SAVEPICMAXHEIGHT, (TINT)
+                        maximum height supported
+
+                TDTAG_SAVEPICMINDEPTH, (TINT)
+                        minimum color depth supported
+
+                TDTAG_SAVEPICMAXDEPTH, (TINT)
+                        maximum color depth supported
+
+    <b><font size="+1">NOTES</font></b>
+
+    <b><font size="+1">SEE ALSO</font></b>
+
+</pre><hr>
+<a name="TDthDoMethod"></a>
+<table width="100%"><tr><td><h3>TDthDoMethod</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">NAME</font></b>
+        TDthDoMethod - reads or writes data
+
+    <b><font size="+1">SYNOPSIS</font></b>
+        success=TDthDoMethod(dthandler, dthandle, taglist)
+        TBOOL                TAPTR      THNDL*    TTAGITEM*
+
+    <b><font size="+1">FUNCTION</font></b>
+        according to the former operations with <a href="#TDthOpen">TDthOpen</a> and the given tags,
+        it will execute loading or writing of data
+
+    <b><font size="+1">INPUTS</font></b>
+        dthandle - handle to opened datatype module
+
+    <b><font size="+1">INPUT TAGS</font></b>
+        tags for reading:
+                TDOTAG_GETDATATYP, (TUINT)
+                        indicates for compounded file types, which type of
+                        data are wished to read in, those are the same as
+                        defined for TDTag_Class in <a href="#TDthGetAttrs">TDthGetAttrs</a>
+
+                TDOTAG_GETDATA, (TAPTR)
+                        pointer to an allocated memory area for reading in
+                        data
+
+        extra picture Tags:
+                TDOTAG_GETPALETTE, (TAPTR)
+                        pointer to an allocated array of TIMGARGBCOLOR
+                        structures to read in the palette, if
+                        picture depth <= 8
+
+        extra anim Tags:
+                TDOTAG_ANIMSTEP, (TINT)
+                        one of the following:
+                                DTANIM_FORWARD  - steps forward to the next
+                                                  frame
+                                DTANIM_REWIND   - steps back to the first
+                                                  frame
+
+        extra sound Tags:
+                TDOTAG_NUMSAMPLES, (TINT)
+                        number of sampels read in
+
+        tags for writing:
+                TDOTAG_SETDATATYP, (TUINT)
+                        indicates which type of data should be written. those
+                        are the same as defined for TDTag_Class in
+                        <a href="#TDthGetAttrs">TDthGetAttrs</a>
+
+                TDOTAG_SETDATA, (TAPTR)
+                        points to data to be written.
+                        for pictures it has to point to a valid filled
+                        TIMGPICTURE structure
+
+                TDOTAG_COMPRESSION, (TINT)
+                        compression value, depending from TDTAG_COMPRESSION in
+                        <a href="#TDthGetAttrs">TDthGetAttrs</a>
+
+                TDOTAG_WRITEFILE, (TAPTR)
+                        a handle to a already opened file to write to
+
+
+    <b><font size="+1">RESULTS</font></b>
+        TTRUE, if data successfully were read in or written
+
+    <b><font size="+1">NOTES</font></b>
+
+    <b><font size="+1">SEE ALSO</font></b>
+        <a href="#TDthOpen">TDthOpen</a>, <a href="#TDthGetAttrs">TDthGetAttrs</a>
+
+</pre><hr>
+<a name="TDthListDatatypes"></a>
+<table width="100%"><tr><td><h3>TDthListDatatypes</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">NAME</font></b>
+        TDthListDatatypes - gives a list of available datatype modules
+
+    <b><font size="+1">SYNOPSIS</font></b>
+        list=TDthListDatatypes(dthandler, filtertags)
+        TLIST*                 TAPTR      TTAGITEM*
+
+    <b><font size="+1">FUNCTION</font></b>
+        fills a list the properties of available datatype modules, filtered
+        according to the given taglist
+
+    <b><font size="+1">INPUT TAGS</font></b>
+        TDFILTER_CLASS, (TUINT)
+                list only datatypes of this class. the classes are the same
+                as defined for TDTAG_CLASS in <a href="#TDthGetAttrs">TDthGetAttrs</a>
+
+        TDFILTER_SHORTNAME, (TSTRPTR)
+                this is to check the availability of a single datatype module
+
+        TDFILTER_CANSAVE, (TBOOL)
+                list only datatype modules able to write data
+
+    <b><font size="+1">RESULTS</font></b>
+        a pointer to a list of DTListItem structures
+
+    <b><font size="+1">SEE ALSO</font></b>
+        <a href="#TDthOpen">TDthOpen</a>
+
+</pre><hr>
+<a name="TDthSimpleLoadPicture"></a>
+<table width="100%"><tr><td><h3>TDthSimpleLoadPicture</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">NAME</font></b>
+        TDthSimpleLoadPicture - loads a picture on the easy way
+
+    <b><font size="+1">SYNOPSIS</font></b>
+        res = TDthSimpleLoadPicture(dthandler, filename, pic)
+        TBOOL                       TAPTR      TSTRPTR   TIMGPICTURE*
+
+    <b><font size="+1">FUNCTION</font></b>
+        this function collects anything needed to load a picture in a single
+        function call.
+
+    <b><font size="+1">INPUTS</font></b>
+        filename - the filename in host specific spelling
+        pic      - a pointer to a TIMGPICTURE struct. this will be allocated
+                   by this function. it can be freed with TImgFreeBitmap, or
+                   by hand. if the last method is prefered, at first have
+                   pic->data and, if allocated, pic->palette to be freed, and
+                   then the pic itself.
+
+    <b><font size="+1">RESULTS</font></b>
+        res - TTRUE, if picture could be loaded
+
+    <b><font size="+1">SEE ALSO</font></b>
+
+</pre><hr>
+<a name="DTDescData"></a>
+<table width="100%"><tr><td><h3>DTDescData</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">NAME</font></b>
+        DTDescData - contains the description of a datatype module
+
+    <b><font size="+1">CONTENTS</font></b>
+        TSTRPTR datatypecodecname - name of the datatype codec module, i.E.
+                                    "datatype_codec_bmp". this is essential
+                                    for <a href="#TDthOpen">TDthOpen</a>
+        TSTRPTR datatypefullname  - full name of datatype, i.E. "BMP Picture"
+        TSTRPTR datatypeshortname - short name of datatype, i.E. "ilbm". this
+                                    is essential for <a href="#TDthListDatatypes">TDthListDatatypes</a>
+        TSTRPTR datatypesuffix    - the common suffix for files saved as this
+                                    data type
+        TINT8 datatypeclass       - the class of data read or written with
+                                    this datatype module
+        TBOOL canwrite            - TTRUE, if this datatype module can write
+                                    data
+        TINT dtnum                - private
+
+    <b><font size="+1">NOTES</font></b>
+
+    <b><font size="+1">SEE ALSO</font></b>
+        <a href="#TDthOpen">TDthOpen</a>, <a href="#TDthListDatatypes">TDthListDatatypes</a>
+
+</pre><hr>
+<a name="DTListItem"></a>
+<table width="100%"><tr><td><h3>DTListItem</h3></td>
+<td align=right><a href="#1_INDEX">Index</a> - <a href="#toc">TOC</a></td></tr></table>
+<pre>
+    <b><font size="+1">NAME</font></b>
+        DTListItem - a single Item of the list returned by <a href="#TDthListDatatypes">TDthListDatatypes</a>
+
+    <b><font size="+1">CONTENTS</font></b>
+        struct TNode li_Node   - Node header
+        DTDescData *li_ddat    - pointer to a DTDescData structure
+        TDFUNC li_DestroyFunc  - Destroy function for this handle
+        TAPTR li_ExecBase      - Exec base pointer
+
+    <b><font size="+1">NOTES</font></b>
+        the only interesting thing inside this is the pointer to DTDescData,
+        the remains are standard list stuff
+
+    <b><font size="+1">SEE ALSO</font></b>
+        <a href="#TDthListDatatypes">TDthListDatatypes</a>
+
+</pre><hr>
+Rendered with docco TEKlib document generator</body></html>

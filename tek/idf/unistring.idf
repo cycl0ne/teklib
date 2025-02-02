@@ -1,0 +1,80 @@
+
+;
+;	$Id: unistring.idf,v 1.6 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/unistring.idf - Unistring interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name unistring				; as in tek_init_...
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix TUStr				; name prefix heading non-inline functions
+
+.ibase TAPTR TUStrBase		; inline base
+.inline on					; generate inline calls
+.iprefix T					; name prefix heading inline functions
+
+.defv TVOID					; aliases for void
+.defp TAPTR, TSTRPTR		; pointer types
+.defi TINT, TUINT, TBOOL, TUString, TWCHAR	; 32bit integer types
+
+
+.offset 13
+TUString AllocArray(TUINT flags)
+TVOID FreeArray(TUString a)
+TINT InsertArray(TUString a, TAPTR ptr)
+TINT RemoveArray(TUString a, TAPTR ptr)
+TINT SeekArray(TUString a, TINT mode, TINT offs)
+TINT GetArray(TUString a, TAPTR ptr)
+TINT SetArray(TUString a, TAPTR ptr)
+TINT LengthArray(TUString a)
+TAPTR MapArray(TUString a, TINT offs, TINT len)
+TINT RenderArray(TUString a, TAPTR ptr, TINT offs, TINT len)
+TINT ChangeArray(TUString a, TUINT flags)
+TUString DupArray(TUString a)
+TINT CopyArray(TUString a, TUString b)
+TINT TruncArray(TUString a)
+TVOID MoveArray(TUString src, TUString dst)
+
+TUString AllocString(TSTRPTR cstr)
+TVOID FreeString(TUString s)
+TINT InsCharString(TUString s, TINT pos, TWCHAR c)
+TWCHAR RemCharString(TUString s, TINT pos)
+TINT LengthString(TUString s)
+TAPTR MapString(TUString s, TINT offs, TINT len, TUINT mode)
+TINT RenderString(TUString s, TAPTR ptr, TINT offs, TINT len, TUINT mode)
+TINT SetCharString(TUString s, TINT pos, TWCHAR c)
+TWCHAR GetCharString(TUString s, TINT pos)
+TUString DupString(TUString s, TINT pos, TINT len)
+TINT CopyString(TUString s, TUString d)
+TINT InsertString(TUString d, TINT dpos, TUString s, TINT spos, TINT len)
+TINT InsertStrNString(TUString s, TINT pos, TAPTR ptr, TINT len, TUINT mode)
+TUString EncodeUTF8String(TUString s)
+TINT InsertUTF8String(TUString s, TINT pos, TUINT8 *utf8)
+TINT CmpNString(TUString s1, TUString s2, TINT p1, TINT p2, TINT len)
+TINT CropString(TUString s, TINT pos, TINT len)
+TINT TransformString(TUString s, TINT pos, TINT len, TUINT mode)
+TINT TokenizeString(TUString pat, TUINT flags)
+TINT MatchString(TUString pat, TUString str)
+TVOID MoveString(TUString src, TUString dst)
+TINT AddPartString(TUString path, TUString part)
+
+TBOOL IsAlnum(TWCHAR c)
+TBOOL IsAlpha(TWCHAR c)
+TBOOL IsCntrl(TWCHAR c)
+TBOOL IsGraph(TWCHAR c)
+TBOOL IsLower(TWCHAR c)
+TBOOL IsPrint(TWCHAR c)
+TBOOL IsPunct(TWCHAR c)
+TBOOL IsSpace(TWCHAR c)
+TBOOL IsUpper(TWCHAR c)
+TWCHAR ToLower(TWCHAR c)
+TWCHAR ToUpper(TWCHAR c)
+
+TINT FindPatString(TUString s, TUString p, TINT pos, TINT len, TTAGITEM *tags)
+TINT FindString(TUString s, TUString p, TINT pos, TINT len)
+
+.end
+

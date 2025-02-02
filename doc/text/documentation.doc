@@ -1,0 +1,418 @@
+@@ INDEX : Index @@
+== TEKlib / Documentation writing tutorial ==
+By Timm S. Müller -
+Copyright © 2005 TEK neoscientists. All rights reserved.
+-------------------------------------------------------------------------------
+
+TEKlib's documentation system is based on plain text documents and a
+commandline tool to convert subtle forms of markup into HTML or XML.
+Markup is mainly performed by means of indentation and elements that
+would appear in plain text documentation anyway.
+
+	- [[Usage]]
+	- [[Blocks]]
+	- [[Indentation]]
+	- [[Preformatted]]
+	- [[Code]]
+	- [[Lists]]
+	- [[Definitions]]
+	- [[Nodes]]
+	- [[Links]]
+	- [[Tables]]
+	- [[Headings]]
+	- [[Rules]]
+	- [[Emphasis]]
+
+The markup format was inspired by Amiga autodocs, MoinMoin Wiki and
+Aptconvert.
+
+@@ Usage @@
+
+Use the commandline tool {{gendoc.lua}} to convert plain text
+documents into marked-up formats such as HTML and XML (and any other
+format for which a set of conversion rules may exist). 
+
+Argument template:
+
+	FROM/A		|| source document
+	TO/K		|| destination document [default: stdout]
+	MODE/K		|| conversion mode [default: html]
+	DEBUG/S		|| print a stacktrace in case of internal errors
+	NOTOC/S		|| do not generate a table of contents
+	HELP/S		|| get help
+	
+Example:
+
+		$ bin/linux/lua bin/gendoc.lua INSTALL to doc/html/install.html
+
+Get help:
+
+		$ bin/linux/lua bin/gendoc.lua help
+
+(See also a description of TEKlib's 
+[[commandline templates][util:TParseArgV]].)
+
+@@ Blocks @@
+
+Text of a consistent indentation level running uninterrupted by empty
+lines is combined into blocks. Lines in blocks can break at any position,
+the breaks are not included to the result. Example:
+
+		This is a
+		block.
+
+		This is
+		another block.
+
+	---------------------------------------------------------------------------
+
+	This is a block.
+	
+	This is another block.
+	
+	---------------------------------------------------------------------------
+
+@@ Indentation @@
+
+Indentation is measured as the consecutive number of tabs at the
+beginning of a line; different indentation levels will be taken into
+account accordingly:
+
+		This is a
+		block.
+
+		    This is
+		    another block.
+
+		        This is a third block.
+
+	---------------------------------------------------------------------------
+
+	This is a block.
+	
+		This is another block.
+		
+			This is a third block.
+	
+	---------------------------------------------------------------------------
+
+@@ Preformatted @@
+
+For blocks of code and other kinds of preformatted text use an indentation
+that is ''two levels deeper'' than the current level, e.g.:
+
+		Normal text
+		
+		        /* Code markup */
+		
+		Back to normal
+
+	---------------------------------------------------------------------------
+
+	Normal text
+
+			/* Code markup */
+			
+	Back to normal
+	
+	---------------------------------------------------------------------------
+
+To indent within blocks of preformatted text you have to indent twice;
+first by using tabs at the beginning of the line, and after that by using
+spaces throughout the rest of the line:
+
+		if (you_use_spaces)
+		{
+		    /* No problem to indent in code */
+		}
+		
+@@ Code @@
+
+Inlined code is marked up between double braces. It may occur at any
+position in a line, but the opening and the closing of the markup must
+occur in the same line:
+
+		This is {{code_markup}} in running text.
+
+	---------------------------------------------------------------------------
+
+	This is {{code_markup}} in running text.
+	
+	---------------------------------------------------------------------------
+
+Note that there is no way to escape double braces outside preformatted
+text.
+	
+@@ Lists @@
+
+There are two types of list items; ''soft'' items and ''bulleted'' items.
+They are recognized by their respective character (dash or asterisk),
+followed by a whitespace at the beginning of a line:
+
+		- soft item
+		* bulleted item
+
+	---------------------------------------------------------------------------
+
+	- soft item
+	* bulleted item
+	
+	---------------------------------------------------------------------------
+
+Soft items are a natural means to enforce line breaks:
+
+		- this is a line,
+		- this is another line,
+		- this is a third line.
+
+	---------------------------------------------------------------------------
+
+	- this is a line,
+	- this is another line,
+	- this is a third line.
+	
+	---------------------------------------------------------------------------
+
+Lists follow the same indentation rules as normal text:
+
+		* one
+		* two
+		* three
+		    * eins
+		    * zwei
+		        - ichi
+		        - ni
+		        - san
+		    * drei
+
+	---------------------------------------------------------------------------
+
+	* one
+	* two
+	* three
+		* eins
+		* zwei
+			- ichi
+			- ni
+			- san
+		* drei
+	
+	---------------------------------------------------------------------------
+
+Although not striclty required, it is recommended to
+[[indent][Indentation]] lists by one indentation step. This will help
+the parser to avoid ambiguities; when a regular [[block][Blocks]]
+follows an unindented list, it is concatenated with the last list
+item.
+
+
+@@ Definitions @@
+
+Definitions are a logical markup and introduced by using an uppercase word
+at the beginning of a line, which is followed by a double colon:
+
+		SYNOPSIS::
+		    The TEKlib document generator
+			
+	---------------------------------------------------------------------------
+	
+	SYNOPSIS::
+		The TEKlib document generator
+
+	---------------------------------------------------------------------------
+
+The first character must be an uppercase letter, the following characters
+may be uppercase letters, digits, whitespaces and underscores.
+
+@@ Nodes @@
+
+Nodes are an important logical markup that groups a document into
+sections or chapters. Nodes will automatically enter the
+''Table of contents'' ([[TOC]]) and receive a header with navigation
+elements, and they can be referenced by external documents (see [[Links]]).
+It is wiser to group documents into nodes than by just using
+[[Headings]], the latter being simple layout elements.
+
+Nodes are enclosed by double at symbols and at least one whitespace on
+each side. The first character must be a letter, the remaining characters
+must be letters, digits, dots, colons, underscores or dashes.
+		
+		@@ Node @@
+		
+		    This is a node with the name "Node".
+
+A special notation allows for nodes with a title that is different from
+the node name:
+
+		@@ Node : A fancy title @@
+		    
+		    This is a node with the name "Node" and a fancy title.
+
+@@ Links @@
+
+There are six types of links; ''simple'', ''named'', ''external'',
+''function'', ''external function'' and ''URL''.
+
+* A simple link can reference a [[Node][Nodes]] in the current document:
+
+		This is a simple link referring to the [[Links]] section.
+	
+	---------------------------------------------------------------------------
+	
+	This is a simple link referring to the [[Links]] section.
+	
+	---------------------------------------------------------------------------
+
+* A named link:
+
+		This is the same link with a [[different title][Links]].
+	
+	---------------------------------------------------------------------------
+	
+	This is the same link with a [[different title][Links]].
+	
+	---------------------------------------------------------------------------
+
+* A named link, referring to another document in TEKlib's notation.
+The symbol after the colon denotes the node to jump to. Leave the
+name behind the colon empty if you do not want to access a specific node.
+
+		This is how you can get to the [[Exec reference manual][exec:INDEX]].
+	
+	---------------------------------------------------------------------------
+	
+	This is how you can get to the [[Exec reference manual][exec:INDEX]].
+	
+	---------------------------------------------------------------------------
+
+		
+* Function link:
+
+		This is a function() link.
+	
+	---------------------------------------------------------------------------
+	
+	This is a function() link.
+	
+	---------------------------------------------------------------------------
+
+* Function link with an external target:
+
+		Please see exec:TPutMsg() for details on how to pass messages.
+	
+	---------------------------------------------------------------------------
+	
+	Please see exec:TPutMsg() for details on how to pass messages.
+	
+	---------------------------------------------------------------------------
+
+* URL:
+
+		http://www.teklib.org is the right place to check for updates.
+	
+	---------------------------------------------------------------------------
+	
+	http://www.teklib.org is the right place to check for updates.
+	
+	---------------------------------------------------------------------------
+
+
+@@ Tables @@
+
+Lines running uninterrupted with at least one cell separator in each
+of them automtically form a table. The cell separator is a double
+vertical bar:
+
+		First cell || Second cell
+		Third cell || Fourth cell
+		
+	---------------------------------------------------------------------------
+	
+	First cell || Second cell
+	Third cell || Fourth cell
+	
+	---------------------------------------------------------------------------
+
+It is also possible to create empty cells as long as the separators
+are present. Note, by the way, that cell separators do not necessarily
+need to be aligned exactly below each other:
+
+		First cell ||  || third cell
+		  || fifth cell ||
+		
+	---------------------------------------------------------------------------
+	
+	First cell ||  || third cell
+	  || fifth cell || 
+	
+	---------------------------------------------------------------------------
+	
+Note however that an empty cell at the beginning of a line must be filled
+with spaces rather than tabs, otherwise the document format would become
+ambiguous.
+
+@@ Headings @@
+
+Headings are a layouting markup; they are mainly used to group nodes
+into sections and subsections. Unlike [[Nodes]], they do not have a logical
+meaning.
+
+		== Heading 1 ==
+		
+		=== Heading 2 ===
+		
+		==== Heading 3 ====
+
+	---------------------------------------------------------------------------
+	
+	== Heading 1 ==
+			
+	=== Heading 2 ===
+	
+	==== Heading 3 ====
+	
+	---------------------------------------------------------------------------
+
+Headings occupy an entire line. They are enclosed by at least two
+equal signs and a whitspace on each side; the more equal signs, the
+less significant the section.
+
+@@ Rules @@
+
+A minimum of four dashes is interpreted as a horizontal rule. They may
+occur at arbitrary indentation levels, but they must occupy the whole line:
+
+		before the rule
+		----------------------------------------------
+		after the rule
+	
+	before the rule
+	---------------------------------------------------------------------------
+	after the rule
+	
+@@ Emphasis @@
+
+An emphasis is a layouting markup. It may occur at any position in a line,
+but the opening and the closing of the markup must occur in the ''same'' line.
+
+The emphasized text is surrounded by at least two ticks on each side; the
+more ticks, the stronger the emphasis.
+
+		- normal
+		- ''emphasis''
+		- '''strong emphasis'''
+		- ''''very strong emphasis''''
+
+	---------------------------------------------------------------------------
+	
+	- normal
+	- ''emphasis''
+	- '''strong emphasis'''
+	- ''''very strong emphasis''''
+
+	---------------------------------------------------------------------------
+	
+@@ function @@
+
+This is a dummy node -- Please return to the [[Links]] section.
+

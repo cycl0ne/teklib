@@ -1,0 +1,21 @@
+
+;
+;	$Id: datatype_codec.idf,v 1.3 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/datatype_codec.idf - Datatype codec interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name datatype_codec
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix dtcodec_
+
+.defp TAPTR
+.defi TINT
+
+TTAGITEM *getattrs()
+TINT domethod(TTAGITEM *tags)
+
+.end

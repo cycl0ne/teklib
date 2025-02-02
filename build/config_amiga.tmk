@@ -1,0 +1,807 @@
+
+[!-------------------------------------------------------------------------
+
+	$Id: config_amiga.tmk,v 1.8 2005/11/05 21:53:47 tmueller Exp $
+	tmkmf configuration for the Amiga platform. Supported contexts:
+
+	SAS/C compiler:
+	
+	amiga_sasc					- debug symbols, debug level 10
+	amiga_sasc_debug			- debug symbols, debug level 5
+	amiga_sasc_release			- no debug symbols, stripped, optimized
+	amiga_sasc_release_68030	- dito, 68030-optimized
+	amiga_sasc_release_68040	- dito, 68040-optimized
+
+	GCC compiler:
+	
+	amiga_gcc					- debug symbols, debug level 10
+	amiga_gcc_debug				- debug symbols, debug level 5
+	amiga_gcc_release			- no debug symbols, stripped, optimized
+	amiga_gcc_release_68030		- dito, 68030-optimized
+	amiga_gcc_release_68040		- dito, 68040-optimized
+	
+	Linux/GCC cross compiler:
+
+	amiga_xm68gcc				- debug symbols, debug level 10
+	amiga_xm68gcc_debug			- debug symbols, debug level 5
+	amiga_xm68gcc_release		- no debug symbols, optimized
+	amiga_xm68gcc_release_68030	- dito, 68030-optimized
+	amiga_xm68gcc_release_68040	- dito, 68040-optimized
+
+--------------------------------------------------------------------------]
+
+[switch]
+
+	[!--------------------------------------------------------------------
+	                                sasc
+	---------------------------------------------------------------------]
+
+	[case config="_sasc"]
+
+		[body name="help"]
+			help:
+				\t@echo "==================================================================="
+				\t@echo "=="
+				\t@echo "== amiga_sasc supported builds"
+				\t@echo "== ---------------------------"
+				\t@echo "== all ............... build linklibs, modules, executables"
+				\t@echo "== libs .............. build linklibs"
+				\t@echo "== modules ........... build shared modules"
+				\t@echo "== tools ............. build executables (tests, tools)"
+				\t@echo "== install ........... install modules in TEKLIB:mod"
+				\t@echo "== clean ............. clean"
+				\t@echo "== help .............. this help"
+				\t@echo "=="
+				\t@echo "==================================================================="
+		[/body]
+
+		[body name="config"]
+
+			#
+			#\tTEKlib amiga_sasc makefile
+			#\tAutomatically generated with tmkmf TEKlib Makefile generator
+			#
+
+			PLATFORM     = amiga
+			HOST         = amiga
+
+			PARENT       = /
+			DEF          = def=TEKLIB def=TSYS_AMIGA $(EXTRADEFS)
+			WARN         =
+
+			#MKDIR        = makedir
+			RM           = delete quiet
+			RMDIR        = delete all quiet
+			CC           = sc resopt nover noerrhigh noicons nominc memsize=huge ign=89,101,306,308 params=r data=fo prec=mixed strsect=code code=far strmer nochkabort nostkchk
+			LD           = slink quiet noicons smallcode 	[!--- smallcode, smalldata? --]
+			CP           = copy all quiet
+			AR           = oml >NIL:
+
+			TODAY        = `rx "say right(date(S),2)*1'.'substr(date(S),5,2)*1'.'left(date(S),4)"`
+
+			LIBPREFIX    =
+			LIBSUFFIX    = lib
+			MODSUFFIX    = mod
+			
+			[switch]
+				[case config="_release"]
+					[switch]
+						[case config="_68030"]
+							CPU     = cpu=68030 math=68882
+							OPT     = opt opttime optinlocal optinl optsched optpeep
+							LDEXTRA = strip
+						[/case]
+						[case config="_68040"]
+							CPU     = cpu=68040 math=68882
+							OPT     = opt opttime optinlocal optinl optsched optpeep
+							LDEXTRA = strip
+						[/case]
+						[default]
+							CPU     = cpu=68060 math=68882
+							OPT     = opt opttime optinlocal optinl optsched optpeep
+							LDEXTRA = strip
+						[/default]
+					[/switch]
+				[/case]
+				[case config="_debug"]
+					DEBUG   = def=TDEBUG=5 debug=line
+					CPU     = cpu=68060 math=68882
+				[/case]
+				[default]
+					DEBUG   = def=TDEBUG=10 debug=line
+					CPU     = cpu=68060 math=68882
+				[/default]
+			[/switch]
+		[/body]
+
+		[body name="paths"]
+
+			INCL         = idir=$(TEKLIB) idir= idir=include
+			LIBDIR       = lib/$(PLATFORM)
+			MODDIR       = $(BINDIR)/mod
+			MODINSTDIR   = TEKLIB:mod
+
+			#
+			
+			MKDIR        = $(TEKLIB)build/bin/tmkmf_amiga MAKEDIR
+			
+			#
+			
+			$(BINDIR):
+				\t-$(MKDIR) $(BINDIR)
+				\t-$(MKDIR) $(MODDIR)
+
+			$(LIBDIR):
+				\t-$(MKDIR) $(LIBDIR)
+
+			[embed body="help"/]
+
+		[/body]
+
+
+		[!---------- guitoolbuild ------------]
+
+		[body name="guitools"]
+			GUITOOLS = \\
+				$(BINDIR)/%n
+		[/body]
+
+		[body name="guitoolbuild"]
+			GUITOOLCFLAGS	= $(IGNORE) $(CPU) $(OPT) $(INCL) $(DEF) $(WARN) $(DEBUG)
+			GUITOOLLIBS    = lib:scm881nb.lib lib:scnb.lib lib:debug.lib lib:amiga.lib $(TEKLIB)lib/amiga/tekcmain.lib $(EXTRATOOLLIBS)
+			guitools: $(BINDIR) $(LIBDIR) libs $(GUITOOLS)
+		[/body]
+
+		[body name="guitooldep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(GUITOOLCFLAGS) %2 objname $@
+		[/body]
+
+		[body name="guitoollink"]
+			$(BINDIR)/%1: %2
+				\t@echo "--- (TOOLINK) %1"
+				\t$(LD) from lib:c.o %2 lib $(GUITOOLLIBS) to $@ $(LDEXTRA)
+		[/body]
+		
+		
+		[!---------- toolbuild ------------]
+
+		[body name="tools"]
+			TOOLS = \\
+				$(BINDIR)/%n
+		[/body]
+
+		[body name="toolbuild"]
+			TOOLCFLAGS	= $(IGNORE) $(CPU) $(OPT) $(INCL) $(DEF) $(WARN) $(DEBUG)
+			TOOLLIBS    = lib:scm881nb.lib lib:scnb.lib lib:debug.lib lib:amiga.lib $(TEKLIB)lib/amiga/tekcmain.lib $(EXTRATOOLLIBS)
+			tools: guitools $(BINDIR) $(LIBDIR) libs $(TOOLS)
+		[/body]
+
+		[body name="tooldep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(TOOLCFLAGS) %2 objname $@
+		[/body]
+
+		[body name="toollink"]
+			$(BINDIR)/%1: %2
+				\t@echo "--- (TOOLINK) %1"
+				\t$(LD) from lib:c.o %2 lib $(TOOLLIBS) to $@ $(LDEXTRA)
+		[/body]
+
+
+		[!---------- libbuild ------------]
+
+		[body name="libs"]
+			LIBS = \\
+				$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+		[/body]
+
+		[body name="libbuild"]
+			LIBCFLAGS	= $(IGNORE) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+			$(TEKLIB)$(LIBDIR):
+				\t-$(MKDIR) $(TEKLIB)$(LIBDIR)
+			libs: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(LIBS)
+		[/body]
+
+		[body name="libdep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(LIBCFLAGS) %2 objname $@
+		[/body]
+
+		[body name="liblink"]
+			$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+				\t@echo "--- (ARCHIVE) %1.$(LIBSUFFIX)"
+				\t$(AR) $@ R %2
+		[/body]
+		
+
+		[!---------- modbuild ------------]
+		
+		[body name="mods"]
+			MODS = \\
+				$(MODDIR)/%n.$(MODSUFFIX)
+		[/body]
+		
+		[body name="modbuild"]
+		
+			$(MODINSTDIR):
+				\t-$(MKDIR) $(MODINSTDIR)
+
+			MODCFLAGS	= $(IGNORE) $(CPU) $(OPT) $(INCL) $(DEF) $(WARN) $(DEBUG)
+			MODLIBS     = lib:scm881nb.lib lib:scnb.lib lib:debug.lib lib:amiga.lib $(TEKLIB)lib/amiga/tek.lib $(EXTRAMODLIBS)
+			modules: $(LIBDIR) $(BINDIR) $(MODS)
+			install: $(MODINSTDIR) libs modules
+				\t@echo "--- (INSTALL) $(MODS)"
+				\t-$(CP) $(MODS) $(MODINSTDIR)
+			do_install: install
+		[/body]
+
+		[body name="moddep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(MODCFLAGS) %2 objname $@
+		[/body]
+
+		[body name="modlink"]
+			$(LIBDIR)/l%1.o: $(TEKLIB)tek/mod/amiga/libstub.c
+				\t@echo "--- (COMPILE) libstub.c -> %1.mod"
+				\t$(CC) $(MODCFLAGS) ign=315 def=MOD_NAME="%1.mod" def=MOD_DATE="$(TODAY)" $(TEKLIB)tek/mod/amiga/libstub.c objname $@
+			$(MODDIR)/%1.$(MODSUFFIX): %2 $(LIBDIR)/l%1.o
+				\t@echo "--- (MODLINK) %1.$(MODSUFFIX)"
+				\t$(LD) with <<
+					\t\tfrom $(LIBDIR)/l%1.o %2
+					\t\tto $@ lib $(MODLIBS)
+					\t\tdefine __XCEXIT=@__dummy define _tek_init=_tek_init_%1
+					\t\t$(LDEXTRA)
+				\t<
+		[/body]
+
+
+		[!---------- metabuild ------------]
+
+		[body name="metabuild"]
+			[embed body="help"/]
+			all: libs modules tools
+			install: do_install
+			modules tools do_install clean libs:
+		[/body]
+
+		[body name="meta"]
+			\t@execute <<
+				\t\tcd %1
+				\t\tsmake -s -f build/tmk_%0 $@
+			\t<
+		[/body]
+
+
+		[!---------- masterbuild ------------]
+
+		[body name="masterbuild"]
+
+			all: modules libs tools
+
+			clean:
+				\t-$(RM) $(LIBDIR)/*.o
+				\t-$(RM) $(LIBS) $(MODS) $(TOOLS)
+
+		[/body]
+
+	[/case]
+
+
+
+	[!--------------------------------------------------------------------
+	                                gcc
+	---------------------------------------------------------------------]
+
+	[case config="_gcc"]
+
+		[body name="help"]
+			help:
+				\t@echo "==================================================================="
+				\t@echo "=="
+				\t@echo "== amiga_gcc supported builds"
+				\t@echo "== --------------------------"
+				\t@echo "== all ............... build linklibs, modules, executables"
+				\t@echo "== libs .............. build linklibs"
+				\t@echo "== modules ........... build shared modules"
+				\t@echo "== tools ............. build executables (tests, tools)"
+				\t@echo "== install ........... install modules in TEKLIB:mod"
+				\t@echo "== clean ............. clean"
+				\t@echo "== help .............. this help"
+				\t@echo "=="
+				\t@echo "==================================================================="
+		[/body]
+
+		[body name="config"]
+
+			#
+			#\tTEKlib amiga_gcc makefile
+			#\tAutomatically generated with tmkmf TEKlib Makefile generator
+			#
+
+			PLATFORM     = amiga
+			HOST         = amiga
+
+			PARENT       = ../
+			DEF          = -DTEKLIB -DTSYS_AMIGA $(EXTRADEFS)
+			WARN         = -Wall
+
+			MKDIR        = mkdir -p
+			RM           = rm -f
+			RMDIR        = rm -Rf
+			CC           = gcc
+			LD           = ld
+			CP           = cp -R
+			AR           = ar r
+
+			INSTALL		 = gg:bin/install
+
+			TODAY        = `rx "say right(date(S),2)*1'.'substr(date(S),5,2)*1'.'left(date(S),4)"`
+
+			LIBPREFIX    = lib
+			LIBSUFFIX    = a
+			MODSUFFIX    = mod
+			
+			TOOLCFLAGS	= -noixemul $(CPU) $(OPT) $(INCL) $(DEF) $(WARN) $(DEBUG)
+			TOOLLIBS    = -lnix -L$(TEKLIB)$(LIBDIR) -ltekcmain -ldebug -lamiga -lm $(EXTRATOOLLIBS)
+
+			[switch]
+				[case config="_release"]
+					[switch]
+						[case config="_68030"]
+							OPT     = -O2 -m68030 -m68881 -fomit-frame-pointer
+						[/case]
+						[case config="_68040"]
+							OPT     = -O2 -m68040 -m68881 -fomit-frame-pointer
+						[/case]
+						[default]
+							OPT     = -O2 -m68060 -m68881 -fomit-frame-pointer
+						[/default]
+					[/switch]
+				[/case]
+				[case config="_debug"]
+					DEBUG	= -DTDEBUG=5 -g
+					OPT     = -O -m68060 -m68881
+				[/case]
+				[default]
+					DEBUG	= -DTDEBUG=10 -g
+					OPT     = -O -m68060 -m68881
+				[/default]
+			[/switch]
+
+			[embed body="help"/]
+
+		[/body]
+
+		[body name="paths"]
+
+			INCL         = -I$(TEKLIB) -I. -I./include
+			LIBDIR       = lib/$(PLATFORM)
+			MODDIR       = $(BINDIR)/mod
+			MODINSTDIR   = TEKLIB:mod
+
+			#
+
+			$(BINDIR):
+				\t-$(MKDIR) $(BINDIR)
+				\t-$(MKDIR) $(MODDIR)
+
+			$(LIBDIR):
+				\t-$(MKDIR) $(LIBDIR)
+
+		[/body]
+
+
+		[!---------- guitoolbuild ------------]
+
+		[body name="guitools"]
+			GUITOOLS = \\
+				$(BINDIR)/%n
+		[/body]
+
+		[body name="guitoolbuild"]
+			guitools: $(BINDIR) $(LIBDIR) libs $(GUITOOLS)
+		[/body]
+
+		[body name="guitooldep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="guitoollink"]
+			$(BINDIR)/%1: %2
+				\t@echo "--- (TOOLINK) %1"
+				\t$(CC) $(TOOLCFLAGS) %2 -o $@ $(TOOLLIBS)
+			[if config="_release"]
+				\tstrip $(BINDIR)/%1
+			[/if]
+		[/body]
+
+
+		[!---------- toolbuild ------------]
+
+		[body name="tools"]
+			TOOLS = \\
+				$(BINDIR)/%n
+		[/body]
+
+		[body name="toolbuild"]
+			tools: guitools $(BINDIR) $(LIBDIR) libs $(TOOLS)
+		[/body]
+
+		[body name="tooldep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="toollink"]
+			$(BINDIR)/%1: %2
+				\t@echo "--- (TOOLINK) %1"
+				\t$(CC) $(TOOLCFLAGS) %2 -o $@ $(TOOLLIBS)
+			[if config="_release"]
+				\tstrip $(BINDIR)/%1
+			[/if]
+		[/body]
+		
+		
+		[!---------- libbuild ------------]
+
+		[body name="libs"]
+			LIBS = \\
+				$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+		[/body]
+
+		[body name="libbuild"]
+			LIBCFLAGS	= -noixemul $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+			$(TEKLIB)$(LIBDIR):
+				\t-$(MKDIR) $(TEKLIB)$(LIBDIR)
+			libs: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(LIBS)
+		[/body]
+
+		[body name="libdep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(LIBCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="liblink"]
+			$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+				\t@echo "--- (ARCHIVE) %1.$(LIBSUFFIX)"
+				\t$(AR) $@ %2
+		[/body]
+
+
+		[!---------- modbuild ------------]
+
+		[body name="mods"]
+			MODS = \\
+				$(MODDIR)/%n.$(MODSUFFIX)
+		[/body]
+
+		[body name="modbuild"]
+
+			MODCFLAGS	= -noixemul $(CPU) $(OPT) $(INCL) $(DEF) $(WARN) $(DEBUG)
+			MODLIBS     = -lnix -ldebug -lamiga -L$(TEKLIB)lib/$(PLATFORM) -ltek -lm $(EXTRAMODLIBS)
+			modules: $(LIBDIR) $(BINDIR) $(MODS)
+
+			install: libs modules
+				\t@echo "--- (INSTALL) $(MODS)"
+				\t-$(INSTALL) -d $(MODINSTDIR)
+				\t-$(INSTALL) $(MODS) $(MODINSTDIR)
+
+		[/body]
+
+		[body name="moddep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(MODCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="modlink"]
+
+			$(LIBDIR)/_%1.o: $(TEKLIB)tek/mod/amiga/libstub.c
+				\t@echo "--- (COMPILE) libstub.c -> %1.mod"
+				\t$(CC) $(MODCFLAGS) -DMOD_NAME="\\"%1.mod\\"" -DMOD_DATE="\\"11.8.2002\\"" -c $(TEKLIB)tek/mod/amiga/libstub.c -o $@
+
+			$(MODDIR)/%1.$(MODSUFFIX): %2 $(LIBDIR)/_%1.o
+				\t@echo "--- (MODLINK) %1.$(MODSUFFIX)"
+				\t$(LD) -fl libnix $(LIBDIR)/_%1.o %2 -o $@ $(MODLIBS) --defsym _tek_init=_tek_init_%1
+		[/body]
+
+
+		[!---------- metabuild ------------]
+
+		[body name="metabuild"]
+			[embed body="help"/]
+			all: libs modules tools
+			install: do_install
+			modules tools do_install clean libs:
+		[/body]
+
+		[body name="meta"]
+			\t@cd %1; $(MAKE) -f build/tmk_%0 $@
+		[/body]
+
+
+		[!---------- masterbuild ------------]
+
+		[body name="masterbuild"]
+
+			all: modules libs tools
+
+			clean:
+				\t-$(RM) $(LIBDIR)/*.o
+				\t-$(RM) $(LIBS) $(MODS) $(TOOLS)
+
+		[/body]
+
+	[/case]
+
+
+	[!--------------------------------------------------------------------
+	                                xm68gcc
+	---------------------------------------------------------------------]
+
+	[case config="_xm68gcc"]
+
+		[body name="help"]
+			help:
+				\t@echo "==================================================================="
+				\t@echo "=="
+				\t@echo "== amiga_xm68gcc supported builds"
+				\t@echo "== ------------------------------"
+				\t@echo "== all ............... build linklibs, modules, executables"
+				\t@echo "== libs .............. build linklibs"
+				\t@echo "== modules ........... build shared modules"
+				\t@echo "== tools ............. build executables (tests, tools)"
+				\t@echo "== clean ............. clean"
+				\t@echo "== help .............. this help"
+				\t@echo "=="
+				\t@echo "==================================================================="
+		[/body]
+
+		[body name="config"]
+
+			#
+			#\tTEKlib amiga_xm68gcc makefile
+			#\tAutomatically generated with tmkmf TEKlib Makefile generator
+			#
+
+			PLATFORM     = amiga
+			HOST         = amiga
+
+			PARENT       = ../
+			DEF          = -DTEKLIB -DTSYS_AMIGA $(EXTRADEFS)
+			WARN         = -Wall
+
+			MKDIR        = mkdir -p
+			RM           = rm -f
+			RMDIR        = rm -Rf
+			CC           = m68k-amigaos-gcc
+			LD           = m68k-amigaos-ld
+			CP           = cp -R
+			AR           = m68k-amigaos-ar r
+
+			INSTALL		 = gg:bin/install
+
+			TODAY        = `rx "say right(date(S),2)*1'.'substr(date(S),5,2)*1'.'left(date(S),4)"`
+
+			LIBPREFIX    = lib
+			LIBSUFFIX    = a
+			MODSUFFIX    = mod
+
+			[switch]
+				[case config="_release"]
+					[switch]
+						[case config="_68030"]
+							OPT     = -O2 -m68030 -m68881 -fomit-frame-pointer
+						[/case]
+						[case config="_68040"]
+							OPT     = -O2 -m68040 -m68881 -fomit-frame-pointer
+						[/case]
+						[default]
+							OPT     = -O2 -m68060 -m68881 -fomit-frame-pointer
+						[/default]
+					[/switch]
+				[/case]
+				[case config="_debug"]
+					DEBUG	= -DTDEBUG=5 -g
+					OPT     = -O -m68060 -m68881
+				[/case]
+				[default]
+					DEBUG	= -DTDEBUG=10 -g
+					OPT     = -O -m68060 -m68881
+				[/default]
+			[/switch]
+
+			[embed body="help"/]
+
+		[/body]
+
+		[body name="paths"]
+
+			INCL         = -I$(TEKLIB) -I.
+			LIBDIR       = lib/$(PLATFORM)
+			MODDIR       = $(BINDIR)/mod
+			MODINSTDIR   = TEKLIB:mod
+
+			#
+
+			$(BINDIR):
+				\t-$(MKDIR) $(BINDIR)
+				\t-$(MKDIR) $(MODDIR)
+
+			$(LIBDIR):
+				\t-$(MKDIR) $(LIBDIR)
+
+		[/body]
+
+
+		[!---------- toolbuild ------------]
+
+		[body name="tools"]
+			TOOLS = \\
+				$(BINDIR)/%n
+		[/body]
+
+		[body name="toolbuild"]
+			TOOLCFLAGS	= -noixemul $(CPU) $(OPT) $(INCL) $(DEF) $(WARN) $(DEBUG)
+			TOOLLIBS    = -L/opt/gg/lib/ -lnix -ldebug -lamiga -lm -L$(TEKLIB)$(LIBDIR) -ltekcmain $(EXTRATOOLLIBS)
+			tools: $(BINDIR) $(LIBDIR) libs $(TOOLS)
+		[/body]
+
+		[body name="tooldep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="toollink"]
+			$(BINDIR)/%1: %2
+				\t@echo "--- (TOOLINK) %1"
+				\t$(CC) $(TOOLCFLAGS) %2 -o $@ $(TOOLLIBS)
+		[/body]
+
+
+		[!---------- libbuild ------------]
+
+		[body name="libs"]
+			LIBS = \\
+				$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+		[/body]
+
+		[body name="libbuild"]
+			LIBCFLAGS	= -noixemul $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+			$(TEKLIB)$(LIBDIR):
+				\t-$(MKDIR) $(TEKLIB)$(LIBDIR)
+			libs: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(LIBS)
+		[/body]
+
+		[body name="libdep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(LIBCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="liblink"]
+			$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+				\t@echo "--- (ARCHIVE) %1.$(LIBSUFFIX)"
+				\t$(AR) $@ %2
+		[/body]
+
+
+		[!---------- modbuild ------------]
+
+		[body name="mods"]
+			MODS = \\
+				$(MODDIR)/%n.$(MODSUFFIX)
+		[/body]
+
+		[body name="modbuild"]
+
+			MODCFLAGS	= -noixemul $(CPU) $(OPT) $(INCL) $(DEF) $(WARN) $(DEBUG)
+			MODLIBS     = -L/opt/gg/lib/ -lnix -ldebug -lamiga -L$(TEKLIB)lib/$(PLATFORM) -ltek -lm $(EXTRAMODLIBS)
+			modules: $(LIBDIR) $(BINDIR) $(MODS)
+
+			install: libs modules
+				\t@echo "--- (INSTALL) $(MODS)"
+				\t-$(INSTALL) -d $(MODINSTDIR)
+				\t-$(INSTALL) $(MODS) $(MODINSTDIR)
+
+		[/body]
+
+		[body name="moddep"]
+			%1: %2 %3
+				\t@echo "--- (COMPILE) %2"
+				\t$(CC) $(MODCFLAGS) %2 -c -o $@
+		[/body]
+
+		[body name="modlink"]
+
+			$(LIBDIR)/libstub_%1.o: $(TEKLIB)tek/mod/amiga/libstub.c
+				\t@echo "--- (COMPILE) libstub.c -> %1.mod"
+				\t$(CC) $(MODCFLAGS) -DMOD_NAME="\\"%1.mod\\"" -DMOD_DATE="\\"11.8.2002\\"" -c $(TEKLIB)tek/mod/amiga/libstub.c -o $@
+
+			$(MODDIR)/%1.$(MODSUFFIX): %2 $(LIBDIR)/libstub_%1.o
+				\t@echo "--- (MODLINK) %1.$(MODSUFFIX)"
+				\t$(LD) -fl libnix $(LIBDIR)/libstub_%1.o %2 -o $@ $(MODLIBS) --defsym _tek_init=_tek_init_%1
+		[/body]
+
+
+		[!---------- metabuild ------------]
+
+		[body name="metabuild"]
+			[embed body="help"/]
+			all: libs modules tools
+			install: do_install
+			modules tools do_install clean libs:
+		[/body]
+
+		[body name="meta"]
+			\t@cd %1; $(MAKE) -f build/tmk_%0 $@
+		[/body]
+
+
+		[!---------- masterbuild ------------]
+
+		[body name="masterbuild"]
+
+			all: modules libs tools
+
+			clean:
+				\t-$(RM) $(LIBDIR)/*.o
+				\t-$(RM) $(LIBS) $(MODS) $(TOOLS)
+
+		[/body]
+
+	[/case]
+
+[/switch]
+
+[!-------------------------------------------------------------------------
+
+	Revision History
+	$Log: config_amiga.tmk,v $
+	Revision 1.8  2005/11/05 21:53:47  tmueller
+	tmkmf MAKEDIR replaces makedir, which lacks -p option
+	
+	Revision 1.7  2005/10/08 02:08:47  tmueller
+	added workarounds for the install target to work on SAS/C again
+	
+	Revision 1.6  2005/05/09 07:42:04  tmueller
+	define removed from slink arguments
+	
+	Revision 1.5  2004/05/05 04:27:45  tmueller
+	Added a special "guitool" target to tmkmf configs and the visual module
+	
+	Revision 1.4  2004/01/22 17:55:49  tmueller
+	Amiga SAS/C build fixed: renamed libstub objects to l<object>.o
+	
+	Revision 1.3  2004/01/13 19:48:16  tmueller
+	amiga_gcc modlink procedure didn't work. fixed.
+	
+	Revision 1.2  2004/01/10 02:34:44  dtrompetter
+	*** empty log message ***
+	
+	Revision 1.1.1.1  2003/12/11 07:22:03  tmueller
+	Krypton import
+	
+	Revision 1.15  2003/10/30 03:12:09  tmueller
+	SAS/C release binaries are now getting stripped. No, they weren't before!
+	
+	Revision 1.14  2003/10/28 21:24:01  tmueller
+	SAS/C libstub compilation warning suppressed
+	
+	Revision 1.13  2003/10/27 22:56:14  tmueller
+	Amiga SAS/C build is now silent
+	
+	Revision 1.12  2003/10/27 22:45:43  tmueller
+	CVS headers added, various cleanup
+
+--------------------------------------------------------------------------]

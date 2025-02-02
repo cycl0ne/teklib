@@ -1,0 +1,33 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(PLATFORM)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]		iohnd_ps2io					[/embed]
+
+	[embed body="modlink"]	iohnd_ps2io
+							$(LIBDIR)/iohnd_ps2io.o		[/embed]
+
+	[embed body="moddep"]	$(LIBDIR)/iohnd_ps2io.o
+							iohnd_ps2io.c				[/embed]
+
+[/body]
+
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] 
+	makefile_modules
+[/render]
+

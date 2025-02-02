@@ -1,0 +1,525 @@
+@@ INDEX : Index @@
+== TEKlib / Build system documentation ==
+By Timm S. Müller -
+Copyright © 2005 TEK neoscientists. All rights reserved.
+-------------------------------------------------------------------------------
+
+TEKlib's build system is based on abstract makefiles (with the default
+name {{tmkmakefile}}) and a commandline tool to generate
+platform/compiler-specific makefiles, {{tmkmf}}. The principle is fully
+generic, and in its current configuration it supports a wide variety
+of compilers, platforms and build configurations. This document gives
+a rough overview. As it is not meant to be a comprehensive reference
+manual, one should stick to the examples of which there are plenty in
+TEKlib's source tree.
+
+- [[1. Build targets][Targets]]
+- [[2. Main tree and side projects][Trees]]
+- [[3. Build contexts][Contexts]]
+- [[4. Build Directory Structure][BuildDirectories]]
+- [[5. Using tmkmf][Usage]]
+- [[6. The tmkmakefile format][tmkmakefiles]]
+- [[7. Makefile destinations][Destinations]]
+	- [[makefile_meta]]
+	- [[makefile_libs]]
+	- [[makefile_modules]]
+	- [[makefile_tools]]
+	- [[makefile_modules_and_tools]]
+	- [[makefile_libs_and_tools]]
+	- [[A complete tmkmakefile example][Example]]
+- [[8. Conditional builds][Conditional]]
+- [[9. Extending the build system][Extending]]
+
+
+@@ Targets : 1. Build targets @@
+
+Build targets according to TEKlib's standard terminology are:
+
+	* ''modules'' - shared objects
+	* ''libs''    - link libraries
+	* ''tools''   - applications and tests
+
+Other targets are:
+
+	* ''all''     - all of the above; modules, libs, tools
+	* ''meta''    - targets in subdirectories
+	* ''install'' - system-wide installation (modules only)
+	* ''clean''
+	* ''help''
+
+Regardless of the project structure, all makefiles allow traversal
+with all kinds of targets, even if no targets of a certain kind are
+actually present in a given hierarchy. The ''all'' target will
+traverse a hierarchy with the targets ''libs'', ''modules'',
+''tools'', in that order.
+
+See also: [[Destinations]]
+
+
+@@ Trees: 2. Main tree and side projects @@
+
+The setup of an environment for software development is usually
+partitioned into at least two top-level directories, namely TEKlib's
+own source tree and any number of ''side projects'', each comprising
+any number of subprojects.
+
+Side projects normally reference TEKlib's source tree using relative
+paths, which makes the installation of TEKlib an optional step and may
+help to ease its deployment.
+
+Example:
+
+		+- projects           targets defined on this level
+		    |
+		    +- teklib                   meta
+		    |	+- boot                 libs
+		    |	+- apps                 meta
+		    |	|   +- tmkmf            tools
+		    |	+ mods                  meta    
+		    |	    +- exec             modules and tools
+		    |	    +- hal              modules
+		    |
+		    +- 3dengine                 meta
+		        +- engine               modules and tools
+		        +- tools                meta
+		            +- guihelper        libs
+		            +- viewer           tools
+		            +- objconv          tools
+
+Notes: 
+
+	* According to the default convention (and unless otherwise noted),
+	side projects are located ''side by side'' to TEKlib's source directory.
+
+	* As you can see from the "exec" and "engine" directories, some build
+	targets can be combined at a given directory node, namely modules with
+	tools and libs with tools.
+
+
+@@ Contexts : 3. Build contexts @@
+
+A ''context'' describes the configuration of a build and is a string
+consisting of path-like components.
+
+Examples:
+
+		win32_vcpp_release_pentium3
+		amiga_sasc_debug     |
+		linux_gcc    |       +-- subflavour
+		  |    |     |
+		  |    |     +---------- flavour
+		  |    |
+		  |    +---------------- compiler
+		  |
+		  +--------------------- platform
+
+Build contexts are usually threefold; the most significant part is the
+''platform'', followed by the ''compiler'' and a ''flavour''. However,
+that doesn't mean that all components must be specified for a context
+to be descriptive; a setting with reasonable defaults will be assumed
+if the flavour (or a more specific component) is omitted. 
+
+
+@@ BuildDirectories : 4. Build Directory Structure @@
+
+There must be a subdirectory named {{build}} on each directory level
+that is subject to build traversal; the {{tmkmakefile}} to describe
+this node is expected in this directory. Here is an example of a 
+project directory in more detail:
+
+		+- demos
+		    +- build
+		    |   +- tmkmakefile
+		    +- kinematic
+		    |   +- build
+		    |   |   +- tmkmakefile       
+		    |   +- kinematic.c
+		    +- rotzoom
+		        +- build
+		        |   +- tmkmakefile
+		        +- rotzoom.c
+		   
+The commandline tool {{tmkmf}} will generate platform-specific
+makefiles in the same directory as the originating {{tmkmakefile}};
+For instance, after the application of the contexts {{fbsd_gcc_debug}}
+and {{win32_vcpp}} the directory structure would look like this:
+
+		+- demos
+		    +- build
+		    |   +- tmkmakefile
+		    |   +- tmk_fbsd_gcc_debug          <- added by tmkmf
+		    |   +- tmk_win32_vcpp              <- added by tmkmf
+		    +- kinematic
+		    |   +- build
+		    |   |   +- tmkmakefile
+		    |   |   +- tmk_fbsd_gcc_debug      <- added by tmkmf
+		    |   |   +- tmk_win32_vcpp          <- added by tmkmf
+		    |   +- kinematic.c
+		    +- rotzoom
+		        +- build
+		        |   +- tmkmakefile
+		        |   +- tmk_fbsd_gcc_debug      <- added by tmkmf
+		        |   +- tmk_win32_vcpp          <- added by tmkmf
+		        +- rotzoom.c
+
+@@ Usage : 5. Using tmkmf @@
+
+Argument template:
+
+	-f=FROM			|| source filename [default {{tmkmakefile}}]
+	-c=CONTEXT/K	|| build context [default {{linux_gcc}}]
+	-r=RECURSE/S	|| recurse from current directory
+	-b=BUILDDIR/K	|| path to the {{BUILD:}} directory [default {{PROGDIR://build}}]
+	-q=QUIET/S		|| silent execution
+	-h=HELP/S		|| get help
+
+If the {{RECURSE}} option is given then {{FROM}} specifies the
+filename to look up in a recursive directory scan, starting at the
+current directory. Without the {{RECURSE}} option, {{FROM}} specifies
+the path and filename of a distinct tmkmakefile.
+	
+Example processing a hierarchy starting at the current directory:
+
+		> build\bin\tmkmf_win32 context win32_vcpp recurse
+
+Example processing a single tmkmakefile:
+
+		> build/bin/tmkmf_morphos mods/hal/build/tmkmakefile -c morphos_gcc
+
+(See also a description of TEKlib's
+[[commandline templates][util:TParseArgV]].)
+
+@@ tmkmakefiles : 6. The tmkmakefile format @@
+
+Tmkmakefiles use a notation similar to XML, with the biggest
+difference being that tags are enclosed in square brackets. Another
+point is that tmkmakefiles do make a difference regarding individual
+lines, whereas linebreaks do not normally play a role in the structure
+of XML.
+
+First we have a look at a tmkmakefile sitting on a meta node named
+''demos'' in a side project, defining two subprojects named
+''kinematic'' and ''rotzoom'', according to the following directory
+structure:
+
+		+- projects
+		    |
+		    +- teklib
+		    |   +- build                <- assigned to BUILD:
+		    |       +- config.tmk       <- included by tmkmakefile
+		    |       +- builds.tmk       <- included by tmkmakefile
+		    |
+		    +- demos                    <- the node being described
+		        +- build
+		        |   +- tmkmakefile      <- makefile describing this node
+		        |   +- tmk_linux_gcc    <- a makefile generated by tmkmf
+		        +- kinematic
+		        +- rotzoom
+
+The tmkmakefile in detail:
+
+		[include name="BUILD:config.tmk"/]
+		[!----------------------------------------]
+		[body name="metatargets"]
+		    [embed body="meta"] kinematic [/embed]
+		    [embed body="meta"] rotzoom [/embed]
+		[/body]
+		[!----------------------------------------]
+		[include name="BUILD:builds.tmk"/]
+		[render to="tmk_"] makefile_meta [/render]
+
+The notation {{BUILD:}} addresses a path (using a ''logical assign'')
+that is determined from the location of the {{tmkmf}} executable. This
+path can be overridden with the {{BUILDDIR}} option of
+[[tmkmf][Usage]]. Two files are included from the TEKlib tree:
+
+	* {{config.tmk}} contains the definitions of
+	platform-/compiler-specific ''contexts'', such as {{win32_vcpp}}
+	(see also [[Contexts]]).
+
+	* {{builds.tmk}} contains the definitions of build ''targets''
+	(see also [[Targets]]).
+
+When the tmkmakefile is interpreted, the {{[render]}} tag will finally
+produce one or more context-specific makefile [[Destinations]], named
+after the current context added to a filename prefix, {{tmk_}}. 
+
+See also: TEKlib's [[path naming conventions][io:Introduction]]
+
+
+@@ Destinations : 7. Makefile destinations @@
+
+Makefile ''destinations'' are, according to the build targets and the
+possible combinations thereof,
+
+	* [[makefile_meta]]
+	* [[makefile_libs]]
+	* [[makefile_modules]]
+	* [[makefile_tools]]
+	* [[makefile_modules_and_tools]]
+	* [[makefile_libs_and_tools]]
+
+See also: [[Targets]]
+
+
+@@ makefile_meta @@
+
+The {{makefile_meta}} destination will produce a makefile for
+descending into one or more subdirectories.
+
+Use the body section {{metatargets}} to enclose the meta build:
+
+		[body name="metatargets"]
+		    [embed body="meta"]
+		    	[!-- name of subdirectories; one directory per line --]
+		    [/embed]
+		[/body]
+
+- An example can be found in the section describing the
+[[tmkmakefiles]] format.
+- See also: [[Destinations]]
+
+
+@@ makefile_libs @@
+
+The {{makefile_libs}} destination will produce a makefile for
+building one or more link libraries on a given directory level.
+
+The body section named {{teklib}} specifies the path to the TEKlib
+source tree. Use {{$(PARENT)}} to step one directory up, e.g.
+
+		[body name="teklib"]
+		    TEKLIB = $(PARENT)$(PARENT)teklib/
+		[/body]
+
+Use the body section {{libtargets}} to enclose the libs build:
+
+		[body name="libtargets"]
+		    [embed body="libs"]
+		    	[!-- libs: name of libraries to be built; one per line --]
+		    [/embed]
+		    [embed body="liblink"]
+		        [!-- a library link; first line: libname,
+		        second line: list of objects --]
+		    [/embed]
+		    [embed body="libdep"]
+		        [!-- a library dependency: first line: objectname,
+		        second line: source,
+		        third line: list of dependencies --]
+		    [/embed]
+		[/body]
+
+See also: a complete [[Example]], [[Destinations]]
+
+
+@@ makefile_modules @@
+
+The {{makefile_modules}} destination will produce a makefile for
+building one or more modules on a given directory level.
+ 
+The body section named {{teklib}} specifies the path to the TEKlib
+source tree. Use {{$(PARENT)}} to step one directory up, e.g.
+
+		[body name="teklib"]
+		    TEKLIB = $(PARENT)$(PARENT)teklib/
+		[/body]
+
+Use the body section {{modtargets}} to enclose the modules build:
+
+		[body name="modtargets"]
+		    [embed body="mods"]
+		    	[!-- mods: name of modules to be built; one per line --]
+		    [/embed]
+		    [embed body="modlink"]
+		        [!-- a module link; first line: module name,
+		        second line: list of objects --]
+		    [/embed]
+		    [embed body="moddep"]
+		        [!-- a module dependency; first line: objectname,
+		        second line: source,
+		        third line: list of dependencies --]
+		    [/embed]
+		[/body]
+
+See also: a complete [[Example]], [[Destinations]]
+
+
+@@ makefile_tools @@
+
+The {{makefile_tools}} destination will produce a makefile for
+building one or more executables (applications, tests...) on a
+given directory level.
+ 
+The body section named {{teklib}} is used to specify the paths to the
+TEKlib source tree and to a directory for putting the executables. Use
+{{$(PARENT)}} to step one directory up and {{$(PLATFORM)}} to address
+the name of the platform of a given context, e.g.
+
+		[body name="teklib"]
+		    TEKLIB = $(PARENT)$(PARENT)teklib/
+		    BINDIR = $(TEKLIB)bin/$(PLATFORM)
+		[/body]
+
+Use the body section {{tooltargets}} to enclose the tools build:
+
+		[body name="tooltargets"]
+		    [embed body="tools"]
+		    	[!-- tools: name of tools to be built; one per line --]
+		    [/embed]
+		    [embed body="toollink"]
+		        [!-- a tool link; first line: tool name,
+		        second line: list of objects --]
+		    [/embed]
+		    [embed body="tooldep"]
+		        [!-- a tool dependency; first line: objectname,
+		        second line: source,
+		        third line: list of dependencies --]
+		    [/embed]
+		[/body]
+
+See also: a complete [[Example]], [[Destinations]]
+
+
+@@ makefile_modules_and_tools @@
+
+This build combines the body sections from the [[makefile_modules]]
+and [[makefile_tools]] builds; use the body section {{teklib}} to specify
+the paths to the TEKlib source tree and to a directory for putting the
+executables (as seen in [[makefile_tools]]).
+
+See also: a complete [[Example]], [[Destinations]]
+
+
+@@ makefile_libs_and_tools @@
+
+This build combines the body sections from the [[makefile_libs]]
+and [[makefile_tools]] builds; use the body section {{teklib}} to specify
+the paths to the TEKlib source tree and to a directory for putting the
+executables (as seen in [[makefile_tools]]).
+
+See also: a complete [[Example]], [[Destinations]]
+
+
+@@ Example : A complete tmkmakefile example @@
+
+An example (taken from {{teklib/mods/util/build}}) is given below:
+
+		[include name="BUILD:config.tmk"/]
+		[!---------------------------------------------------------------]
+		[body name="teklib"]
+		    TEKLIB = $(PARENT)$(PARENT)
+		    BINDIR = $(TEKLIB)bin/$(PLATFORM)
+		[/body]
+		[body name="modtargets"]
+		    [embed body="mods"] util [/embed]
+		    [embed body="modlink"]
+		        util
+		        $(LIBDIR)/util_mod.o \
+		            $(LIBDIR)/util_args.o \
+		            $(LIBDIR)/util_string.o \
+		            $(LIBDIR)/util_searchsort.o
+		    [/embed]
+		    [embed body="moddep"] $(LIBDIR)/util_mod.o
+		                          util_mod.c            [/embed]
+		    [embed body="moddep"] $(LIBDIR)/util_args.o
+		                          util_args.c           [/embed]
+		    [embed body="moddep"] $(LIBDIR)/util_string.o
+		                          util_string.c         [/embed]
+		    [embed body="moddep"] $(LIBDIR)/util_searchsort.o
+		                          util_searchsort.c     [/embed]
+		[/body]		
+		[body name="tooltargets"]
+		    [embed body="tools"] modscan
+		                         sorttest               [/embed]
+		    [embed body="tooldep"] $(LIBDIR)/modscan.o
+		                           tests/modscan.c      [/embed]
+		    [embed body="tooldep"] $(LIBDIR)/sorttest.o
+		                           tests/sorttest.c     [/embed]
+		    [embed body="toollink"] modscan
+		                            $(LIBDIR)/modscan.o [/embed]
+		    [embed body="toollink"] sorttest
+		                            $(LIBDIR)/sorttest.o [/embed]
+		[/body]
+		[!---------------------------------------------------------------]
+		[include name="BUILD:builds.tmk"/]
+		[render to="tmk_"] makefile_modules_and_tools [/render]
+
+
+@@ Conditional : 8. Conditional builds @@
+
+TEKlib's build system allows conditional builds with the directives
+{{[switch]}} and {{[if]}}, which act on the current context for case
+differentiation. Despite their simplicity, they allow for a good deal
+of flexibility. Example:
+
+		[if config="linux"]
+		    [!-- considered if context is linux... --]
+		[/if]
+
+		[switch]
+		    [case config="win32_vcpp"]
+		        [!-- considered if context is win32_vcpp... --]
+		    [/case]
+		[/switch]
+
+If the {{config}} attribute is fully contained at the beginning of the
+current context then the dependent block will be entered.
+
+The matching part of the context is removed from the current
+context string, and the dependent block will be entered with the
+remaining subcontext. This allows for cascading differentiations, for
+instance
+
+		[if config="linux_gcc"]
+		    [switch]
+		        [case config="_release"]
+		            OPT = -O2 -finline-functions -fomit-frame-pointer
+		        [/case]
+		        [case config="_debug"]
+		            OPT = -O1
+		            DEBUG = -DTDEBUG=5 -g
+		        [/case]
+		        [default]
+		            OPT = -O2
+		            DEBUG = -DTDEBUG=10 -g
+		        [/default]
+		    [/switch]
+		[/if]
+
+If you don't want to enter a block with the matching part of the
+context being removed then use the {{[case_no_descend]}} tag instead
+of {{[case]}}. This can be useful in meta builds, for example:
+
+		[switch]
+		    [case_no_descend config="ps2"]
+		        [!-- this block will be entered with the
+		        unmodified context. --]
+		        [embed body="meta"] ps2 [/embed]
+		    [/case_no_descend]
+		[/switch]
+
+As a last note on cases, there is currently no such statement like
+{{[ifnot]}}. Use a {{[switch]}} and the {{[default]}} statement
+instead, like this:
+
+		[switch]
+		    [case config="amiga"][/case]
+		    [case config="morphos"][/case]
+		    [case config="darwin"][/case]
+		    [default]
+		        [!-- the "if not" case goes here --]
+		    [/default]
+		[/switch]
+
+@@ Extending : 9. Adapting the build system to your needs @@
+
+On a final note, the build system is no way hardwired or limited to
+the definitions outlined in this document; these resulted from the
+specific requirements of the TEKlib project and are part of its
+configuration.
+
+Edit the configuration files (starting at {{build/config.tmk}} and
+{{build/builds.tmk}}) to adapt the build system according to your
+needs; more platforms, compilers, contexts and destinations can be
+added.
+

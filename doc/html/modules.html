@@ -1,0 +1,992 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>modules</title>
+		<style type="text/css">
+			<!--
+				body { background-color: #fff; color: #000; }
+				a:link { color: #00e; }
+				a:visited { color: #44d; }
+				a:hover { color: #700; background-color: #ffb; }
+				body,td,dfn,div,li { font-family: Arial, Helvetica,
+					Geneva, sans-serif; }
+				div.block, li { margin-bottom: 0.4em; }
+				dfn { font-weight: bold; }
+				pre { background-color: #eef7df; border-style: solid;
+					border-width: 1px; padding: 0.4em; }
+				td { padding: 2px; }
+				td.noborder { padding: 0.1em 0.4em;
+					background-color: #fceed2; }
+				table.noborder { border-style: none; border-spacing: 4px;
+					margin-bottom: 0.4em; }
+				li.soft { list-style-type: none; }
+				ul { margin-left: 0cm; padding: 0cm;
+					list-style-position: inside; }
+				table.head { background-color: #d7d7f5; }
+			//-->
+		</style>
+	</head>
+	<body>
+		<hr><a name="INDEX"></a><table width="100%" class="head"><tr><td width="100%"><strong>modules : Index</strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h2>
+				TEKlib / Module writing tutorial
+			</h2>
+			<div class="block">
+				By Timm S. M&#252;ller -
+				Copyright &#169; 2005 TEK neoscientists. All rights reserved.
+			</div>
+			<hr>
+			<ul>
+				<li class="soft">
+					<a href="#intro">1. Introduction</a> 
+				</li>
+				<li class="soft">
+					<a href="#openclose">2. Open and close</a> 
+				</li>
+				<li class="soft">
+					<a href="#memory">3. Memory layout</a> 
+				</li>
+				<li class="soft">
+					<a href="#initfunc">4. Init function</a> 
+				</li>
+				<li class="soft">
+					<a href="#initialization">5. Initialization</a> 
+				</li>
+				<li class="soft">
+					<a href="#calling">6. Calling conventions</a> 
+				</li>
+				<li class="soft">
+					<a href="#openfunction">7. Open function</a> 
+				</li>
+				<li class="soft">
+					<a href="#instances">8. Instances</a> 
+				</li>
+				<li class="soft">
+					<a href="#advanced">9. Advanced object orientation</a> 
+				</li>
+				<li class="soft">
+					<a href="#reserved">10. Reserved function vectors</a> 
+				</li>
+				<li class="soft">
+					<a href="#versioning">11. Versioning</a> 
+				</li>
+			</ul>
+		</div>
+		<hr><a name="intro"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#intro">1. Introduction</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				TEKlib is a modular framework. <em>Modules</em> are logical parts of code and
+				data that do not follow a strict hierarchy but can depend on each
+				other. The Exec module, for example, depends on the HAL module and all
+				other modules depend at least on the Exec module. All dependencies are
+				always resolved during runtime. Module interfaces are resolved as a
+				whole; individual functions are not exported symbolically.
+			</div>
+		</div>
+		<hr><a name="openclose"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#openclose">2. Open and close</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				The function for requesting a module is <a href="exec.html#TOpenModule">exec:TOpenModule</a>. The result
+				from <a href="exec.html#TOpenModule">exec:TOpenModule</a> is a module base pointer, or <code>TNULL</code>. The return
+				value must be checked, as an attempt to open a module may fail at any
+				time; a module may be inaccessible in the file system, it may have an
+				insufficient version or fail to initialize.
+			</div>
+			<div class="block">
+				When they are no longer needed, all modules that have been opened by
+				an application (or by another module) must be closed with a matching
+				call to <a href="exec.html#TCloseModule">exec:TCloseModule</a>. If unclosed modules are encountered
+				during closedown then TEKlib's Exec core will raise a fatal exception
+				(read: "crash") at exit.
+			</div>
+			<div class="block">
+				A module can be requested by any number of tasks at the same time.
+				Exec keeps track of modules using a locking scheme and reference
+				counter. As soon as a module reference counter drops to zero, the
+				module in question is unloaded and all its resources are freed.
+			</div>
+		</div>
+		<hr><a name="memory"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#memory">3. Memory layout</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				Modules do not export symbols. Once initialized, a module's interface
+				consists of a data structure called the <em>module base</em> and a table of
+				function pointers, which is normally located in front of it. A
+				module's first function pointer has an index of -1 relative to the
+				base, thus a module has a <em>negative size</em>, which is the size of the
+				table of function pointers preceding its base address.
+			</div>
+			<blockquote>
+<pre>
+               ____________
+negative      |            |    --&#062; mod_func[-N]
+  size        |  function  |    --&#062; ...
+              |   table    |    --&#062; mod_func[-2]
+  base  ____ _|____________|_   --&#062; mod_func[-1]
+address       |            |
+              |   module   |
+              |   header   |
+positive      |____________|    module
+  size        |            |    base
+              |   module   |
+              |  specific  |
+              |    data    |
+              |            |    a module in memory
+              |____________|
+</pre>
+			</blockquote>
+			<div class="block">
+				The module base (or <em>super instance</em>) is an unique data structure and
+				shared across all opens to a module. Modules must be expected to be
+				accessed by an arbitrary number of openers at the same time,
+				therefore all data being stored in the module base should be protected
+				with locking mechanisms for safe use in a multitasking environment.
+			</div>
+			<div class="block">
+				Example of a typical module base structure:
+			</div>
+			<blockquote>
+<pre>
+#include &#060;tek/exec.h&#062;
+
+typedef struct MyModule
+{
+    struct TModule module;  /* module header */
+
+    TAPTR lock;             /* module-specific data */
+    TUINT refcount;
+    TAPTR anothermod;
+    TBOOL initialized;
+
+} MYMOD;
+</pre>
+			</blockquote>
+		</div>
+		<hr><a name="initfunc"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#initfunc">4. Init function</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				Only a single entrypoint to a module is visible to TEKlib's module
+				loader. That entry point is called a module's <em>init function</em>:
+			</div>
+			<blockquote>
+<pre>
+result = tek_init_modname(task, module,          version, tags)
+TUINT                     TAPTR struct TModule*  TUINT16  TTAGITEM*
+</pre>
+			</blockquote>
+			<div class="block">
+				The name is prefixed with tek_init_ and then followed by the module's
+				name. The <em>modname</em> part acts as an unique identifier and usually
+				matches the filename (or part of it).
+			</div>
+			<div class="block">
+				When a module is requested for the first time, TEKlib's Exec core
+				attempts to load it and determine its init function entry. If a matching
+				init function is available, it is then called three times:
+			</div>
+			<blockquote>
+				<ul>
+					<li class="bullets">
+						Upon the first invocation the module argument is <code>TNULL</code>. The init
+						function is expected to check the version argument and to return the
+						size of the module base. If the version request cannot be satisfied
+						then the init function must return <code>0</code> (or <code>TFALSE</code>).
+					</li>
+					<li class="bullets">
+						When called for the second time, the module argument is <code>TNULL</code> and
+						the version argument is <code>0xffff</code>. The init function is now expected to
+						return the module's negative size, i.e. the size of a function table
+						preceding the base address. It is possible that a module has no
+						function table at all, therefore <code>0</code> is valid return value.
+					</li>
+					<li class="bullets">
+						When called for the third time, the module argument contains a
+						pointer to a module base. The memory for this data structure has been
+						allocated and cleared, and some fields in the module header have been
+						readily initialized by Exec. The init function is now expected to
+						perform the module's one-shot initializations. If successful, the
+						return value is <code>TTRUE</code>, otherwise <code>TFALSE</code>.
+					</li>
+				</ul>
+			</blockquote>
+			<div class="block">
+				A module's init function may look like this:
+			</div>
+			<blockquote>
+<pre>
+TMODENTRY TUINT
+tek_init_mymod(TAPTR task, MYMOD *mod, TUINT16 version, TTAGITEM *tags)
+{
+    if (mod == TNULL)
+    {
+        if (version &#060;= MOD_VERSION)
+        {
+            /* First call: check version, return positive size */
+            return sizeof(MYMOD);
+        }
+
+        if (version == 0xffff)
+        {
+            /* Second call: return negative size */
+            return sizeof(TAPTR) * MOD_NUMVECTORS;
+        }
+
+        /* cannot satisfy version request */
+        return 0;
+    }
+
+    /* Third call: Module-specific initializations (see below) */
+    return mod_init(mod);
+}
+</pre>
+			</blockquote>
+			<div class="block">
+				Notes:
+			</div>
+			<blockquote>
+				<ul>
+					<li class="bullets">
+						The task argument refers to the Exec-internal task context
+						in which the init function is called.
+					</li>
+					<li class="bullets">
+						The tags argument is currently unused by the init function as it is
+						reserved for future extensions of the module interface.
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<hr><a name="initialization"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#initialization">5. Initialization</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				The initializations in the third stage normally include the setup of
+				a function table, memory managers, lists, locks etc.
+			</div>
+			<div class="block">
+				Note:
+			</div>
+			<blockquote>
+				<ul>
+					<li class="bullets">
+						The init function is entered in an Exec-internal task context. It is
+						not advisable to perform "expensive" initializations here that depend
+						on I/O operations or other functions that might block. In particular,
+						you are not allowed to open other modules in the init function.
+						Attempts to do so will be rejected by Exec and cause <a href="exec.html#TOpenModule">exec:TOpenModule</a> 
+						to return <code>TNULL</code>. Other modules, when needed, must be opened somewhere
+						else in the module API, or preferrably in a module's <em>open function</em> 
+						(see <a href="#openfunction">7. Open function</a>).
+					</li>
+					<li class="bullets">
+						Exec expects the module base to be headed by a structure of the type
+						struct TModule. Some fields in the header are readily initialized by
+						Exec when the third initialization stage is entered. Other fields
+						are mandatory to be filled in by the user, namely the version/revision
+						fields and usually at least a function table or a pointer to an open
+						function (see <a href="#openfunction">7. Open function</a>).
+					</li>
+					<li class="bullets">
+						If you create locks, allocate memory or claim other resources in the
+						init function then you must place a pointer to a corresponding
+						<em>deinitialization function</em> in the module header. This function will be
+						called back by Exec before a module is getting unloaded.
+					</li>
+				</ul>
+			</blockquote>
+			<div class="block">
+				Example:
+			</div>
+			<blockquote>
+<pre>
+TBOOL
+mod_init(MYMOD *mod)
+{
+    TAPTR TExecBase = TGetExecBase(mod);
+    mod-&#062;lock = TCreateLock(TNULL);
+    if (mod-&#062;lock)
+    {
+        /* Activate deinitialization */
+        mod-&#062;module.tmd_DestroyFunc = (TDFUNC) mod_exit;
+
+        /* Place module version in the header */
+        mod-&#062;module.tmd_Version = MOD_VERSION;
+        mod-&#062;module.tmd_Revision = MOD_REVISION;
+
+        /* Initialize function table */
+        ((TAPTR *) mod)[-1] = mod_func1;
+        ((TAPTR *) mod)[-2] = mod_func2;
+        ((TAPTR *) mod)[-3] = mod_func3;
+
+        return TTRUE;
+    }
+    return TFALSE;
+}
+
+TVOID TCALLBACK
+mod_exit(MYMOD *mod)
+{
+    TDestroy(mod-&#062;lock);
+}
+</pre>
+			</blockquote>
+		</div>
+		<hr><a name="calling"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#calling">6. Calling conventions</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				According to TEKlib's default convention (which is ANSI-C-compliant),
+				the C/C++ prototype for calling a module function is actually a macro
+				dereferencing an entry in a table of function pointers. Here it is in
+				more detail:
+			</div>
+			<blockquote>
+<pre>
+#define TExampleFunc(TExampleBase,arg) \
+(*(((TMODCALL TINT(**)(TAPTR,TINT))(base))[-10]))(TExampleBase,arg)
+     ---1)--- ---------2)--------- ------3)------ -------4)--------
+</pre>
+				<div class="block">
+					1) The <code>TMODCALL</code> definition encapsulates calling conventions for
+					individual platform/compiler combinations.
+				</div>
+				<div class="block">
+					2) <code>TINT(**)(TAPTR,TINT)</code> is the type of the function to which the table
+					entry points.
+				</div>
+				<div class="block">
+					3) <code>[-10]</code> references the 10th function table entry in front of the
+					module base.
+				</div>
+				<div class="block">
+					4) <code>(TExampleBase,arg)</code> passes the arguments to the function. By
+					convention, the first argument of each function must be a pointer to
+					the module base (or an instance thereof, see <a href="#instances">8. Instances</a>).
+				</div>
+			</blockquote>
+			<div class="block">
+				Note:
+			</div>
+			<blockquote>
+				<ul>
+					<li class="bullets">
+						Module prototypes are normally generated from
+						<em>interface definition files</em> (IDF) using TEKlib's <code>genheader</code> tool.
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<hr><a name="openfunction"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#openfunction">7. Open function</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				A module's init function is invoked only once per module being
+				loaded into memory, and only a limited set of global initializations
+				can be performed there (see also <a href="#initfunc">4. Init function</a>).
+			</div>
+			<div class="block">
+				By using a module <em>open function</em> it is possible to request other
+				resources (including modules) during initialization and to perform
+				non-trivial setups that may be specific to the opener, or more
+				precisely, to the task context in which the opener is running. It is also
+				possible to return a different module base pointer per opening call
+				(see also <a href="#instances">8. Instances</a>).
+			</div>
+			<div class="block">
+				To enable this facility, place pointers to an <em>open</em> and a
+				corresponding <em>close function</em> in the module header during
+				initialization:
+			</div>
+			<blockquote>
+<pre>
+TBOOL
+mod_init(MYMOD *mod)
+{
+    ...
+
+    /* Enable module open/close facility */
+    mod-&#062;module.tmd_OpenFunc = (TMODOPENFUNC) mod_open;
+    mod-&#062;module.tmd_CloseFunc = (TMODCLOSEFUNC) mod_close;
+
+    ...
+
+</pre>
+			</blockquote>
+			<div class="block">
+				The open function is called in the opener's task context each time a
+				module is opened using <a href="exec.html#TOpenModule">exec:TOpenModule</a>. Accordingly, the close function
+				is called when the opener issues <a href="exec.html#TCloseModule">exec:TCloseModule</a>.
+			</div>
+			<div class="block">
+				In most cases the open function is used to perform
+				"expensive" global initializations (see <a href="#initfunc">4. Init function</a>).
+				In this scenario, the open function intercepts module opens for the
+				maintenance of a reference counter, so that it may request the missing
+				resources when the module is accessed for the first time:
+			</div>
+			<blockquote>
+<pre>
+TCALLBACK MYMOD *
+mod_open(MYMOD *mod, TAPTR task, TTAGITEM *tags)
+{
+    TAPTR TExecBase = TGetExecBase(mod);
+    MYMOD *result = TNULL; /* in case of failure */
+
+    TLock(mod-&#062;lock);
+
+    if (mod-&#062;initialized == TFALSE)
+    {
+        /* request "another" module */
+        mod-&#062;anothermod = TOpenModule("another", 0, TNULL);
+        if (mod-&#062;anothermod != TNULL) mod-&#062;initialized = TTRUE;
+    }
+
+    if (mod-&#062;initialized == TTRUE)
+    {
+        /* success: return self */
+        result = mod;
+        mod-&#062;refcount++;
+    }
+
+    TUnlock(mod-&#062;lock);
+
+    return result;
+}
+</pre>
+			</blockquote>
+			<div class="block">
+				Accordingly, a close function is needed to unload the module as soon as
+				the reference counter drops to zero:
+			</div>
+			<blockquote>
+<pre>
+TCALLBACK TVOID
+mod_close(MYMOD *mod, TAPTR task)
+{
+    TAPTR TExecBase = TGetExecBase(mod);
+
+    TLock(mod-&#062;lock);
+
+    if (--mod-&#062;refcount == 0)
+    {
+        TCloseModule(mod-&#062;anothermod);
+        mod-&#062;initialized = TFALSE;
+    }
+
+    TUnlock(mod-&#062;lock);
+}
+</pre>
+			</blockquote>
+			<div class="block">
+				Note:
+			</div>
+			<blockquote>
+				<ul>
+					<li class="bullets">
+						Once initialized, a module can be requested by any number of opening
+						tasks at the same time, therefore a locking mechanism is mandatory to
+						ensure the integrity of the fields in the module base.
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<hr><a name="instances"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#instances">8. Instances</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				A more elaborate use of the open function (see
+				<a href="#openfunction">7. Open function</a>) can be the creation of
+				<em>instances</em> of a module.
+			</div>
+			<div class="block">
+				Each open to a module can return a different (i.e. newly created) module
+				base which may include (but is not limited to) an overloaded set of
+				function pointers, and by passing module-specific taglist arguments to
+				<a href="exec.html#TOpenModule">exec:TOpenModule</a>, it is possible to use the open function not dissimilar
+				to a variable-argument constructor; these facilities allow object-oriented
+				designs to be implemented on top of the module interface.
+			</div>
+			<div class="block">
+				In the following example an exact copy of the module <em>super instance</em> is
+				created, alongside with its preceding table of function pointers:
+			</div>
+			<blockquote>
+<pre>
+#include &#060;tek/teklib.h&#062;
+
+TCALLBACK MYMOD *
+mod_open(MYMOD *mod, TAPTR task, TTAGITEM *tags)
+{
+    TAPTR TExecBase = TGetExecBase(mod);
+    MYMOD *inst;
+
+    /* Get instance copy of the module base */
+    inst = TNewInstance(mod, mod-&#062;module.tmd_PosSize,
+        mod-&#062;module.tmd_NegSize);
+
+    if (inst)
+    {
+        /* Initializations specific to the newly created instance */
+        inst-&#062;anothermod = TOpenModule("another", 0, TNULL);
+        if (inst-&#062;anothermod)
+        {
+            inst-&#062;numvertex = TGetTag(tags, MYMOD_NumVertex, 0);
+            inst-&#062;numcolors = TGetTag(tags, MYMOD_NumColors, 0);
+            /* etc. */
+            return inst;
+        }
+        TFreeInstance(inst);
+    }
+    return TNULL;
+}
+
+TCALLBACK TVOID
+mod_close(MYMOD *inst, TAPTR task)
+{
+    TAPTR TExecBase = TGetExecBase(inst);
+    TCloseModule(inst-&#062;anothermod);
+    /* etc. */
+    TFreeInstance(inst);
+}
+</pre>
+			</blockquote>
+			<div class="block">
+				In this design the module base is used like a 'prototype'; all data is placed
+				in the instance copies, therefore no locking mechanism or reference counter
+				is needed.
+			</div>
+		</div>
+		<hr><a name="advanced"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#advanced">9. Advanced Object Orientation</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				In object-oriented designs you may wish to implement inheritance on top of
+				the module interface by extending the module base and/or the table of
+				function pointers upon the creation of a new instance
+				(see <a href="#instances">8. Instances</a>).
+			</div>
+			<div class="block">
+				As a downside to this, a copy of the function table for each and every new
+				instance may turn out to be redundant and a major waste of memory. Or, in
+				a method that has been overwritten in an instance copy, you may need to
+				invoke its respective implementation in the module super instance (aka its
+				<em>super method</em>).
+			</div>
+			<div class="block">
+				In such cases, the use of a double-indirect calling convention may come
+				in handy. For example, the field <code>tmd_ModSuper</code> in the module header,
+				which holds a pointer to the module super instance that is getting
+				replicated with each call to <a href="teklib.html#TNewInstance">teklib:TNewInstance</a>, can be used to
+				implement an additional layer of indirection for method calling, e.g.:
+			</div>
+			<blockquote>
+<pre>
+#define TExampleSuper(base) ((struct TModule *)(base))-&#062;tmd_ModSuper
+
+#define TExampleSuperMethod(inst,arg) \
+(*(((TMODCALL TINT(**)(TAPTR,TINT))(TExampleSuper(inst)))[-10]))(inst,arg)
+</pre>
+			</blockquote>
+			<div class="block">
+				This would roughly correspond to <code>(*inst-&#062;super-&#062;method)(inst,arg)</code>.
+			</div>
+		</div>
+		<hr><a name="reserved"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#reserved">10. Reserved function vectors</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				It is recommended that you reserve the lower eight function vectors of
+				each module for future extensions of TEKlib's module interface. The
+				extended range, as currently defined:
+			</div>
+			<blockquote>
+				<table class="noborder">
+					<tr>
+						<td class="noborder">
+							-1
+						</td>
+						<td class="noborder">
+							Begin-I/O vector, or TNULL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							-2
+						</td>
+						<td class="noborder">
+							Abort-I/O vector, or TNULL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							-3
+						</td>
+						<td class="noborder">
+							reserved, must be TNULL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							-4
+						</td>
+						<td class="noborder">
+							reserved, must be TNULL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							-5
+						</td>
+						<td class="noborder">
+							reserved, must be TNULL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							-6
+						</td>
+						<td class="noborder">
+							reserved, must be TNULL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							-7
+						</td>
+						<td class="noborder">
+							reserved, must be TNULL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							-8
+						</td>
+						<td class="noborder">
+							reserved, must be TNULL
+						</td>
+					</tr>
+				</table>
+			</blockquote>
+			<div class="block">
+				The Begin-I/O and Abort-I/O vectors are reserved for predefined calls
+				that allow turning a module into a hybrid with a device driver or
+				filesystem handler. The vectors -3 to -8 are reserved for future
+				extensions. Hence, in case of an 'extended' module, the regular API
+				starts at function vector -9.
+			</div>
+			<div class="block">
+				Each unused (yet existent) module vector in an extended module must be
+				initialized with TNULL, otherwise binary compatibility of a module
+				with future versions of TEKlib is likely to be compromised; that is
+				because in future versions TEKlib may probe and call module vectors
+				in the range from -3 to -8 if they exist and are not TNULL.
+			</div>
+			<div class="block">
+				To make a module aware of its extensible nature, place the flag
+				<code>TMODF_EXTENDED</code> into the module header during initialization:
+			</div>
+			<blockquote>
+<pre>
+mod-&#062;module.tmd_Flags |= TMODF_EXTENDED;
+</pre>
+			</blockquote>
+		</div>
+		<hr><a name="versioning"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#versioning">11. Versioning</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				The caller can request a specific (major) version of a module using
+				the version argument to <a href="exec.html#TOpenModule">exec:TOpenModule</a>. Note that a module writer
+				is obliged to increase the major version when a module's general
+				functionality is getting extended. The (minor) revision number is only
+				for information purposes and normally indicates internal changes, such
+				as bugfixes etc. It is not available to <a href="exec.html#TOpenModule">exec:TOpenModule</a>.
+			</div>
+			<div class="block">
+				Further notes:
+			</div>
+			<blockquote>
+				<ul>
+					<li class="bullets">
+						The version request is resolved in the module init function.
+						It is under exclusive control of the module implementation.
+					</li>
+					<li class="bullets">
+						By convention, a request to a previous version should be granted by
+						a newer implementation of a module.
+					</li>
+					<li class="bullets">
+						TEKlib does not support different versions of the same module at the
+						same time in memory.
+					</li>
+				</ul>
+			</blockquote>
+			<div class="block">
+				Although it would be possible to implement different interfaces
+				depending on the version requested, you are strongly advised
+				not to break a module API once it has been released to the public.
+				It is always possible to extend an unattractive but otherwise
+				functional API with better designed functions for the same purpose. If
+				an API was designed so badly that backwards compatibility cannot be
+				maintained then the API should be redesigned and a new name chosen for
+				the module. By all means you should avoid incompatible, equally named
+				modules in the common namespace.
+			</div>
+			<div class="block">
+				Example demonstrating the intended use of the version and revision
+				fields:
+			</div>
+			<blockquote>
+				<table class="noborder">
+					<tr>
+						<td class="noborder">
+							Version
+						</td>
+						<td class="noborder">
+							Revision
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							0
+						</td>
+						<td class="noborder">
+							0
+						</td>
+						<td class="noborder">
+							The module is under development and
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							0
+						</td>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							the API is constantly changing
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							3
+						</td>
+						<td class="noborder">
+							0
+						</td>
+						<td class="noborder">
+							The authors mark the module as 'beta' and
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							3
+						</td>
+						<td class="noborder">
+							1
+						</td>
+						<td class="noborder">
+							release it to testers. Bugfixes and API
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							3
+						</td>
+						<td class="noborder">
+							2
+						</td>
+						<td class="noborder">
+							changes may follow.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							5
+						</td>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							The authors decide that the API is ready,
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							and bump the major version
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							6
+						</td>
+						<td class="noborder">
+							0
+						</td>
+						<td class="noborder">
+							The module is marked stable and/or released
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							6
+						</td>
+						<td class="noborder">
+							1
+						</td>
+						<td class="noborder">
+							to the public; Bug fixes may follow, but
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							6
+						</td>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							no changes that would break the API.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							7
+						</td>
+						<td class="noborder">
+							0
+						</td>
+						<td class="noborder">
+							The module is now being extended with new
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							functionality. A new version is due so that
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							new features can be requested properly
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							7
+						</td>
+						<td class="noborder">
+							1
+						</td>
+						<td class="noborder">
+							Bugfixes...
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							.
+						</td>
+						<td class="noborder">
+							.
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							8
+						</td>
+						<td class="noborder">
+							0
+						</td>
+						<td class="noborder">
+							More functionality added...
+						</td>
+					</tr>
+				</table>
+			</blockquote>
+		</div>
+		<hr><a name="TOC"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">modules</a> : <a href="#TOC">Table of contents</a></strong></td></tr></table><p><div class="node">
+			<blockquote>
+				<ul>
+					<li class="soft">
+						<a href="#intro">1. Introduction</a>
+					</li>
+					<li class="soft">
+						<a href="#reserved">10. Reserved function vectors</a>
+					</li>
+					<li class="soft">
+						<a href="#versioning">11. Versioning</a>
+					</li>
+					<li class="soft">
+						<a href="#openclose">2. Open and close</a>
+					</li>
+					<li class="soft">
+						<a href="#memory">3. Memory layout</a>
+					</li>
+					<li class="soft">
+						<a href="#initfunc">4. Init function</a>
+					</li>
+					<li class="soft">
+						<a href="#initialization">5. Initialization</a>
+					</li>
+					<li class="soft">
+						<a href="#calling">6. Calling conventions</a>
+					</li>
+					<li class="soft">
+						<a href="#openfunction">7. Open function</a>
+					</li>
+					<li class="soft">
+						<a href="#instances">8. Instances</a>
+					</li>
+					<li class="soft">
+						<a href="#advanced">9. Advanced Object Orientation</a>
+					</li>
+					<li class="soft">
+						<a href="#INDEX">Index</a>
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<hr>
+		<p align="right">Generated Sat Oct  8 03:05:01 2005 from modules.doc</p>
+	</body>
+</html>

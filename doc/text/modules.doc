@@ -1,0 +1,511 @@
+@@ INDEX : Index @@
+== TEKlib / Module writing tutorial ==
+By Timm S. Müller -
+Copyright © 2005 TEK neoscientists. All rights reserved.
+-------------------------------------------------------------------------------
+
+- [[1. Introduction][intro]]
+- [[2. Open and close][openclose]]
+- [[3. Memory layout][memory]]
+- [[4. Init function][initfunc]]
+- [[5. Initialization][initialization]]
+- [[6. Calling conventions][calling]]
+- [[7. Open function][openfunction]]
+- [[8. Instances][instances]]
+- [[9. Advanced object orientation][advanced]]
+- [[10. Reserved function vectors][reserved]]
+- [[11. Versioning][versioning]]
+
+@@ intro: 1. Introduction @@
+
+TEKlib is a modular framework. ''Modules'' are logical parts of code and
+data that do not follow a strict hierarchy but can depend on each
+other. The Exec module, for example, depends on the HAL module and all
+other modules depend at least on the Exec module. All dependencies are
+always resolved during runtime. Module interfaces are resolved as a
+whole; individual functions are not exported symbolically.
+
+@@ openclose: 2. Open and close @@
+
+The function for requesting a module is exec:TOpenModule(). The result
+from exec:TOpenModule() is a module base pointer, or {{TNULL}}. The return
+value must be checked, as an attempt to open a module may fail at any
+time; a module may be inaccessible in the file system, it may have an
+insufficient version or fail to initialize.
+
+When they are no longer needed, all modules that have been opened by
+an application (or by another module) must be closed with a matching
+call to exec:TCloseModule(). If unclosed modules are encountered
+during closedown then TEKlib's Exec core will raise a fatal exception
+(read: "crash") at exit.
+
+A module can be requested by any number of tasks at the same time.
+Exec keeps track of modules using a locking scheme and reference
+counter. As soon as a module reference counter drops to zero, the
+module in question is unloaded and all its resources are freed.
+
+@@ memory: 3. Memory layout @@
+
+Modules do not export symbols. Once initialized, a module's interface
+consists of a data structure called the ''module base'' and a table of
+function pointers, which is normally located in front of it. A
+module's first function pointer has an index of -1 relative to the
+base, thus a module has a ''negative size'', which is the size of the
+table of function pointers preceding its base address.
+
+		               ____________
+		negative      |            |    --> mod_func[-N]
+		  size        |  function  |    --> ...
+		              |   table    |    --> mod_func[-2]
+		  base  ____ _|____________|_   --> mod_func[-1]
+		address       |            |
+		              |   module   |
+		              |   header   |
+		positive      |____________|    module
+		  size        |            |    base
+		              |   module   |
+		              |  specific  |
+		              |    data    |
+		              |            |    a module in memory
+		              |____________|
+
+The module base (or ''super instance'') is an unique data structure and
+shared across all opens to a module. Modules must be expected to be
+accessed by an arbitrary number of openers at the same time,
+therefore all data being stored in the module base should be protected
+with locking mechanisms for safe use in a multitasking environment.
+
+Example of a typical module base structure:
+
+		#include <tek/exec.h>
+
+		typedef struct MyModule
+		{
+		    struct TModule module;  /* module header */
+		
+		    TAPTR lock;             /* module-specific data */
+		    TUINT refcount;
+		    TAPTR anothermod;
+		    TBOOL initialized;
+		
+		} MYMOD;
+
+@@ initfunc: 4. Init function @@
+
+Only a single entrypoint to a module is visible to TEKlib's module
+loader. That entry point is called a module's ''init function'':
+
+		result = tek_init_modname(task, module,          version, tags)
+		TUINT                     TAPTR struct TModule*  TUINT16  TTAGITEM*
+
+The name is prefixed with tek_init_ and then followed by the module's
+name. The ''modname'' part acts as an unique identifier and usually
+matches the filename (or part of it).
+
+When a module is requested for the first time, TEKlib's Exec core
+attempts to load it and determine its init function entry. If a matching
+init function is available, it is then called three times:
+
+	* Upon the first invocation the module argument is {{TNULL}}. The init
+	function is expected to check the version argument and to return the
+	size of the module base. If the version request cannot be satisfied
+	then the init function must return {{0}} (or {{TFALSE}}).
+
+	* When called for the second time, the module argument is {{TNULL}} and
+	the version argument is {{0xffff}}. The init function is now expected to
+	return the module's negative size, i.e. the size of a function table
+	preceding the base address. It is possible that a module has no
+	function table at all, therefore {{0}} is valid return value.
+
+	* When called for the third time, the module argument contains a
+	pointer to a module base. The memory for this data structure has been
+	allocated and cleared, and some fields in the module header have been
+	readily initialized by Exec. The init function is now expected to
+	perform the module's one-shot initializations. If successful, the
+	return value is {{TTRUE}}, otherwise {{TFALSE}}.
+
+A module's init function may look like this:
+
+		TMODENTRY TUINT 
+		tek_init_mymod(TAPTR task, MYMOD *mod, TUINT16 version, TTAGITEM *tags)
+		{
+		    if (mod == TNULL)
+		    {
+		        if (version <= MOD_VERSION)
+		        {
+		            /* First call: check version, return positive size */
+		            return sizeof(MYMOD);
+		        }
+
+		        if (version == 0xffff)
+		        {
+		            /* Second call: return negative size */
+		            return sizeof(TAPTR) * MOD_NUMVECTORS;
+		        }
+
+		        /* cannot satisfy version request */
+		        return 0;
+		    }
+
+		    /* Third call: Module-specific initializations (see below) */
+		    return mod_init(mod);
+		}
+
+Notes:
+
+	* The task argument refers to the Exec-internal task context
+	in which the init function is called.
+
+	* The tags argument is currently unused by the init function as it is
+	reserved for future extensions of the module interface.
+
+@@ initialization: 5. Initialization @@
+
+The initializations in the third stage normally include the setup of
+a function table, memory managers, lists, locks etc. 
+
+Note:
+
+	* The init function is entered in an Exec-internal task context. It is
+	not advisable to perform "expensive" initializations here that depend
+	on I/O operations or other functions that might block. In particular,
+	you are not allowed to open other modules in the init function.
+	Attempts to do so will be rejected by Exec and cause exec:TOpenModule()
+	to return {{TNULL}}. Other modules, when needed, must be opened somewhere
+	else in the module API, or preferrably in a module's ''open function''
+	(see [[7. Open function][openfunction]]).
+
+	* Exec expects the module base to be headed by a structure of the type
+	struct TModule. Some fields in the header are readily initialized by
+	Exec when the third initialization stage is entered. Other fields
+	are mandatory to be filled in by the user, namely the version/revision
+	fields and usually at least a function table or a pointer to an open
+	function (see [[7. Open function][openfunction]]).
+
+	* If you create locks, allocate memory or claim other resources in the
+	init function then you must place a pointer to a corresponding
+	''deinitialization function'' in the module header. This function will be
+	called back by Exec before a module is getting unloaded.
+
+Example:
+
+		TBOOL
+		mod_init(MYMOD *mod)
+		{
+		    TAPTR TExecBase = TGetExecBase(mod);
+		    mod->lock = TCreateLock(TNULL);
+		    if (mod->lock)
+		    {
+		        /* Activate deinitialization */
+		        mod->module.tmd_DestroyFunc = (TDFUNC) mod_exit;
+
+		        /* Place module version in the header */
+		        mod->module.tmd_Version = MOD_VERSION;
+		        mod->module.tmd_Revision = MOD_REVISION;
+
+		        /* Initialize function table */
+		        ((TAPTR *) mod)[-1] = mod_func1;
+		        ((TAPTR *) mod)[-2] = mod_func2;
+		        ((TAPTR *) mod)[-3] = mod_func3;
+
+		        return TTRUE;
+		    }
+		    return TFALSE;
+		}
+		
+		TVOID TCALLBACK
+		mod_exit(MYMOD *mod)
+		{
+		    TDestroy(mod->lock);
+		}
+
+@@ calling: 6. Calling conventions @@
+
+According to TEKlib's default convention (which is ANSI-C-compliant),
+the C/C++ prototype for calling a module function is actually a macro
+dereferencing an entry in a table of function pointers. Here it is in
+more detail:
+
+		#define TExampleFunc(TExampleBase,arg) \
+		(*(((TMODCALL TINT(**)(TAPTR,TINT))(base))[-10]))(TExampleBase,arg)
+		     ---1)--- ---------2)--------- ------3)------ -------4)--------
+
+	1) The {{TMODCALL}} definition encapsulates calling conventions for
+	individual platform/compiler combinations.
+
+	2) {{TINT(**)(TAPTR,TINT)}} is the type of the function to which the table
+	entry points.
+	
+	3) {{[-10]}} references the 10th function table entry in front of the
+	module base.
+	
+	4) {{(TExampleBase,arg)}} passes the arguments to the function. By
+	convention, the first argument of each function must be a pointer to
+	the module base (or an instance thereof, see [[8. Instances][instances]]).
+
+Note:
+	* Module prototypes are normally generated from
+	''interface definition files'' (IDF) using TEKlib's {{genheader}} tool.
+
+@@ openfunction: 7. Open function @@
+
+A module's init function is invoked only once per module being
+loaded into memory, and only a limited set of global initializations
+can be performed there (see also [[4. Init function][initfunc]]).
+
+By using a module ''open function'' it is possible to request other
+resources (including modules) during initialization and to perform
+non-trivial setups that may be specific to the opener, or more
+precisely, to the task context in which the opener is running. It is also
+possible to return a different module base pointer per opening call
+(see also [[8. Instances][instances]]).
+
+To enable this facility, place pointers to an ''open'' and a
+corresponding ''close function'' in the module header during
+initialization:
+
+		TBOOL
+		mod_init(MYMOD *mod)
+		{
+		    ...
+		
+		    /* Enable module open/close facility */
+		    mod->module.tmd_OpenFunc = (TMODOPENFUNC) mod_open;
+		    mod->module.tmd_CloseFunc = (TMODCLOSEFUNC) mod_close;
+		
+		    ...
+
+
+The open function is called in the opener's task context each time a
+module is opened using exec:TOpenModule(). Accordingly, the close function
+is called when the opener issues exec:TCloseModule().
+    
+In most cases the open function is used to perform
+"expensive" global initializations (see [[4. Init function][initfunc]]). 
+In this scenario, the open function intercepts module opens for the
+maintenance of a reference counter, so that it may request the missing
+resources when the module is accessed for the first time:
+
+		TCALLBACK MYMOD *
+		mod_open(MYMOD *mod, TAPTR task, TTAGITEM *tags)
+		{
+		    TAPTR TExecBase = TGetExecBase(mod);
+		    MYMOD *result = TNULL; /* in case of failure */
+		
+		    TLock(mod->lock);
+		
+		    if (mod->initialized == TFALSE)
+		    {
+		        /* request "another" module */
+		        mod->anothermod = TOpenModule("another", 0, TNULL);
+		        if (mod->anothermod != TNULL) mod->initialized = TTRUE;
+		    }
+		    
+		    if (mod->initialized == TTRUE)
+		    {
+		        /* success: return self */
+		        result = mod;
+		        mod->refcount++;
+		    }
+		    
+		    TUnlock(mod->lock);
+		    
+		    return result;
+		}
+
+Accordingly, a close function is needed to unload the module as soon as
+the reference counter drops to zero:
+
+		TCALLBACK TVOID
+		mod_close(MYMOD *mod, TAPTR task)
+		{
+		    TAPTR TExecBase = TGetExecBase(mod);
+		
+		    TLock(mod->lock);
+		
+		    if (--mod->refcount == 0)
+		    {
+		        TCloseModule(mod->anothermod);
+		        mod->initialized = TFALSE;
+		    }
+		
+		    TUnlock(mod->lock);
+		}
+
+Note: 
+
+	* Once initialized, a module can be requested by any number of opening
+	tasks at the same time, therefore a locking mechanism is mandatory to
+	ensure the integrity of the fields in the module base.
+
+@@ instances: 8. Instances @@
+
+A more elaborate use of the open function (see
+[[7. Open function][openfunction]]) can be the creation of
+''instances'' of a module.
+
+Each open to a module can return a different (i.e. newly created) module
+base which may include (but is not limited to) an overloaded set of
+function pointers, and by passing module-specific taglist arguments to
+exec:TOpenModule(), it is possible to use the open function not dissimilar
+to a variable-argument constructor; these facilities allow object-oriented
+designs to be implemented on top of the module interface.
+
+In the following example an exact copy of the module ''super instance'' is
+created, alongside with its preceding table of function pointers:
+
+		#include <tek/teklib.h>
+		
+		TCALLBACK MYMOD *
+		mod_open(MYMOD *mod, TAPTR task, TTAGITEM *tags)
+		{
+		    TAPTR TExecBase = TGetExecBase(mod);
+		    MYMOD *inst;
+		
+		    /* Get instance copy of the module base */
+		    inst = TNewInstance(mod, mod->module.tmd_PosSize,
+		        mod->module.tmd_NegSize);
+		
+		    if (inst)
+		    {
+		        /* Initializations specific to the newly created instance */
+		        inst->anothermod = TOpenModule("another", 0, TNULL);
+		        if (inst->anothermod)
+		        {
+		            inst->numvertex = TGetTag(tags, MYMOD_NumVertex, 0);
+		            inst->numcolors = TGetTag(tags, MYMOD_NumColors, 0);
+		            /* etc. */
+		            return inst;
+		        }
+		        TFreeInstance(inst);
+		    }
+		    return TNULL;
+		}
+
+		TCALLBACK TVOID
+		mod_close(MYMOD *inst, TAPTR task)
+		{
+		    TAPTR TExecBase = TGetExecBase(inst);
+		    TCloseModule(inst->anothermod);
+		    /* etc. */
+		    TFreeInstance(inst);
+		}
+
+In this design the module base is used like a 'prototype'; all data is placed
+in the instance copies, therefore no locking mechanism or reference counter
+is needed.
+
+@@ advanced: 9. Advanced Object Orientation @@
+
+In object-oriented designs you may wish to implement inheritance on top of
+the module interface by extending the module base and/or the table of
+function pointers upon the creation of a new instance
+(see [[8. Instances][instances]]).
+
+As a downside to this, a copy of the function table for each and every new
+instance may turn out to be redundant and a major waste of memory. Or, in
+a method that has been overwritten in an instance copy, you may need to
+invoke its respective implementation in the module super instance (aka its
+''super method'').
+
+In such cases, the use of a double-indirect calling convention may come
+in handy. For example, the field {{tmd_ModSuper}} in the module header,
+which holds a pointer to the module super instance that is getting
+replicated with each call to teklib:TNewInstance(), can be used to 
+implement an additional layer of indirection for method calling, e.g.:
+
+		#define TExampleSuper(base) ((struct TModule *)(base))->tmd_ModSuper
+		
+		#define TExampleSuperMethod(inst,arg) \
+		(*(((TMODCALL TINT(**)(TAPTR,TINT))(TExampleSuper(inst)))[-10]))(inst,arg)
+		
+This would roughly correspond to {{(*inst->super->method)(inst,arg)}}.
+
+@@ reserved : 10. Reserved function vectors @@
+
+It is recommended that you reserve the lower eight function vectors of
+each module for future extensions of TEKlib's module interface. The
+extended range, as currently defined:
+
+	-1  || Begin-I/O vector, or TNULL
+	-2  || Abort-I/O vector, or TNULL
+	-3  || reserved, must be TNULL
+	-4  || reserved, must be TNULL
+	-5  || reserved, must be TNULL
+	-6  || reserved, must be TNULL
+	-7  || reserved, must be TNULL
+	-8  || reserved, must be TNULL
+
+The Begin-I/O and Abort-I/O vectors are reserved for predefined calls
+that allow turning a module into a hybrid with a device driver or
+filesystem handler. The vectors -3 to -8 are reserved for future
+extensions. Hence, in case of an 'extended' module, the regular API
+starts at function vector -9.
+
+Each unused (yet existent) module vector in an extended module must be
+initialized with TNULL, otherwise binary compatibility of a module
+with future versions of TEKlib is likely to be compromised; that is 
+because in future versions TEKlib may probe and call module vectors
+in the range from -3 to -8 if they exist and are not TNULL.
+
+To make a module aware of its extensible nature, place the flag
+{{TMODF_EXTENDED}} into the module header during initialization:
+
+		mod->module.tmd_Flags |= TMODF_EXTENDED;
+
+@@ versioning : 11. Versioning @@
+
+The caller can request a specific (major) version of a module using
+the version argument to exec:TOpenModule(). Note that a module writer
+is obliged to increase the major version when a module's general
+functionality is getting extended. The (minor) revision number is only
+for information purposes and normally indicates internal changes, such
+as bugfixes etc. It is not available to exec:TOpenModule().
+
+Further notes:
+
+	* The version request is resolved in the module init function.
+	It is under exclusive control of the module implementation.
+	
+	* By convention, a request to a previous version should be granted by
+	a newer implementation of a module.
+
+	* TEKlib does not support different versions of the same module at the
+	same time in memory.
+
+Although it would be possible to implement different interfaces
+depending on the version requested, you are strongly advised
+not to break a module API once it has been released to the public.
+It is always possible to extend an unattractive but otherwise
+functional API with better designed functions for the same purpose. If
+an API was designed so badly that backwards compatibility cannot be
+maintained then the API should be redesigned and a new name chosen for
+the module. By all means you should avoid incompatible, equally named
+modules in the common namespace.
+
+Example demonstrating the intended use of the version and revision
+fields:
+
+	Version  || Revision ||
+	0        || 0        || The module is under development and
+	0        || .        || the API is constantly changing
+	.        || .        ||
+	3        || 0        || The authors mark the module as 'beta' and
+	3        || 1        || release it to testers. Bugfixes and API 
+	3        || 2        || changes may follow.
+	.        || .        ||
+	5        || .        || The authors decide that the API is ready,
+	.        || .        || and bump the major version
+	.        || .        || 
+	6        || 0        || The module is marked stable and/or released
+	6        || 1        || to the public; Bug fixes may follow, but
+	6        || .        || no changes that would break the API.
+	.        || .        || 
+	7        || 0        || The module is now being extended with new
+	.        || .        || functionality. A new version is due so that
+	.        || .        || new features can be requested properly
+	.        || .        || 
+	7        || 1        || Bugfixes...
+	.        || .        || 
+	8        || 0        || More functionality added...
+

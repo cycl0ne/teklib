@@ -1,0 +1,219 @@
+@@ INDEX : Index @@
+== TEKlib / Application Writing Guide ==
+By Franciska Schulze - 
+Copyright © 2005 TEK neoscientists. All rights reserved.
+
+@@ Overview : Overview @@
+
+So you want to write a TEKlib application? A good starting point is our
+template project. It's called {{appskel}} and can be downloaded here:
+http://www.teklib.org/current/appskel.tar.gz
+
+This guide will show you the first steps you have to take in order to create
+a TEKlib application, and hopefully it will help you to avoid some traps.
+
+Once unpacked, the {{appskel}} directory should be located side by side to
+the TEKlib project. (If you don't like this layout, you could copy the directory
+elsewhere, but you would have to adjust the {{tmkmakefile}} accordingly.)
+
+The application we're going to create will need the TEKlib modules ''exec'' and
+''util''. I'd recommend installing these modules globally; otherwise you'd have
+to create a {{mod}} directory under {{bin/<platform>}}, and copy the required
+modules there.
+
+Let's have a look at the {{appskel}} directory structure:
+
+		+- appskel
+		    +- Makefile             contains platform specific magic; this
+		    |                       file is the same for all side projects
+		    +- bin
+		    |   +- <platform>       the executable can be found here
+		    |       |
+		    |       +- mod          modules local to this application (if any)
+		    |
+		    +- build
+		    |	+- tmkmakefile      meta makefile, not platform-specific
+		    |   |
+		    |	+- tmk_<platform>   platform/compiler-specific makefile,
+		    |                       generated during the build procedure
+		    |
+		    +- lib                  this is where object files go
+		    
+		    
+@@ tmkmakefile : tmkmakefile @@
+
+The {{tmkmakefile}} is a platform-independent meta makefile.
+It contains the target as well as the target's dependencies. As mentioned above,
+during the build process, a platform-specific makefile will be generated from
+this file.
+
+Some snippets from the {{tmkmakefile}} of our tekapp:
+
+		[body name="teklib"]
+		    TEKLIB = $(PARENT)teklib/
+		    BINDIR = bin/$(PLATFORM)
+		[/body]
+
+The path to the TEKlib directory is assigned to the {{TEKLIB}} variable.
+This is necessary for the include files to be found. The variable {{BINDIR}}
+contains the directory in which we want our application executable to end up.
+
+		[body name="tooltargets"]
+
+The build-system is aware of different targets, for example ''modtargets''
+for modules or ''libtargets'' for libraries. In case of an application you
+must utilise ''tooltargets''.
+
+		[embed body="tools"]    tekapp          [/embed]
+
+The symbolic name of the application is included here. (It usually corresponds
+to the executable name.)
+
+		[embed body="tooldep"]  $(LIBDIR)/tekapp.o
+		                        tekapp.c        [/embed]
+
+Dependencies are denoted in sections like this. If the application depends
+on more than one source file, a new ''tooldep'' subsection must be inserted for
+each file. An example:
+
+		[embed body="tooldep"]  $(LIBDIR)/file1.o
+		                        file1.c         [/embed]
+		[embed body="tooldep"]  $(LIBDIR)/file2.o
+		                        file2.c         [/embed]
+		                   ...  ...
+
+In the last section you can find the directives used when linking the
+application executable:
+
+		[embed body="toollink"] tekapp
+		            $(LIBDIR)/tekapp.o          [/embed]
+
+In the first line you include the application name. It's followed by the object
+files, which make up the executable. If the application consists of more than
+one object file, you can simply put one after another, but don't forget to
+concatenate the lines using a backslash if you are moving on to a new line:
+ 
+		[embed body="toollink"]	app
+		            $(LIBDIR)/file1.o   \
+		            $(LIBDIR)/file2.o           [/embed]
+
+A more detailed description of the build system can be found
+[[here][buildsystem:INDEX]].
+
+---------------------------------------------------------------------------
+
+'''IMPORTANT:''' If you change the {{tmkmakefile}}, you have to regenerate
+the makefiles for the changes to take effect. On many platforms, a simple
+		
+		$ make distclean
+
+will do. Calling ''make distclean'' will wipe out all platform-specific
+makefiles and hence they'll be regenerated the next time you start a build.
+It's also possible to manually generate the platform-specific makefiles;
+for example, the Linux commandline would look like this:
+
+		$ ../teklib/build/bin/tmkmf_linux -r -c linux_gcc
+
+---------------------------------------------------------------------------
+
+After we've put so much effort into the {{tmkmakefile}}, our application can
+finally be built. The build procedure is the same as in TEKlib's main tree.
+To build a Linux application, use
+
+		$ make linux
+
+You will notice that there's not much compiler output when building, but
+if you are in a struggle with includes or libraries, then more output could
+be helpful; details of the build procedure can be unveiled if you feed the
+platform-specific makefile directly to the make command:
+
+		$ make -f build/tmk_linux_gcc all
+
+@@ code : Sample code @@
+
+Ok, time to fiddle with {{tekapp.c}}. Starting with the includes,
+{{<tek/teklib.h>}} is a very important one, as many of TEKlib's internal
+definitions are resolved through this file. You shouldn't miss this one,
+especially not if you're writing an application.
+
+Furtheron, some modules provide ''inline''-versions of their respective API.
+These inline includes contain short versions of the module prototypes (more
+on that later). It's always recommended to include and use
+{{<tek/inline/modname.h>}} if available.
+
+Before a TEKlib module can be used, it must be initialised by making a call
+to the exec:TOpenModule() function. exec:TOpenModule() returns a pointer,
+the so-called ''module base''. All functions of a module expect their
+module base as the first argument.
+
+The inline includes will simplify the calling procedure, so that you can do
+without specifying the module base in each function call. For example,
+instead of
+
+		TUtilBase = TExecOpenModule(TExecBase, "util", 0, TNULL); 
+
+you could then use
+
+		TUtilBase = TOpenModule("util", 0, TNULL); 
+
+provided that you named the module base symbol correctly. Here's a short
+overview of modules providing inline includes, alongside with their
+respective module base symbol:
+
+	'''module'''    || '''modul base symbol'''
+	exec            || TExecBase
+	io              || TIOBase
+	ps2             || TPS2Base
+	time            || TTimeBase
+	unistring       || TUStrBase
+	util            || TUtilBase
+
+You can always look up the module base symbol in the module's inline include.
+
+Now, if you take a closer look at the sample code, you will notice that the
+''exec'' module, unlike all other modules, isn't initialised with a call to
+exec:TOpenModule(). The reason is this: When a TEKlib application is started,
+the ''exec'' module has been opened already - as the ''exec'' module wouldn't be
+able to open itself. This works because the application's entrypoint (e.g.
+''main'') lives inside TEKlib's startup code, and therefore a TEKlib application
+is entered through a custom entrypoint, ''TEKMain''.
+
+The only argument to ''TEKMain'' is a pointer to the task we are currently
+running in; and we're lucky - it is possible to derive an ''exec'' module base
+pointer from it. In ''TEKMain'', use the exec:TGetExecBase() macro:
+
+		TTASKENTRY TVOID 
+		TEKMain(TAPTR task)
+		{
+		    TExecBase = TGetExecBase(task);
+		    ...
+		}
+
+The succeeding code demonstrates the parsing of commandline arguments, and
+I won't explain it here in more detail. If you're interested, refer to 
+util:TParseArgV().
+
+-----------------------------------------------------------------------------
+
+You finally reached the end of this guide, which was meant to give you a short
+introduction to TEKlib-based application writing. I shouldn't forget to
+mention that many TEKlib modules come with small test programs, designed
+to illustrate a module's purpose. It's always worthwhile to have a look at
+these samples sources; they can be found inside the module directories in the
+TEKlib main tree. If you're after some more complex examples, you can try out
+our demopack, which can be downloaded here:
+http://www.teklib.org/current/demos.tar.gz
+
+@@ ABOUT : ABOUT @@
+
+VERSION::
+	$Id: application.doc,v 1.2 2005/10/21 12:38:38 tmueller Exp $
+
+REVISION HISTORY::
+	$Log: application.doc,v $
+	Revision 1.2  2005/10/21 12:38:38  tmueller
+	inline include path corrected
+	
+	Revision 1.1  2005/10/08 18:59:54  fschulze
+	added
+	

@@ -1,0 +1,214 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(PLATFORM)
+[/body]
+
+[body name="modtargets"]
+
+	[!-- extra configs --]
+	[if config="linux"]
+		EXTRADEFS = -I/usr/X11R6/include
+		EXTRAMODLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXxf86vm -lGL -lGLU
+	[/if]
+	[if config="fbsd"]
+		EXTRADEFS = -I /usr/X11R6/include
+		EXTRAMODLIBS = -L/usr/X11R6/lib -lX11 -lXext -lXxf86vm -lGL -lGLU
+	[/if]
+	[if config="win32"]
+		[switch]
+			[case config="_vcpp"]
+				EXTRAMODLIBS = gdi32.lib ddraw.lib dinput.lib dxguid.lib opengl32.lib glu32.lib
+			[/case]
+			[case config="_gcc"]
+				EXTRAMODLIBS = -lgdi32 -lddraw -ldinput -ldxguid -lopengl32 -lglu32
+			[/case]
+		[/switch]
+	[/if]
+	[if config="darwin"]
+        EXTRAMODLIBS = -framework Carbon -framework OpenGL -framework AGL
+	[/if]
+
+	[!-- modules to be built --]
+	[switch]
+		[case config="win32"]
+			[embed body="mods"]		display_window_std
+									display_full_std
+									display_window_gl
+									display_full_gl		[/embed]
+		[/case]
+		[case config="linux"]
+			[embed body="mods"]		display_window_std
+									display_full_std
+									display_window_gl
+									display_full_gl	[/embed]
+		[/case]
+		[case config="fbsd"]
+			[embed body="mods"]		display_window_std
+									display_full_std
+									display_window_gl
+									display_full_gl	[/embed]
+		[/case]
+		[case config="amiga"]
+			[embed body="mods"]		display_window_std_cgfx
+							display_full_std_cgfx			[/embed]
+		[/case]
+		[case config="morphos"]
+			[embed body="mods"]		display_window_std_cgfx
+							display_full_std_cgfx			[/embed]
+		[/case]
+		[case config="darwin"]
+                        [embed body="mods"]		display_window_gl
+												display_full_gl
+                        [/embed]
+                [/case]
+	[/switch]
+
+	[!-- link modules. first argument: modname, second: objects --]
+	[switch]
+		[case config="win32"]
+			[embed body="modlink"]	display_window_std
+						$(LIBDIR)/display_window_std.o			[/embed]
+
+			[embed body="modlink"]	display_full_std
+						$(LIBDIR)/display_full_std.o			[/embed]
+
+			[embed body="modlink"]	display_window_gl
+						$(LIBDIR)/display_window_gl.o			[/embed]
+
+			[embed body="modlink"]	display_full_gl
+						$(LIBDIR)/display_full_gl.o			[/embed]
+		[/case]
+		[case config="linux"]
+			[embed body="modlink"]	display_window_std
+						$(LIBDIR)/display_window_std.o			[/embed]
+
+			[embed body="modlink"]	display_full_std
+						$(LIBDIR)/display_full_std.o			[/embed]
+
+			[embed body="modlink"]	display_window_gl
+						$(LIBDIR)/display_window_gl.o			[/embed]
+
+			[embed body="modlink"]	display_full_gl
+						$(LIBDIR)/display_full_gl.o			[/embed]
+		[/case]
+		[case config="fbsd"]
+			[embed body="modlink"]	display_window_std
+						$(LIBDIR)/display_window_std.o			[/embed]
+
+			[embed body="modlink"]	display_full_std
+						$(LIBDIR)/display_full_std.o			[/embed]
+
+			[embed body="modlink"]	display_window_gl
+						$(LIBDIR)/display_window_gl.o			[/embed]
+
+			[embed body="modlink"]	display_full_gl
+						$(LIBDIR)/display_full_gl.o			[/embed]
+		[/case]
+		[case config="amiga"]
+			[embed body="modlink"]	display_window_std_cgfx
+						$(LIBDIR)/display_wnd_std_cgfx.o		[/embed]
+
+			[embed body="modlink"]	display_full_std_cgfx
+						$(LIBDIR)/display_full_std_cgfx.o		[/embed]
+		[/case]
+		[case config="morphos"]
+			[embed body="modlink"]	display_window_std_cgfx
+						$(LIBDIR)/display_wnd_std_cgfx.o		[/embed]
+
+			[embed body="modlink"]	display_full_std_cgfx
+						$(LIBDIR)/display_full_std_cgfx.o		[/embed]
+		[/case]
+		[case config="darwin"]
+[!--
+                        [embed body="modlink"]  display_window_std
+                                                $(LIBDIR)/display_window_std.o                  [/embed]
+                        [embed body="modlink"]  display_full_std
+                                                $(LIBDIR)/display_full_std.o                  [/embed]
+--]
+                        [embed body="modlink"]  display_window_gl
+                                                $(LIBDIR)/display_window_gl.o                  [/embed]
+                        [embed body="modlink"]  display_full_gl
+                                                $(LIBDIR)/display_full_gl.o                  [/embed]
+                [/case]
+	[/switch]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[switch]
+		[!-- explicit rules for unix/x11, since $(HOST) refers to "posix" --]
+		[case config="win32"]
+			[embed body="moddep"]	$(LIBDIR)/display_window_std.o
+									win32/display_window_std.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_std.o
+									win32/display_full_std.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_window_gl.o
+									win32/display_window_gl.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_gl.o
+									win32/display_full_gl.c				[/embed]
+		[/case]
+		[case config="linux"]
+			[embed body="moddep"]	$(LIBDIR)/display_window_std.o
+									x11/display_window_std.c		[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_std.o
+									x11/display_full_std.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_window_gl.o
+									x11/display_window_gl.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_gl.o
+									x11/display_full_gl.c			[/embed]
+		[/case]
+		[case config="fbsd"]
+			[embed body="moddep"]	$(LIBDIR)/display_window_std.o
+									x11/display_window_std.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_std.o
+									x11/display_full_std.c				[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_window_gl.o
+									x11/display_window_gl.c				[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_gl.o
+									x11/display_full_gl.c				[/embed]
+		[/case]
+		[case config="amiga"]
+			[embed body="moddep"]	$(LIBDIR)/display_wnd_std_cgfx.o
+									amiga/display_window_std_cgfx.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_std_cgfx.o
+									amiga/display_full_std_cgfx.c			[/embed]
+		[/case]
+		[case config="morphos"]
+			[embed body="moddep"]	$(LIBDIR)/display_wnd_std_cgfx.o
+									amiga/display_window_std_cgfx.c			[/embed]
+			[embed body="moddep"]	$(LIBDIR)/display_full_std_cgfx.o
+									amiga/display_full_std_cgfx.c			[/embed]
+		[/case]
+		[case config="darwin"]
+[!--
+                        [embed body="moddep"]   $(LIBDIR)/display_window_std.o
+                                                			darwin/display_window_std.c
+                     	[/embed]
+                        [embed body="moddep"]   $(LIBDIR)/display_full_std.o
+			                                                darwin/display_full_std.c
+						[/embed]
+--]
+						[embed body="moddep"]   $(LIBDIR)/display_full_gl.o
+			                                                darwin/display_full_gl.c
+                       	[/embed]
+                        [embed body="moddep"]   $(LIBDIR)/display_window_gl.o
+			                                                darwin/display_window_gl.c
+                       	[/embed]
+                [/case]
+	[/switch]
+
+
+[/body]
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] 
+	makefile_modules
+[/render]

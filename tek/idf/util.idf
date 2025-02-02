@@ -1,0 +1,64 @@
+
+;
+;	$Id: util.idf,v 1.9 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/util.idf - Util interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name util					; as in tek_init_...
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix TUtil				; name prefix heading non-inline functions
+.iprefix T					; name prefix heading inline functions
+.ibase TAPTR TUtilBase		; inline module base
+.inline on					; generate inline calls
+
+.defv TVOID					; aliases for void
+.defp TAPTR, TCMPFUNC, TSTRPTR, TFINDFUNC		; pointer types
+.defi TINT, TUINT, TBOOL	; 32bit integer types
+.defd TDOUBLE				; double types
+.defs TUINT16
+
+.offset 9
+TINT GetArgC()
+TSTRPTR *GetArgV()
+TBOOL SetRetVal(TINT retval)
+TUINT GetUniqueID(TAPTR ext)
+TINT GetRandObs()
+TVOID SetRandObs(TINT seed)
+TBOOL HeapSort(TAPTR data, TTAG *ref, TUINT len, TCMPFUNC cmp)
+TNODE *SeekNode(TNODE *node, TINT steps)
+TVOID InsertSorted(TLIST *list, TUINT numentries, TNODE *nnode, TCMPFUNC cmp, TAPTR data)
+TNODE *FindSorted(TLIST *list, TUINT numentries, TFINDFUNC find, TAPTR data)
+TBOOL IsBigEndian()
+TVOID BSwap16(TINT16 *valp)
+TVOID BSwap32(TINT *valp)
+
+TINT StrLen(TSTRPTR str)
+TSTRPTR StrCpy(TSTRPTR dst, TSTRPTR src)
+TSTRPTR StrNCpy(TSTRPTR dst, TSTRPTR src, TINT len)
+TSTRPTR StrCat(TSTRPTR dst, TSTRPTR src)
+TSTRPTR StrNCat(TSTRPTR dst, TSTRPTR src, TINT len)
+TINT StrCmp(TSTRPTR s1, TSTRPTR s2)
+TINT StrNCmp(TSTRPTR s1, TSTRPTR s2, TINT len)
+TINT StrCaseCmp(TSTRPTR s1, TSTRPTR s2)
+TINT StrNCaseCmp(TSTRPTR s1, TSTRPTR s2, TINT len)
+TSTRPTR StrStr(TSTRPTR s1, TSTRPTR s2)
+TSTRPTR StrChr(TSTRPTR str, TINT chr)
+TSTRPTR StrRChr(TSTRPTR str, TINT chr)
+TSTRPTR StrDup(TAPTR mmu, TSTRPTR str)
+TSTRPTR StrNDup(TAPTR mmu, TSTRPTR str, TINT len)
+TINT StrToI(TSTRPTR str, TINT *valp)
+TINT GetRand(TINT seed)
+TAPTR ParseArgV(TSTRPTR tmpl, TSTRPTR *argv, TTAG *argarray)
+TUINT HToNL(TUINT val)
+TUINT16 HToNS(TUINT16 val)
+TINT StrToD(TSTRPTR str, TDOUBLE *valp)
+TBOOL QSort(TAPTR array, TINT num, TINT size, TCMPFUNC cmp, TAPTR udata)
+TINT GetModules(TSTRPTR prefix, TLIST *list, TTAGITEM *tags)
+TAPTR ParseArgs(TSTRPTR template, TSTRPTR argstring, TTAG *argarray)
+TSTRPTR GetArgs()
+
+.end

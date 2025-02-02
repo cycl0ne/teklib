@@ -1,0 +1,284 @@
+@@ INDEX : Index @@
+== TEKlib build instructions and installation ==
+
+- [[Linux]]
+- [[Windows]]
+- [[FreeBSD]]
+- [[MorphOS]]
+- [[AmigaOS]]
+- [[Playstation 2][PS2]]
+- [[Mac OS X][MacOSX]]
+
+@@ Linux @@
+
+=== Requirements ===
+
+Notable dependencies on the Linux platform are X11, OpenGL and OSS.
+Modules requiring these can be commented out in {{mods/build/tmkmakefile}}:
+
+	visual		|| depends on X11
+	displays	|| depends on X11 and OpenGL
+	audio		|| requires OSS support
+
+=== Installation ===
+
+At the top-level directory, type:
+
+		$ make help
+
+This will guide you through the build process. The normal build procedure
+is invoked with:
+
+		$ make linux
+
+The global installation path on the Linux platform is {{/opt/tek}}.
+It will be used as a fallback if modules cannot be found locally in
+an application's module directory, {{PROGDIR:mod}}. Installation
+is optional, but recommended for side projects to work:
+
+		$ make linux_install
+
+=== Notes ===
+
+* Tests can be found in {{bin/linux}}.
+
+* To disable modules from the build procedure, remove or comment the
+appropriate lines in {{mods/build/tmkmakefile}}, and then regenerate the
+makefiles using
+
+		$ build/bin/tmkmf_linux tmkmakefile -c linux_gcc -r
+
+* To rebuild a (sub-) project, invoke from any level in the directory
+hierarchy:
+
+		$ make -f build/tmk_linux_gcc all
+
+@@ Windows @@
+
+=== Requirements ===
+
+The only notable dependency on the Windows platform is DirectX.
+Modules requiring it can be commented out in {{mods/build/tmkmakefile}}:
+
+	displays	|| depends on DirectX
+	audio		|| depends on DirectX
+
+=== Installation ===
+	
+* Microsoft Visual C++ v6
+
+	The Microsoft Visual C++ makefile build requires version 6 of the
+	compiler suite and a {{cmd}} shell from Windows 2000 or better.
+	
+	At the top-level directory, type:
+	
+			> nmake help
+	
+	This will guide you through the build process. The normal build
+	procedure is invoked with:
+	
+			> nmake win32
+			
+	To install modules globally:
+
+			> nmake win32_install
+	
+	To rebuild a (sub-) project, invoke from any level in the directory
+	hierarchy:
+
+			> nmake /f build\tmk_win32_vcpp all
+
+* GNU-C compiler (MinGW32) 
+
+	There are two possible configurations for this compiler:
+
+		1.) MSys and GCC (both available at http://www.mingw.org)
+
+	or
+
+		2.) Cygwin (need to have the MinGW32 link-kit installed) 
+
+	We assume the compiler is set up correctly to build native Windows 
+	applications (we set {{-mno-cygwin}} to request a native build) and that
+	native headers, such as {{windows.h}} can be found (this should be the 
+	case by default).
+
+	Further we assume that the {{PATH}} environment variable is set in a way
+	that the command {{make}} invokes the GNU make program (please note that
+	this is important even if we invoke {{mingw32-make}}).
+
+	Make sure the DirectX headers can be found by the compiler:
+
+			$ export C_INCLUDE_PATH=<DirectX-SDK>/Include 
+
+	To start the build:
+
+			$ mingw32-make win32_gcc
+
+	To install modules globally:
+	
+			$ mingw32-make win32_gcc_install
+	
+	To rebuild a (sub-) project, invoke from any level in the directory
+	hierarchy:
+	
+			$ mingw32-make -f build/tmk_win32_gcc all
+
+	If you are using Cygwin, use just type {{make}} instead of 
+	{{mingw32-make}}.
+	
+=== Notes ===
+
+* The global installation path on the Windows platform is
+{{%CommonProgramFiles%\tek}}. It will be used as a fallback if modules
+cannot be found locally in an application's module directory,
+{{PROGDIR:mod}}. Installation is optional, but recommended for side
+projects to work.
+
+* Tests can be found in {{bin\win32}}.
+
+* To disable modules from the build procedure, remove or comment the
+appropriate lines in {{mods\build\tmkmakefile}}, and then regenerate
+the makefiles using (depending on the compiler):
+
+		> build\bin\tmkmf_win32 tmkmakefile -c win32_vcpp -r
+or
+		$ ./build/bin/tmkmf_win32 tmkmakefile -c win32_gcc -r
+	
+@@ FreeBSD @@
+
+=== Requirements ===
+
+Notable dependencies of the FreeBSD build are X11, OpenGL and OSS.
+Modules requiring these can be commented out in {{mods/build/tmkmakefile}}:
+
+	visual		|| depends on X11
+	displays	|| depends on X11 and OpenGL
+	audio		|| requires OSS support
+
+=== Installation ===
+
+At the top-level directory, type:
+
+		$ make help
+
+This will guide you through the build process. The normal build procedure
+is invoked with:
+
+		$ make fbsd
+
+The global installation path on the FreeBSD platform is {{/usr/local/tek}}.
+It will be used as a fallback if modules cannot be found locally in
+an application's module directory, {{PROGDIR:mod}}. Installation
+is optional, but recommended for side projects to work:
+
+		$ make fbsd_install
+
+=== Notes ===
+
+* Tests can be found in {{bin/fbsd}}.
+
+* To disable modules from the build procedure, remove or comment the
+appropriate lines in {{mods/build/tmkmakefile}}, and then regenerate the
+makefiles using
+
+		$ build/bin/tmkmf_linux tmkmakefile -c fbsd_gcc -r
+
+* To rebuild a (sub-) project, invoke from any level in the directory
+hierarchy:
+
+		$ make -f build/tmk_fbsd_gcc all
+
+@@ MorphOS @@
+
+=== Installation ===
+
+At the top-level directory, type:
+
+		$ make help
+
+This will guide you through the build process. The normal build procedure
+is invoked with:
+
+		$ make morphos_gcc
+
+The global installation path on the MorphOS platform is {{TEKLIB:}}.
+It will be used as a fallback if modules cannot be found locally in
+an application's module directory, {{PROGDIR:mod}}. Installation
+is optional, but recommended for side projects to work:
+
+		$ make morphos_gcc_install
+
+To rebuild a (sub-) project, invoke from any level in the directory
+hierarchy:
+
+		$ make -f build/tmk_morphos_gcc all
+
+=== Notes ===
+
+* Tests can be found in {{bin/morphos}}.
+
+* To disable modules from the build procedure, remove or comment the
+appropriate lines in {{mods/build/tmkmakefile}}, and then regenerate the
+makefiles using
+		
+		$ build/bin/tmkmf_morphos_gcc tmkmakefile -c morphos_gcc -r	
+
+@@ AmigaOS @@
+
+=== Requirements ===
+
+Dependencies on the Amiga platform are render.library and guigfx.library.
+Modules requiring these can be commented out in {{mods/build/tmkmakefile}}:
+
+	visual		|| render.library, guigfx.library
+
+Supported compilers are SAS/C and GCC. The GCC build is currently
+unmaintained.
+
+=== Installation ===
+
+At the top-level directory, type:
+		
+		$ smake help
+
+This will guide you through the build process. The normal build procedure
+is invoked with:
+
+		$ smake amiga
+
+The global installation path on the Amiga platform is {{TEKLIB:}}.
+It will be used as a fallback if modules cannot be found locally in
+an application's module directory, {{PROGDIR:mod}}. Installation
+is optional, but recommended for side projects to work:
+
+		$ smake amiga_install
+
+=== Notes ===
+
+* Tests can be found in {{bin/amiga}}.
+
+* To disable modules from the build procedure, remove or comment the
+appropriate lines in {{mods/build/tmkmakefile}}, and then regenerate the
+makefiles using
+		
+		$ build/bin/tmkmf_amiga tmkmakefile -c amiga_sasc -r
+
+* To rebuild a (sub-) project, invoke from any level in the directory
+hierarchy:
+
+		$ smake -f build/tmk_amiga_sasc all
+
+* The render.library and guigfx.library packages can be downloaded from
+http://www.neoscientists.org/~tmueller/binarydistillery/ .
+
+@@ PS2 : Playstation 2 @@
+
+Please refer to {{teklib/doc/README.ps2}}.
+
+@@ MacOSX : Mac OS X @@
+
+The Mac OS X port (formerly named {{darwin_gcc}}) is currently unmaintained,
+and the build is likely to fail. Refer to the instructions for a Unix version
+for getting started.
+

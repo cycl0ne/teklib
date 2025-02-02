@@ -1,0 +1,66 @@
+
+;
+;	$Id: ps2.idf,v 1.2 2005/10/05 22:03:55 fschulze Exp $
+;	teklib/tek/idf/ps2.idf - PS2 interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name ps2					; as in tek_init_exec
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix TPS2							; name prefix heading non-inline functions
+
+.defv TVOID								; aliases for void
+.defp TAPTR, TSTRPTR, DMACB				; pointer types
+.defi TINT, TUINT, TBOOL, GSvmode		; 32bit integer types
+.defl TUINT64
+
+.offset 9
+
+TVOID DebugDumpReg(TUINT regdesc);
+TVOID DebugHexDump(TINT8 *s, TQWDATA *data, TINT qwc);
+
+.offset 15
+TVOID    DMAInit(TUINT channel, TUINT size);
+TQWDATA *DMAAlloc(TUINT chn, TUINT qwc, DMACB cb, TAPTR udata);
+TVOID    DMACommit(TUINT channel);
+TQWDATA *DMAAllocSPR(TUINT chn, TUINT qwc, DMACB cb, TAPTR udata);
+TQWDATA *DMAAllocCall(TUINT chn, TQWDATA* dmadata, DMACB cb, TAPTR udata);
+
+.offset 25
+TVOID GSSetReg(TINT reg, TUINT64 data);
+TVOID GSVSync();
+TVOID GSEnableZBuf(TINT ctx);
+TVOID GSClearScreen(TINT ctx);
+TVOID GSClearScreenAlpha(TINT ctx);
+TVOID GSFlipBuffer(TINT ctx, TINT fb);
+TVOID GSSetClearColor(TINT ctx, gs_rgbaq_packed *rgba);
+TVOID GSSetDepthFunc(TINT ctx, TINT dfunc);
+TVOID GSSetDepthClear(TINT ctx, TINT clear);
+TINT  GSInitImage(GSimage *gsimage, TINT w, TINT h, TINT psm, TAPTR data);
+TVOID GSLoadImage(GSimage *gsimage);
+TVOID GSFreeImage(GSimage *gsimage);
+TVOID GSInitScreen(GSvmode mode, TINT inter, TINT ffmd);
+TVOID GSInitDisplay(TINT ctx, TINT dx, TINT dy, TINT magh, TINT magv, TINT w, TINT h, TINT d, TINT xc, TINT yc);
+TVOID GSInitContext(TINT ctx, TINT fbp0, TINT fbp1, TINT psm);
+TVOID GSEnableContext(TINT ctx, TBOOL onoff);
+TVOID GSInitZBuf(TINT ctx, TINT zbp, TINT zpsm, TINT dfunc, TINT dclear);
+TVOID GSInitTexEnv(TINT tbp, TINT tw, TINT th);
+TVOID GSInitTexReg(TINT ctx, TINT tcc, TINT tfx, GSimage *gsimage);
+TVOID GSInit(GSvmode mode, TINT inter, TINT ffmd);
+TINT  GSAllocMem(TINT ctx, TINT memtype, TINT psm);
+TVOID GSFreeMem(TINT ctx, TINT memtype, TINT startpage);
+TVOID DrawTRect(TINT ctx, TINT x, TINT y, TINT w, TINT h, GSimage *gsimage);
+TVOID DrawFRect(TINT ctx, TINT x, TINT y, TINT w, TINT h, gs_rgbaq_packed *rgb);
+TVOID DrawRect(TINT ctx, TINT x, TINT y, TINT w, TINT h, gs_rgbaq_packed *rgb);
+TVOID DrawLine(TINT ctx, TINT x1, TINT y1, TINT x2, TINT y2, gs_rgbaq_packed *rgb);
+TVOID DrawPoint(TINT ctx, TINT x, TINT y, gs_rgbaq_packed *rgb);
+TVOID DrawTRectUV(TINT ctx, TINT x0, TINT y0, TINT x1, TINT y1, TINT u0, TINT v0, TINT u1, TINT v1, GSimage *gsimage);
+TVOID DrawTPointUV(TINT ctx, TINT x, TINT y, TINT u, TINT v, GSimage *gsimage);
+TINT  GSSyncPath(TINT mode);
+TVOID GSGetImage(GSimage *img);
+TVOID GSSetActiveFb(TINT ctx, TINT fbp);
+
+.end

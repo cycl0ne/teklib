@@ -1,0 +1,298 @@
+
+[!-------------------------------------------------------------------------
+
+	$Id: config_ps2.tmk,v 1.8 2005/10/07 14:02:42 fschulze Exp $
+
+--------------------------------------------------------------------------]
+
+[body name="help"]
+	help:
+		\t@echo "==================================================================="
+		\t@echo "=="
+		\t@echo "== ps2_gcc supported builds"
+		\t@echo "== --------------------------"
+		\t@echo "== all ............... build linklibs, modules, executables"
+		\t@echo "== libs .............. build linklibs"
+		\t@echo "== modules ........... build shared modules"
+		\t@echo "== tools ............. build executables (tests, tools)"
+		\t@echo "== install ........... install modules in /opt/tek"
+		\t@echo "== clean ............. clean"
+		\t@echo "== help .............. this help"
+		\t@echo "=="
+		\t@echo "==================================================================="
+[/body]
+
+[body name="config"]
+
+	#
+	#\tTEKlib ps_gcc makefile
+	#\tAutomatically generated with tmkmf TEKlib Makefile generator
+	#
+
+	PLATFORM	= ps2
+	HOST        = ps2
+	
+	PREFIX	= ee-
+	AS 		= $(PREFIX)as
+	CC		= $(PREFIX)gcc
+	LD		= $(PREFIX)gcc
+	DVPASM	= $(PREFIX)dvp-as
+	AR      = $(PREFIX)ar r	
+	RANLIB  = $(PREFIX)ranlib	
+	STRIP   = $(PREFIX)strip
+
+	CFLAGS 	= -mips3 -mcpu=r5900 -D_EE -ffreestanding -fno-builtin \
+				-mlong64 -mhard-float -mno-abicalls -EL
+
+	PARENT      = ../
+	DEF			= -DTEKLIB -DTSYS_PS2 $(EXTRADEFS)
+	WARN		= -Wall
+
+	MKDIR        = mkdir -p
+	RM           = rm
+	RMDIR        = rm -R
+
+	LIBPREFIX    = lib
+	LIBSUFFIX    = a
+	MODSUFFIX    = so
+
+	TOOLCFLAGS	= $(CFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) $(EXTRATOOLINCL)
+	
+	TOOLLIBS    = -L$(PS2DEV)/newlib/lib -L$(PS2DEV)/neolib/lib -L$(TEKLIB)lib/$(PLATFORM) \
+		-ltekcmain -lexec -lhal -ltime -lutil -lio -liohnd_ps2io -lhash -lstoragemanager -lvisual \
+		-lunistring -lzlib -limgproc -ldatatypehandler -ldatatype_codec_targa -ldatatype_ident_targa \
+		-lps2common -liohnd_stdio -lkernel -lc -lm $(EXTRATOOLLIBS)
+	
+	TOOLLIBS    += -L$(PS2LIB)/ee/lib -T$(PS2LIB)/ee/startup/linkfile -nostartfiles
+
+	[switch]
+		[case config="_release"]
+			OPT 	= -O2
+		[/case]
+		[case config="_debug"]
+			OPT 	= -O1
+			DEBUG	= -DTDEBUG=5 -g
+		[/case]
+		[default]
+			OPT 	= -O2
+			DEBUG	= -DTDEBUG=10 -g
+		[/default]
+	[/switch]
+
+	[embed body="help"/]
+	
+[/body]
+
+[body name="paths"]
+
+	INCL		 = -I$(TEKLIB) -I. -I./include -I$(PS2DEV)/newlib/include -I$(PS2LIB)/common/include -I$(PS2LIB)/ee/include
+	LIBDIR       = lib/$(PLATFORM)
+	MODDIR       = $(BINDIR)/mod
+
+	TEKSYSDIR    = /opt/tek/			[!--- you can adjust this to your needs --]
+	MODINSTDIR   = $(TEKSYSDIR)mod
+
+	#
+
+	$(BINDIR):
+		\t-$(MKDIR) $(BINDIR)
+		\t-$(MKDIR) $(MODDIR)
+	$(LIBDIR):
+		\t-$(MKDIR) $(LIBDIR)
+
+[/body]
+
+
+[!---------- guitoolbuild ------------]
+
+[body name="guitools"]
+	GUITOOLS = \\
+		$(BINDIR)/%n
+[/body]
+
+[body name="guitoolbuild"]
+	guitools: $(BINDIR) $(LIBDIR) libs $(GUITOOLS)
+[/body]
+
+[body name="guitooldep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="guitoollink"]
+	$(BINDIR)/%1: %2
+		\t@echo "--- (TOOLINK) %1"
+		\t$(CC) $(TOOLCFLAGS) %2 -o $@ $(TOOLLIBS) 
+	[if config="_release"]
+		\t$(STRIP) $(BINDIR)/%1
+	[/if]
+[/body]
+
+
+[!---------- toolbuild ------------]
+
+[body name="tools"]
+	TOOLS = \\
+		$(BINDIR)/%n
+
+	$(TEKLIB)boot/lib/ps2/entries.o: $(TEKLIB)boot/ps2/entries.c
+		\t@echo "--- (COMPILE) $@"
+		\t$(CC) $(TOOLCFLAGS) $(TEKLIB)boot/ps2/entries.c -c -o $(TEKLIB)boot/lib/ps2/entries.o
+
+[/body]
+
+[body name="toolbuild"]
+	tools: $(BINDIR) $(LIBDIR) $(TEKLIB)boot/lib/ps2/entries.o libs $(TOOLS)
+[/body]
+
+[body name="tooldep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="vsmdep"]
+	%1: %2 %3
+		\t@echo "--- (ASSEMBLE) %2"
+		\t$(DVPASM) $(INCL) %2 -o $@
+[/body]
+
+
+[body name="toollink"]
+	$(BINDIR)/%1: %2 $(TEKLIB)lib/ps2/crt0.o
+		\t@echo "--- (TOOLINK) %1"
+		\t$(CC) $(TOOLCFLAGS) $(TEKLIB)lib/ps2/crt0.o $(TEKLIB)boot/lib/ps2/entries.o %2 -o $@ $(TOOLLIBS) 
+	[if config="_release"]
+		\t$(STRIP) --strip-unneeded --remove-section .comment $(BINDIR)/%1
+	[/if]
+[/body]
+
+
+[!---------- libbuild ------------]
+
+[body name="libs"]
+	LIBS = \\
+		$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+
+	$(TEKLIB)lib/ps2/crt0.o: $(TEKLIB)boot/ps2/crt0.S
+		\t@echo "--- (COMPILE) $@"
+		\t$(CC) $(LIBCFLAGS) $(TEKLIB)boot/ps2/crt0.S -c -o $(TEKLIB)lib/ps2/crt0.o
+
+[/body]
+
+[body name="libbuild"]
+	LIBCFLAGS	= $(CFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+	libs: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(LIBS) $(TEKLIB)lib/ps2/crt0.o
+	$(TEKLIB)$(LIBDIR):
+		\t-$(MKDIR) $(TEKLIB)$(LIBDIR)
+[/body]
+
+[body name="libdep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(LIBCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="liblink"]
+	$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+		\t@echo "--- (ARCHIVE) %1.$(LIBSUFFIX)"
+		\t$(AR) $@ %2
+		\t$(RANLIB) $@
+[/body]
+
+
+[!---------- modbuild ------------]
+
+[body name="mods"]
+	MODS = \\
+		$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+[/body]
+
+[body name="modbuild"]
+	MODCFLAGS	= $(CFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+	MODLIBS		= -L$(TEKLIB)lib/$(PLATFORM) -ltek $(EXTRAMODLIBS)
+		#-lm
+	modules: $(LIBDIR) $(BINDIR) $(MODS)
+	install: libs modules
+[/body]
+
+[body name="moddep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(MODCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="modlink"]
+	$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+		\t@echo "--- (ARCHIVE) %1.$(LIBSUFFIX)"
+		\t$(AR) $@ %2
+		\t$(RANLIB) $@
+[/body]
+
+
+[!---------- metabuild ------------]
+
+[body name="metabuild"]
+	[embed body="help"/]
+	all: libs modules tools
+	modules tools install clean libs:
+[/body]
+
+[body name="meta"]
+	\t@cd %1; $(MAKE) -f build/tmk_%0 $@
+[/body]
+
+
+[!---------- masterbuild ------------]
+
+[body name="masterbuild"]
+
+	all: modules libs tools
+
+	clean:
+		\tfind $(LIBDIR) -name "*.o" -type f | xargs rm -f
+		\trm -f $(MODS) $(TOOLS) $(LIBS)
+
+[/body]
+
+
+[!-------------------------------------------------------------------------
+
+	Revision History
+	$Log: config_ps2.tmk,v $
+	Revision 1.8  2005/10/07 14:02:42  fschulze
+	cleanup
+	
+	Revision 1.7  2005/10/05 22:08:24  fschulze
+	new rule vsmdep introduced
+	
+	Revision 1.6  2005/09/18 12:12:11  tmueller
+	added crt0.S
+	
+	Revision 1.5  2005/08/04 22:21:25  tmueller
+	fixed
+	
+	Revision 1.4  2005/04/01 22:18:48  fschulze
+	Tool build: Fixed order of -L paths - now using correct clib
+	
+	Revision 1.3  2005/04/01 18:58:46  tmueller
+	Module entries corrected: imgproc, datatypehandler, pcx datatype
+	
+	Revision 1.2  2005/03/13 20:02:37  fschulze
+	update
+	
+	Revision 1.1  2005/01/29 22:20:12  tmueller
+	Playstation2 build config added
+	
+	Revision 1.2  2005/01/23 19:08:55  tmueller
+	removed 'tools' from 'all' target
+	
+	Revision 1.1.1.1  2005/01/23 13:59:39  fschulze
+	initial import
+	
+	Revision 1.1  2005/01/22 16:01:46  tmueller
+	added
+	
+	
+--------------------------------------------------------------------------]

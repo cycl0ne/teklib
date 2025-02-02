@@ -1,0 +1,17 @@
+
+$Id: README,v 1.2 2004/01/13 02:14:53 tmueller Exp $
+teklib/mods/displays/README - Notes about Display drivers
+
+2003-01-12 [tmueller]
+
+The following is likely to apply only to NVIDIA GLX:
+
+2003-12-19 [tmueller]
+
+On the Linux platform, some display drivers are not entirely
+freestanding. An application using the displayhandler must be linked
+against libGL for the displayhandler to load, initialize and query
+displays correctly. If you do not wish your application to link
+against GL, the known workaround is to not include GL display drivers
+to your software distribution, and to avoid linking the remaining
+TEKlib drivers against GL in teklib/mods/displays/build/tmkmakefile

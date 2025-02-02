@@ -1,0 +1,1452 @@
+@@ INDEX : Index @@
+== TEKlib / Unistring module reference manual ==
+By Timm S. Müller - 
+Copyright © 2005 TEK neoscientists. All rights reserved.
+-------------------------------------------------------------------------------
+
+[[Background]]      || Introduction to this module
+[[Unicode]]         || Notes on Unicode
+                    || '''String functions'''
+TAllocString()      || Allocate a new dynamic string
+TFreeString()       || Free a dynamic string
+TSetCharString()    || Set a character in a dynamic string
+TGetCharString()    || Get a character in a dynamic string
+TInsCharString()    || Insert a character to a dynamic string
+TRemCharString()    || Remove a character from a dynamic string
+TLengthString()     || Return length of a dynamic string
+TRenderString()     || Render dynamic string to user-supplied buffer
+TMapString()        || Map dynamic string to a linear range
+TDupString()        || Create a duplicate of a string (or range)
+TCopyString()       || Copy a dynamic string over another 
+TInsertString()     || Insert a dynamic string to a dynamic string
+TInsertStrNString() || Insert a regular string to a dynamic string
+TInsertUTF8String() || Insert an UTF-8 string to dynamic string
+TEncodeUTF8String() || Create an UTF-8 encoded copy of a string
+TCmpNString()       || Compare dynamic strings, length-limited
+TCropString()       || Crop a string to the specified range
+TTransformString()  || Transform (e.g. case of) a dynamic string
+TTokenizeString()   || Tokenize a string to be used as a pattern
+TMatchString()      || Check if a string matches a pattern
+                    || '''Array functions'''
+TAllocArray()       || Allocate a new array
+TFreeArray()        || Free an array
+TInsertArray()      || Insert element to an array
+TRemoveArray()      || Remove an element from an array
+TSeekArray()        || Seek in an array
+TGetArray()         || Get a single element from an array
+TSetArray()         || Set an element in an array
+TLengthArray()      || Return length of an array
+TMapArray()         || Map an array to a linear range in memory
+TRenderArray()      || Render an array to an user-supplied buffer
+TChangeArray()      || Change an array's element size
+TDupArray()         || Create a duplicate of an array
+TCopyArray()        || Copy an array over another
+TTruncArray()       || Truncate an array at its cursor position
+        
+=== Note ===
+
+The array and string functions can be used to operate on the
+same kind of objects, but the array functions are based on an internal cursor
+position that is normally overwritten by string functions. Make sure
+to restore the cursor position to a defined state if you are switching
+from string to array functions.
+
+
+@@ Unicode @@
+
+=== Introduction ===
+
+TEKlib has no notion of Codepages. The character range from {{U+0080}} to
+{{U+00FF}} includes the characters from the LATIN SUPPLEMENT table of
+Unicode, where no symbols exist like hearts, smilies, box drawing or
+the Euro character. The Euro symbol ({{U+20AC}}) is contained in the
+CURRENCY SYMBOLS collection, a smiling face ({{U+263A}}) is available in
+MISCELLANEOUS SYMBOLS, to name only a few examples.
+        
+=== Encodings ===
+
+The ISO 10646 specification defines the Universal Character Set (UCS),
+which is a superset to all other encodings in use. Unicode initially
+included only characters from the Basic Multilingual Plane (BMP) in
+the range from {{U+0000}} to {{U+FFFF}}. The following wide character
+encodings are supported by this module:
+
+	* UCS-2 - Characters in the range from U+0000 to U+0FFFF in the BMP.
+	This is sufficient for by far the most applications, and the preferred
+	encoding used e.g. on the Windows operating system.
+
+	* UCS-4 - Characters in the range from U-00000000 to U-7FFFFFFF,
+	encoded as 32bit integers. Characters in the range above the BMP have
+	only recently been added, and are currently used for mathematical and
+	artistic purposes, musical typesetting and historic alphabets.
+
+	* UTF-8 - Characters in the range from U-00000000 to U-7FFFFFFF,
+	encoded as multibyte sequences.
+               
+			U-00000000 - U-0000007F: 0xxxxxxx
+			U-00000080 - U-000007FF: 110xxxxx 10xxxxxx
+			U-00000800 - U-0000FFFF: 1110xxxx 10xxxxxx 10xxxxxx
+			etc.
+
+	This is the preferred encoding on Unix-style operating systems.
+	The Unistring module does not use this encoding internally, but it
+	supports it for import and export.
+                  
+The ISO 10646-1 standard proposes the use of big-endian encoding,
+unless otherwise agreed; it is hereby stated differently: TEKlib
+uses the host's native endianness. UTF-8, however, is not affected
+by endian issues, which is another good reason to use it for import
+and export purposes.
+
+=== Common sets ===
+
+Unicode defines more than 40,000 characters, and many rules must be
+obeyed to handle uppercase/lowercase conversion and the composition
+and combination of characters.
+        
+It is common practise to use reduced sets for special purposes,
+operating systems and different world regions. TEKlib suggests and
+supports the following minimal set:
+        
+		MES-1: the "Multilingual European Subset", containing 335
+		       characters from the following collections:
+
+		        1 BASIC LATIN                U+0020 - U+007E
+		        2 LATIN SUPPLEMENT           U+00A0 - U+00FF
+		        3 LATIN EXTENDED A           U+0100 - U+017F
+		        6 SPACING MODIFIER LETTERS   U+02B0 - U+02FF
+		       32 GENERAL PUNCTUATION        U+2000 - U+206F
+		       34 CURRENCY SYMBOLS           U+20A0 - U+20CF
+		       36 LETTERLIKE SYMBOLS         U+2100 - U+214F
+		       37 NUMBER FORMS               U+2150 - U+218F
+		       38 ARROWS                     U+2190 - U+21FF
+		       47 MISCELLANEOUS SYMBOLS      U+2600 - U+26FF 
+           
+This set contains all characters of ISO 8859 parts 1, 2, 3, 4, 9, 10, 15.
+Larger sets may be supported in the future.
+
+== References ==
+
+See http://www.unicode.org for further details.
+
+@@ Background @@
+
+BACKGROUND::
+
+	This module provides containers for dynamic arrays, strings, and
+	management of wide characters. Hence "uni" stands for both unified and
+	[[Unicode]], and "strings" stands for sequences of equally-sized
+	elements. Character sequences managed with this module are not
+	necessarily terminated like C strings, and they may contain zeros at
+	any positions.
+
+	This module is designed to efficiently handle insertion and removal in
+	sequences of an arbitrary length, and yet to allow "mappings" to
+	linear ranges of elements in memory. This flexibility comes at a
+	price; heavy internal reorganization may be required if elements are
+	repeatedly inserted or removed at arbitrary positions and each
+	modification is mapped back to a linear range.
+
+	If an operation fails due to a lack of memory then the respective
+	string or array falls into an invalid state and will reject any
+	further modification. It will furthermore return -1 for its length.
+	The only useful operation that remains for an invalid object is to
+	free it. Note, however, that retrieving a copy or a single element
+	from a valid object will never cause its failure; these operations are
+	always safe.
+
+
+MODULE OPEN::
+		TUStrBase = TOpenModule("unistring", version, tags)
+		TAPTR                   TSTRPTR      TUINT16  TTAGITEM*
+
+TAGS::
+	TUString_Local, (TBOOL)
+		By default, an open to the Unistring module returns a pointer to
+		a globally shared instance. If set to TTRUE, this tag causes
+		exec:TOpenModule() to create a local module instance with a
+		private memory pool and ID space.
+
+		A local instance does not implement task-safe memory management,
+		and all objects allocated from a local instance will automatically
+		be freed when it is closed. Objects allocated from a local
+		instance, however, cannot be exchanged with other instances of
+		the Unistring module, and they cannot be passed to another
+		module's API functions that expect dynamic strings as arguments.
+    
+		Default: TFALSE
+    
+	TUString_FragSize, (TINT)
+		Initial fragment size for newly allocated objects in number
+		of elements. Only taken into account for local instances.
+		Default: 64
+
+SEE ALSO::
+	exec:TOpenModule()
+
+@@ TAllocString @@
+
+NAME::
+	TAllocString - create new dynamic string
+
+SYNOPSIS::
+		string = TUStrAllocString(TUStrBase, initstr)
+		TUString                  TAPTR      TSTRPTR
+
+		string = TAllocString(initstr)
+		TUString              TSTRPTR
+
+FUNCTION::
+	Allocate a new dynamic string, and initialize it to the specified
+	C string. The C string's terminating null byte will not be included
+	in the newly created dynamic string. If the C string is a TNULL
+	pointer, the new string will be allocated with a length of zero
+	characters.
+
+INPUTS::
+	cstr   || Pointer to a null-terminated C string, or TNULL
+
+RESULTS::
+	string || A newly created string, or TINVALID_STRING if out of memory.
+
+SEE ALSO::
+	TFreeString(), TDupString(), TAllocArray()
+
+@@ TFreeString @@
+
+NAME::
+	TFreeString - free a dynamic string
+
+SYNOPSIS::
+		TUStrFreeString(TUStrBase, string)
+		                TAPTR      TUString
+
+		TFreeString(string)
+		            TUString
+
+FUNCTION::
+	Delete a dynamic string and free all associated memory.
+	Attempts to free the value TINVALID_STRING are harmless.
+
+INPUTS::
+	string || A string to be freed
+
+SEE ALSO::
+	TAllocString(), TFreeArray()
+
+@@ TInsCharString @@
+
+NAME::
+	TInsCharString - insert character to a dynamic string
+
+SYNOPSIS::
+		length = TUStrInsCharString(TUStrBase, string,  position, character)
+		TINT                        TAPTR      TUString TINT      TWCHAR
+
+		length = TInsCharString(string,  position, character)
+		TINT                    TUString TINT      TWCHAR
+
+FUNCTION::
+	Grow the specified string by inserting the given character at the
+	specified position. If position is less than 0, then it counts
+	backwards from one character past the end of the string. The new
+	length of the string is returned, or -1 in case of an error.
+
+INPUTS::
+	string    || Dynamic string
+	position  || Character position to insert at
+	character || Character (possible range up to 31 bit)
+
+RESULTS::
+	length    || New length, or -1 in case of an error
+
+	The return value will be -1 if an invalid string was specified,
+	when an invalid position was specified, or when an error occured
+	and the string fell into an invalid state.
+
+SEE ALSO::
+	TRemCharString(), TSetCharString(), TInsertStrNString()
+
+@@ TRemCharString @@
+
+NAME::
+	TRemCharString - remove a character from a dynamic string
+
+SYNOPSIS::
+		character = TUStrRemCharString(TUStrBase, string,  position)
+		TWCHAR                         TAPTR      TUString TINT
+
+		character = TRemCharString(string,  position)
+		TWCHAR                     TUString TINT
+
+FUNCTION::
+	Shrink the specified string by removing the character at the given
+	position. If position is less than 0, then it counts backwards
+	from one character past the end of the string. The character being
+	removed will be returned to the caller, or TINVALID_WCHAR (-1) in
+	case of an error.
+
+INPUTS::
+	string    || Dynamic string
+	position  || Character position
+
+RESULTS::
+	character || Character (possible range up to 31 bit), or TINVALID_CHAR
+    
+	The return value will be TINVALID_CHAR (-1) when the string or the
+	position was invalid.
+
+SEE ALSO::
+	TInsCharString()
+
+@@ TLengthString @@
+
+NAME::
+	TLengthString - return the length of a dynamic string
+
+SYNOPSIS::
+		length = TUStrLengthString(TUStrBase, string)
+		TINT                       TAPTR      TUString
+
+		length = TLengthString(string)
+		TINT                   TUString
+
+FUNCTION::
+	Return the length of a string in number of characters.
+	The return value will be -1 if an invalid string or a string
+	in an invalid state was specified.
+
+INPUTS::
+	string || Dynamic string
+
+RESULTS::
+	length || Length of the string, or -1 if the string was invalid
+
+@@ TRenderString @@
+
+NAME::
+	TRenderString - render characters to an user-supplied buffer
+
+SYNOPSIS::
+		error = TUStrRenderString(TUStrBase, string,  ptr,  offs, len, type)
+		TINT                      TAPTR      TUString TAPTR TINT  TINT TINT
+
+		error = TRenderString(string,  ptr,  offs, len, type)
+		TINT                  TUString TAPTR TINT  TINT TINT
+
+FUNCTION::
+	Render a range of a string into an user-supplied buffer.
+	Supported types:
+    
+		- TASIZE_7BIT - range is copied to an 8bit array (TSTRPTR), and it
+		is guaranteed to be free of characters in the range from 0x80 to
+		0xff.
+	
+		- TASIZE_8BIT - range is copied to an 8bit array (TUINT8 *)
+	
+		- TASIZE_16BIT - range is copied to a 16bit array (TUINT16 *)
+	
+		- TASIZE_32BIT - range is copied to a 32bit array (TWCHAR *)
+	
+	If successful, this function returns 0. In the case of an error,
+	the return value will be:
+	
+		- -1 when illegal arguments were passed, e.g. when the specified
+		range is not entirely contained within the string
+	
+		- -2 when the conversion would cause a loss of data, e.g. when
+		there are UCS-2 characters in the string, and a conversion to 8 bit
+		was indicated.
+
+INPUTS::
+	string || Dynamic string
+	ptr    || Pointer to user-supplied buffer
+	offs   || Start position in the string
+	len    || Length of the desired range in number of elements
+	type   || Type of conversion
+
+RESULTS::
+	error  || Error type, 0 if successful
+
+SEE ALSO::
+	TMapString()
+
+
+@@ TMapString @@
+
+NAME::
+	TMapString - map string to a linear array in memory
+
+SYNOPSIS::
+		ptr = TUStrMapString(TUStrBase, string,  offset, length, type)
+		TAPTR                TAPTR      TUString TINT    TINT    TUINT
+
+		ptr = TMapString(string,  offset, length, type)
+		TAPTR            TUString TINT    TINT    TUINT
+
+FUNCTION::
+	Returns a pointer to a linear range of characters of the specified
+	encoding in memory. The pointer can be used to both read from and
+	write to the string. TNULL will be returned in the following cases:
+    
+		- The string or string argument was invalid
+		- The specified range is not entirely contained in the string
+		- The conversion would lead to a loss of information, e.g. because
+		there were UCS-2 characters in the string, and a conversion to
+		8 bit was indicated
+		- Internal reorganization is not possible due to a lack of memory
+  
+	Supported types:
+
+		- TASIZE_7BIT -result is a pointer to an 8bit array (TSTRPTR), and
+		it is guaranteed to be free of characters in the range from 0x80 to
+		0xff.
+	
+		- TASIZE_8BIT - result is a pointer to an 8bit array (TUINT8 *)
+	
+		- TASIZE_16BIT - result is a pointer to a 16bit array (TUINT16 *)
+	
+		- TASIZE_32BIT - result is a pointer to a 32bit array (TWCHAR *)
+            
+WARNINGS::
+	* Using the pointer after calling any other function on the same
+	string is not allowed, as the slightest modification can make it
+	invalid. 
+
+	* Under no circumstances must the array be expected to be valid
+	past the end of the specified length. Remember that dynamic strings
+	are not inherently terminated with zeros, so great care must be
+	taken to not iterate past the end.
+
+INPUTS::
+	string || Dynamic string
+	offset || Start position in the string
+	length || Length of the desired range in number of elements
+	type   || Type of conversion
+
+RESULTS::
+	ptr    || Pointer to an array of elements, or TNULL
+
+NOTES::
+	* This operation may require expensive internal reorganizations
+	which can cause the string to fall into an invalid state. Mappings
+	to a linear array should be well justified. If you just need a copy
+	of the string, use TRenderString().
+
+SEE ALSO::
+	TRenderString()
+
+@@ TSetCharString @@
+
+NAME::
+	TSetCharString - set a character in a string
+
+SYNOPSIS::
+		length = TUStrSetCharString(TUStrBase, string,  position, character)
+		TINT                        TAPTR      TUString TINT      TWCHAR
+
+		length = TSetCharString(string,  position, character)
+		TINT                    TUString TINT      TWCHAR
+
+FUNCTION::
+	Overwrite the character at the specified position in the string. 
+	If position is less than 0, then it counts backwards from one
+	character past the end of the string; if position is -1 or equals
+	the length of the string, the character will be appended, increasing
+	the length of the string by one. The new length of the string will
+	be returned to the caller, or -1 in the case of an error.
+
+INPUTS::
+	string    || Dynamic string
+	position  || Absolute position, or -1 to append
+	character || Character to write
+    
+RESULTS::
+	length    || Length of the string, or -1 if an error occured
+	
+	The return value will be -1 if the string was invalid, in invalid
+	state, when the position was invalid, or when the operation failed
+	due to a lack of memory.
+
+SEE ALSO::
+	TGetCharString(), TInsCharString()
+
+@@ TGetCharString @@
+
+NAME::
+	TGetCharString - get a character from a string
+
+SYNOPSIS::
+		character = TUStrGetCharString(TUStrBase, string,  position)
+		TINT                           TAPTR      TUString TINT
+
+		character = TGetCharString(string,  position)
+		TINT                       TUString TINT
+
+FUNCTION::
+	Get a character at the specified position in the string. If
+	position is less than 0, then it counts backwards from one
+	character past the end of the string. The character is returned to
+	the caller, or TINVALID_WCHAR (-1) if an invalid string or a string
+	in invalid state was specified, or when the position exceeded the
+	length of the string.
+
+INPUTS::
+	string    || Dynamic string
+	position  || Absolute position
+    
+RESULTS::
+	character || Character at the specified position, or -1
+	
+	The return value will be -1 if the string was invalid or in
+	invalid state, or when the position exceeded the length of the
+	string.
+
+SEE ALSO::
+	TSetCharString(), TRemCharString()
+
+@@ TDupString @@
+
+NAME::
+	TDupString - duplicate all or a part of a string
+
+SYNOPSIS::
+		newstr = TUStrDupString(TUStrBase, string,  position, len)
+		TUString                TAPTR      TUString TINT      TINT
+
+		newstr = TDupString(string,  position, len)
+		TUString            TUString TINT      TINT
+
+FUNCTION::
+	Create a duplicate of all or part of a dynamic string. If position
+	is less than 0, then it counts backwards from one character past
+	the end of the string. The len argument specifies the length of the
+	range to be duplicated; if it is less than 0, then -1 extends to the
+	length of the string, -2 extends to the length of the string minus one,
+	etc.
+	
+INPUTS::
+	string    || Dynamic string
+	startpos  || Start position for the desired range
+	len       || Length of the desired range, or -1
+
+RESULTS::
+	newstr    || New string, or TINVALID_STRING (-1)
+	
+	The return value will be -1 if the string was invalid or in an
+	invalid state, when the operation failed due to a lack of memory,
+	or when the range was invalid.
+
+SEE ALSO::
+	TCopyString(), TAllocString(), TFreeString()
+
+@@ TCopyString @@
+
+NAME::
+	TCopyString - copy a string over another
+
+SYNOPSIS::
+		length = TUStrCopyString(TUStrBase, srcstr,  dststr)
+		TINT                     TAPTR      TUString TUString
+
+		length = TCopyString(srcstr,  dststr)
+		TINT                 TUString TUString
+
+FUNCTION::
+	This function copies one string over another.
+
+INPUTS::
+	srcstr   || Dynamic string (source)
+	dststr   || Dynamic string (destination)
+    
+RESULTS::
+	length   || Length of the new string, or TINVALID_STRING (-1)
+	
+	The return value will be -1 if either of the strings were invalid
+	or in an invalid state, or when the operation failed due to a lack
+	of memory
+
+SEE ALSO::
+	TDupString(), TAllocString(), TFreeString()
+
+@@ TInsertString @@
+
+NAME::
+	TInsertString - insert a dynamic string to a dynamic string
+
+SYNOPSIS::
+		len = TUStrInsertString(TUStrBase, dstr,    dpos, sstr,    spos, maxlen)
+		TINT                    TAPTR      TUString TINT  TUString TINT  TINT
+
+		len = TInsertString(dstr,    dpos, sstr,    spos, maxlen)
+		TINT                TUString TINT  TUString TINT  TINT
+
+FUNCTION::
+	Insert a range of characters from a source dynamic string (sstr) to
+	the specified position (dpos) in a destination dynamic string
+	(dstr). If dpos is less than 0, then it counts backwards
+	from one character past the end of the string; if dpos is -1, then
+	the characters will be appended at the end of the string, otherwise
+	they will be inserted before the specified position.
+	
+	The range in the source string begins with the position spos, and
+	extends to the end of the source string if maxlen is -1, to its
+	length minus one character if maxlen is -2 etc., otherwise no more
+	than maxlen characters will be inserted.
+	
+	The return value will be the new length of the destination string,
+	or -1 if an error occured. Possible reasons for failure are that
+	either of the specified strings were invalid, in invalid state,
+	illegal arguments were passed, or a lack of memory was detected.
+
+INPUTS::
+	dstr    || Destination dynamic string
+	dpos    || Destination position in destination string, -1 to append
+	sstr    || Source dynamic string
+	spos    || Starting position in source string
+	maxlen  || Maximum number of characters to insert, or -1
+
+RESULTS::
+	len     || New length of the destination string, or -1
+    
+	The result will be -1 if dpos was out of range or if maxlen was
+	less than zero, when either of the strings was invalid or in
+	invalid state, or when the function ran out of memory.
+
+SEE ALSO::
+	TCopyString(), TInsCharString(), TInsertStrNString(),
+	TInsertUTF8String()
+
+@@ TInsertStrNString @@
+
+NAME::
+	TInsertStrNString - insert a string, length-limited
+
+SYNOPSIS::
+		len = TUStrInsertStrNString(TUStrBase, string,  pos, data, maxl, type)
+		TINT                        TAPTR      TUString TINT TAPTR TINT  TUINT
+
+		len = TInsertStrNString(string,  pos, data, maxl, type)
+		TINT                    TUString TINT TAPTR TINT  TUINT
+
+FUNCTION::
+	Insert data from a regular C string or a sequence of UCS-2 or UCS-4
+	encoded characters into the specified dynamic string. If position is
+	less than 0, then it counts backwards from one character past the
+	end of the string; if position is -1, then the characters will be
+	appended at the end of the string, otherwise they will be inserted
+	before the specified position. A character value of zero terminates
+	reading from data, but will not be included in the result.
+    
+	The new length of the resulting string will be returned to the
+	caller, or -1 in case of an error. 
+
+INPUTS::
+	string  || Dynamic string
+	pos     || Position in the dynamic string, or -1 to append
+	data    || Regular string to be read
+	maxl    || Maximum number of characters to insert
+	type    || Type of conversion.
+    
+	Supported types:
+
+		- TASIZE_8BIT - read data as an 8bit C string (TUINT8 *)
+		- TASIZE_16BIT - read data as 16bit UCS-2 (TUINT16 *)
+		- TASIZE_32BIT - read dara as 32bit UCS-4 (TWCHAR *)
+
+RESULTS::
+	len     || Length of the new string, or -1
+	
+	The return value will be -1 if the position or string was invalid,
+	or when the operation failed due to a lack of memory
+
+SEE ALSO::
+	TCopyString(), TInsCharString(), TInsertString(),
+	TInsertUTF8String()
+
+@@ TInsertUTF8String @@
+
+NAME::
+	TInsertUTF8String - insert an UTF-8 encoded string
+
+SYNOPSIS::
+		length = TUStrInsertUTF8String(TUStrBase, string,  position, utf8str)
+		TINT                           TAPTR      TUString TINT      TUINT8*
+
+		length = TInsertUTF8String(string,  position, utf8str)
+		TINT                       TUString TINT      TUINT8*
+
+FUNCTION::
+	Insert data from an UTF-8 encoded string into the specified dynamic
+	string. If position is less than 0, then it counts backwards
+	from one character past the end of the string; if position is -1,
+	then the characters will be appended at the end of the string,
+	otherwise they will be inserted before the specified position.
+	A character value of zero terminates reading from data, but it
+	will not be included in the result. 
+	
+	The new length of the resulting string will be returned to the
+	caller, or -1 in case of an error. 
+
+INPUTS::
+	string   || Dynamic string
+	position || Position in the dynamic string, or -1 to append
+	utf8str  || UTF-8 encoded string
+    
+RESULTS::
+	length   || Length of the new string, or -1
+	
+	The return value will be -1 if the position or string was invalid,
+	the operation failed due to a lack of memory, or the UTF-8 encoding
+	was corrupt. In the latter case, the resulting string may contain
+	parts of the UTF-8 string up to the invalid position.
+
+SEE ALSO::
+	TInsertStrNString(), TEncodeUTF8String(), TSetCharString(),
+	[[Unicode]]
+
+@@ TEncodeUTF8String @@
+
+NAME::
+	TEncodeUTF8String - create an UTF-8 encoded copy of a string
+
+SYNOPSIS::
+		newstr = TUStrEncodeUTF8String(TUStrBase, string)
+		TUString                       TAPTR      TUString
+
+		newstr = TEncodeUTF8String(string)
+		TUString                   TUString
+
+FUNCTION::
+	Create a new string containing an UTF-8 encoded copy of the
+	specified string.
+
+INPUTS::
+	string   || Dynamic string
+    
+RESULTS::
+	newstr   || UTF-8 encoded copy, or TINVALID_STRING (-1)
+
+SEE ALSO::
+	TInsertUTF8String(), TCopyString(), TDupString(), [[Unicode]]
+
+@@ TCropString @@
+
+NAME::
+	TCropString - crop a dynamic string to the specified range
+
+SYNOPSIS::
+		newlen = TUStrCropString(TUStrBase, string,  position, length)
+		TINT                     TAPTR      TUString TINT      TINT
+
+		newlen = TCropString(string,  position, length)
+		TINT                 TUString TINT      TINT
+
+FUNCTION::
+	This function crops the string to the specified range. If position is
+	less than 0, then it counts backwards from one character past the
+	end of the string. If length is -1, the range extends to the end of
+	the string. If successful, the new length will be returned to the
+	caller. In the case of an error, -1 is returned.
+    
+INPUTS::
+	string   || Dynamic string to crop
+	position || Start position of the range to keep
+	length   || Length of the range to keep
+    
+RESULTS::
+	newlen   || New length of the string, or -1
+	
+	The result will be -1 if the string was invalid or invalid
+	arguments were specified.
+
+@@ TCmpNString @@
+
+NAME::
+	TCmpNString - compare a range of dynamic strings, length-limited
+
+SYNOPSIS::
+		res = TUStrCmpNString(TUStrBase, string1, string2, pos1, pos2, maxlen)
+		TINT                  TAPTR      TUString TUString TINT  TINT  TINT
+
+		res = TCmpNString(string1, string2, pos1, pos2, maxlen)
+		TINT              TUString TUString TINT  TINT  TINT
+
+FUNCTION::
+	This function compares a range of two dynamic strings,
+	case-sensitively.
+	
+	The comparison starts at the specified position in each string, and
+	stops when a maximum of maxlen characters has been traversed, or
+	when either of the strings' length is exceeded. If maxlen is -1,
+	the comparison is not length-limited. If a position is less than 0,
+	then it counts backwards from one character past the end of the
+	string.
+	
+	The return value will be less than zero if string1 is less than
+	string2, zero if both strings are equal, or greater than zero if
+	string1 is greater than string2.
+	
+	Either or both of the strings may be invalid. An invalid string is
+	considered 'less than' a valid string. If the starting position is
+	past the end in both strings, the strings will be considered equal.
+    
+INPUTS::
+	string1  || First dynamic string
+	string2  || Second dynamic string
+	pos1     || Starting position in string 1
+	pos2     || Starting position in string 2
+	maxlen   || Maximum length, or -1 for no maximum
+            
+RESULTS::
+	res      || result of comparison
+
+NOTES::
+	This is a 'technical' comparison; no attempts of collations or
+	normalizations are made. It provides a reproducable numerical
+	ordering of strings, and does not get into language-specific
+	details.
+
+SEE ALSO::
+	TTransformString()
+
+@@ TTransformString @@
+
+NAME::
+	TTransformString - transform (e.g. case of) a dynamic string
+
+SYNOPSIS::
+		newlen = TUStrTransformString(TUStrBase, string,  pos, len, mode)
+		TINT                          TAPTR      TUString TINT TINT TUINT 
+
+		newlen = TTransformString(string,  pos, len, mode)
+		TINT                      TUString TINT TINT TUINT 
+
+FUNCTION::
+	This function changes the specified string's configuration for a
+	given range beginning with the specified character position. If
+	position is less than 0, then it counts backwards from one
+	character past the end of the string. Len determines the number of
+	characters to convert; the range extends to the end of the string
+	if len is -1, to its length minus one if len is -2 etc.
+
+	Modes currently supported are:
+	
+		- TSTRF_UPPER  - Transform to uppercase
+		- TSTRF_LOWER  - Transform to lowercase
+	
+	To avoid irreversible conversions, combine the mode with the flag
+	TSTRF_NOLOSS. The German SMALL SHARP S, for example, extends to two
+	characters, "SS", which, when converted back to lowercase, would
+	become "ss". The Turkish CAPITAL I WITH DOT would transform to "i"
+	in lowercase, and lose its dot when reverted back to uppercase.
+	
+	The return value will be the new length of the resulting string, or
+	-1 if the operation failed due to invalid arguments or a lack of
+	memory. The function will return -2 if the mode was combined with
+	the flag TSTRF_NOLOSS, and a possible loss of information was
+	detected. Note that in the latter case, the resulting string may be
+	left in a partially converted state.
+    
+INPUTS::
+	string  || Dynamic string to transform
+	pos     || Start position of the range to transform
+	len     || Length of the range to transform
+	mode    || Transformation mode
+    
+RESULTS::
+	newlen  || New length of the string, or -1
+    
+	The result will be -1 if the string was invalid or when invalid
+	arguments were specified, or -2 if a potential loss of information
+	was detected.
+
+SEE ALSO::
+	TCmpNString()
+
+@@ TAllocArray @@
+
+NAME::
+	TAllocArray - allocate a new dynamic array
+
+SYNOPSIS::
+		array = TUStrAllocArray(TUStrBase, size)
+		TUString                TAPTR      TUINT
+
+		array = TAllocArray(size)
+		TUString            TUINT
+
+FUNCTION::
+	Reserve a new dynamic array. Possible sizes currently defined:
+    
+		- TASIZE_8BIT     - Element size is 8bit
+		- TASIZE_16BIT    - Element size is 16bit
+		- TASIZE_32BIT    - Element size is 32bit
+		- TASIZE_64BIT    - Element size is 64bit
+		- TASIZE_128BIT   - Element size is 128bit
+		
+		- TASIZE_TAPTR    - Element size is sizeof(TAPTR)
+		- TASIZE_TFLOAT   - Element size is sizeof(TFLOAT)
+		- TASIZE_TDOUBLE  - Element size is sizeof(TDOUBLE)
+		- TASIZE_TTAGITEM - Element size is sizeof(TTAGITEM)
+	
+	If successful, the resulting array has an initial length of
+	zero elements and is in a valid state. If not successful, the
+	return value will be TINVALID_ARRAY (-1).
+
+INPUTS::
+	size  || Element size
+
+RESULTS::
+	array || A newly created array, or TINVALID_ARRAY if out of memory
+
+SEE ALSO::
+	TFreeArray(), TDupArray(), TChangeArray(), TAllocString()
+
+@@ TFreeArray @@
+
+NAME::
+	TFreeArray - free a dynamic array
+
+SYNOPSIS::
+		TUStrFreeArray(TUStrBase, array)
+		               TAPTR      TUString
+
+		TFreeArray(array)
+		           TUString
+
+FUNCTION::
+	Delete a dynamic array and free all associated memory.
+	Attempts to free the value TINVALID_ARRAY (-1) are harmless.
+
+INPUTS::
+	array  - An array to be freed
+
+SEE ALSO::
+	TAllocArray()
+
+@@ TInsertArray @@
+
+NAME::
+	TInsertArray - insert an element to a dynamic array
+
+SYNOPSIS::
+		position = TUStrInsertArray(TUStrBase, array,   dataptr)
+		TINT                        TAPTR      TUString TAPTR
+
+		position = TInsertArray(array,   dataptr)
+		TINT                    TUString TAPTR
+
+FUNCTION::
+	Grow the specified array by inserting one element at the internal
+	cursor position, then advance the internal cursor by one element. The
+	element is fetched from the location in memory to which dataptr
+	points. The new cursor position of the array is returned to the
+	caller, or -1 in case of an error.
+
+INPUTS::
+	array   || Dynamic array
+	dataptr || Pointer to element in memory, or TNULL.
+    
+	If dataptr is TNULL, an undefined element will be inserted.
+
+RESULTS::
+	position || New cursor position, or -1 
+    
+	The return value will be -1 if an invalid array was specified or
+	an error occured and the array fell into an invalid state.
+
+SEE ALSO::
+	TRemoveArray(), TSetArray(), TInsertStrNString(), TSeekArray()
+
+@@ TRemoveArray @@
+
+NAME::
+	TRemoveArray - remove one element from a dynamic array
+
+SYNOPSIS::
+		position = TUStrRemoveArray(TUStrBase, array,   buffer)
+		TINT                        TAPTR      TUString TAPTR
+
+		position = TRemoveArray(array,   buffer)
+		TINT                    TUString TAPTR
+
+FUNCTION::
+	Shrink the specified array by removing the element at the internal
+	cursor position. The element being removed can be copied to an
+	user-specified buffer. The new position of the internal cursor
+	position will be returned to the caller, or -1 in case of an error.
+
+INPUTS::
+	array   || Dynamic array
+	buffer  || Pointer to a buffer receiving a copy of the element removed
+	
+	buffer may be TNULL.	
+
+RESULTS::
+	position || New position of the internal cursor or -1
+
+SEE ALSO::
+	TInsertArray(), TGetArray(), TRemCharString(), TSeekArray()
+
+@@ TSeekArray @@
+
+NAME::
+	TSeekArray - set and get the position of the internal cursor
+
+SYNOPSIS::
+		position = TUStrSeekArray(TUStrBase, array,   mode, numsteps)
+		TINT                      TAPTR      TUString TINT  TINT
+
+		position = TSeekArray(array,   mode, numsteps)
+		TINT                  TUString TINT  TINT
+
+FUNCTION::
+	Place the internal cursor in a dynamic array by seeking the given
+	number of steps, depending on the mode argument:
+    
+		- -1 - from end of the array
+		- 0 - from the current cursor position
+		- 1 - from the start of the array
+
+	The new absolute position will be returned to the caller, or -1 in the
+	case of an error. To determine the current cursor position, seek 0
+	from current.
+
+INPUTS::
+	array    || Dynamic array
+	mode     || Seek mode (-1 from end, 0 from current, 1 from start)
+	numsteps || Number of steps to seek
+
+RESULTS::
+	position || New position of the internal cursor or -1
+
+SEE ALSO::
+	TInsertArray(), TRemoveArray()
+
+@@ TSetArray @@
+
+NAME::
+	TSetArray - set an element in a dynamic array
+
+SYNOPSIS::
+		position = TUStrSetArray(TUStrBase, array,   dataptr)
+		TINT                     TAPTR      TUString TAPTR
+
+		position = TSetArray(array,   dataptr)
+		TINT                 TUString TAPTR
+
+FUNCTION::
+	Overwrite the element at the current cursor position in the array. The
+	element is fetched from the location in memory to which dataptr
+	points. The current cursor position is returned to the caller or -1 in
+	case of an error.
+
+INPUTS::
+	array    || Dynamic array
+	dataptr  || Pointer to element to be set in array
+    
+RESULTS::
+	position || Position of the internal cursor in the array
+
+NOTES::
+	This function does not append the element to the array if the cursor
+	is behind the last element; -1 is returned in this case.
+
+SEE ALSO::
+	TGetArray(), TInsertArray(), TSetCharString()
+
+@@ TGetArray @@
+
+NAME::
+	TGetArray - get an element from an array
+
+SYNOPSIS::
+		position = TUStrGetArray(TUStrBase, array,   dataptr)
+		TINT                     TAPTR      TUString TAPTR
+
+		position = TGetArray(array,   dataptr)
+		TINT                 TUString TAPTR
+
+FUNCTION::
+	Get an element from the current cursor position in the array. The
+	element is written to a buffer to which dataptr points. The current
+	cursor position is returned to the caller or -1 in the case of an
+	error.
+
+INPUTS::
+	array    || Dynamic array
+	dataptr  || Pointer to a buffer to receive the element
+    
+RESULTS::
+	position || Position of the internal cursor in the array or -1
+
+SEE ALSO::
+	TSetArray(), TRemoveArray(), TGetCharString()
+
+@@ TLengthArray @@
+
+NAME::
+	TLengthArray - return the length of a dynamic array
+
+SYNOPSIS::
+		length = TUStrLengthArray(TUStrBase, array)
+		TINT                      TAPTR      TUString
+
+		length = TLengthArray(array)
+		TINT                  TUString
+
+FUNCTION::
+	Return the number of elements in the specified array. The return value
+	will be -1 if an invalid array or an array in invalid state was
+	specified.
+
+INPUTS::
+	array  || Dynamic array
+
+RESULTS::
+	length || Length of the array or -1 in the case of an error
+
+@@ TMapArray @@
+
+NAME::
+	TMapArray - map array to a linear range in memory
+
+SYNOPSIS::
+		ptr = TUStrMapArray(TUStrBase, array,   offs, length)
+		TAPTR               TAPTR      TUString TINT  TINT
+
+		ptr = TMapArray(array,   offs, length)
+		TAPTR           TUString TINT  TINT
+
+FUNCTION::
+	Returns a pointer to a linear range of an array's elements. The
+	pointer can be used to both read from and write to the array. TNULL
+	will be returned in the following cases:
+    
+	* The array or array argument was invalid
+	* The specified range is not entirely contained in the array
+	* Internal reorganization is not possible due to a lack of memory
+            
+WARNING::
+	* Using the pointer after calling any other function on the same
+	array is not allowed, as the slightest modification can make it
+	invalid. 
+
+	* Under no circumstances must the array be expected to be valid
+	past the end of the specified length.
+
+INPUTS::
+	array  || Dynamic array
+	offs   || Start position in the array
+	length || Length of the desired range in number of elements
+
+RESULTS::
+	ptr    || Pointer to an array of elements or TNULL
+
+NOTES::
+	* This operation may require expensive internal reorganizations which
+	can cause the array to fall into an invalid state. Mappings to a
+	linear array should be well justified. If you only need a copy of the
+	range, use TRenderArray().
+
+SEE ALSO::
+	TRenderArray(), TChangeArray()
+
+@@ TRenderArray @@
+
+NAME::
+	TRenderArray - copy/convert elements to an user-supplied buffer
+
+SYNOPSIS::
+		error = TUStrRenderArray(TUStrBase, array,   ptr,  offs, len, type)
+		TINT                     TAPTR      TUString TAPTR TINT  TINT TUINT
+
+		error = TRenderArray(array,   ptr,  offs, len, type)
+		TINT                 TUString TAPTR TINT  TINT TUINT
+
+FUNCTION::
+	Render a range of elements, converted to the specified type, from
+	a dynamic array into an user-supplied buffer.
+	Refer to TAllocArray() for a list of the possible types.
+	
+	If a conversion from a bigger to smaller type is indicated, the
+	elements will be truncated to their least-significant bytes. If the
+	conversion is from a smaller to bigger type, the elements will be
+	padded with zeros at their most-significant end. Both types of
+	conversion are in compliance with the host's native endian model.
+	
+	If successful, this function returns 0. In the case of an error,
+	the return value will be -1.
+
+INPUTS::
+	array  || Dynamic array
+	ptr    || Pointer to user-supplied buffer
+	offs   || Start position in the array
+	len    || Length of the desired range in number of elements
+	type   || Type of conversion
+
+RESULTS::
+	error  || Error, 0 if successful
+
+SEE ALSO::
+	TAllocArray(), TMapArray(), TChangeArray()
+
+@@ TChangeArray @@
+
+NAME::
+	TChangeArray - change element type in a dynamic array
+
+SYNOPSIS::
+		length = TUStrChangeArray(TUStrBase, array,   type)
+		TINT                      TAPTR      TUString TUINT
+
+		length = TChangeArray(array,   type)
+		TINT                  TUString TUINT
+
+FUNCTION::
+	Change an array's element size to the new type specified. Refer to
+	TAllocArray() for a list of the possible types.
+	
+	If a conversion from a bigger to smaller type is indicated, the
+	elements will be truncated to their least-significant bytes. If the
+	conversion is from a smaller to bigger type, the elements will be
+	padded with zeros at their most-significant end. Both types of
+	conversion are in compliance with the host's native endian model.
+	
+	The length of the array will be returned to the caller or -1 in the
+	case of an error. 
+
+INPUTS::
+	array  || Dynamic array
+	type   || New internal element type
+
+RESULTS::
+	length || Length of the array or -1 if an error occured
+
+SEE ALSO::
+	TAllocArray(), TRenderArray(), TChangeArray()
+
+@@ TDupArray @@
+
+NAME::
+	TDupArray - create a duplicate of a dynamic array
+
+SYNOPSIS::
+		newarray = TUStrDupArray(TUStrBase, array)
+		TUString                 TAPTR      TUString
+
+		newarray = TDupArray(array)
+		TUString             TUString
+
+FUNCTION::
+	Create a duplicate of a dynamic array.
+
+INPUTS::
+	array     || Dynamic array
+    
+RESULTS::
+	newstr    || New array or TINVALID_ARRAY (-1)
+	
+	The result value will be TINVALID_ARRAY if the array was invalid,
+	in an invalid state, or the operation failed due to a lack of
+	memory.
+
+SEE ALSO::
+	TCopyArray(), TAllocArray(), TDupString()
+
+@@ TCopyArray @@
+
+NAME::
+	TCopyArray - copy an array over another
+
+SYNOPSIS::
+		length = TUStrCopyArray(TUStrBase, srcarray, dstarray)
+		TINT                    TAPTR      TUString  TUString
+
+		length = TCopyArray(srcarray, dstarray)
+		TINT                TUString  TUString
+
+FUNCTION::
+	This function copies one dynamic array over another.
+
+INPUTS::
+	srcarray ||Dynamic array (source)
+	dstarray || Dynamic array (destination)
+    
+RESULTS::
+	length   || Length of the array, or -1
+	
+	The result will be -1 if either of the arrays were invalid or in an
+	invalid state, or the operation failed due to a lack of memory.
+
+SEE ALSO::
+	TDupArray(), TAllocArray(), TCopyString()
+
+@@ TTruncArray @@
+
+NAME::
+	TTruncArray - truncate an array at its cursor position
+
+SYNOPSIS::
+		length = TUStrTruncArray(TUStrBase, array)
+		TINT                     TAPTR      TUString
+
+		length = TTruncArray(array)
+		TINT                 TUString
+
+FUNCTION::
+	Truncate the specified array, i.e. remove all characters past its
+	current cursor position. The new length of the array will be
+	returned to the caller or -1 in the case of an error.
+
+INPUTS::
+	array   || Dynamic array to truncate
+    
+RESULTS::
+	length  || New length of the array or -1 if the array was invalid
+
+SEE ALSO::
+	TRemoveArray()
+
+@@ TTokenizeString @@
+
+NAME::
+	TTokenizeString - Tokenize a string to be used as a pattern
+
+SYNOPSIS::
+		result = TUStrTokenizeString(TUStrBase, pattern, flags)
+		TINT                         TAPTR      TUString TUINT
+
+		result = TTokenizeString(pattern, flags)
+		TINT                     TUString TUINT
+
+FUNCTION::
+	Tokenizes a string for use by TMatchString(). If the pattern is a
+	valid string and contains a valid template, then pattern will contain
+	a tokenized string that can be passed to functions such as
+	TMatchString(). In the case of an error the pattern will be left
+	untouched.
+    
+	Available tokens:
+    
+		- {{?}}       - Matches a single character
+		- {{#}}       - Matches the following expression 0 or more times
+		- {{(ab|cd)}} - Matches any one of the items seperated by {{"|"}}
+		- {{~}}       - Negates the following expression. It matches all
+		strings that do not match the expression (e.g. {{"~(foo)"}} matches
+		all strings that are not exactly {{"foo"}}).
+		- {{[abc]}}   - Character class: Matches any of the characters in
+		the class.        
+		- {{[~bc]}}   - Character class: Matches any of the characters
+		not in class.
+		- {{a-z}}     - Character range (only inside a character class)
+		- {{%}}       - Matches 0 characters always (useful e.g. in
+		{{"(foo|bar|%)"}}).
+		- {{*}}       - Synonym for {{"#?"}}
+    
+	"Expression" in the above table is either a single character (like
+	in {{#?}}), or an alternation (like in {{"#(ab|bc|cd)"}}), or a
+	character class (like in {{"#[a-zA-Z]"}}).
+    
+	Characters used for tokens can be escaped with an apostrophe:
+
+		- {{'#}} - Literal number sign
+		- {{'[}} - Literal square bracket
+		- {{''}} - Literal apostroph
+
+INPUTS::
+	pattern || Unparsed string to be used as a pattern
+	flags   || currently unused, must be 0
+
+RESULTS::
+	result
+		- 1 pattern is valid and contains wildcard characters
+		- 0 pattern is valid and contains no wildcard characters
+		- -1 pattern is an invalid argument or out of memory
+		- -2 pattern is not valid; pattern string unchanged
+
+	A return value of 0 or 1 indicates the pattern is now in a
+	tokenized state and can be passed to pattern matching functions.
+    
+SEE ALSO::
+	TMatchString()
+
+@@ TMatchString @@
+
+NAME::
+	TMatchString - Check for a pattern match with a string
+
+SYNOPSIS::
+		result = TUStrMatchString(TUStrBase, pattern, string)
+		TINT                      TAPTR      TUString TUString
+
+		result = TMatchString(pattern, string)
+		TINT                  TUString TUString
+
+FUNCTION::
+	Checks for a pattern match with a string. The pattern must be a
+	tokenized string that was parsed with TTokenizeString().
+    
+INPUTS::
+	pattern || Tokenized pattern string from TTokenizeString()
+	string  || String to match against the given pattern
+
+RESULTS::
+	result  || 1  || string matched the pattern
+	        || 0  || string did not match the pattern
+	        || -1 || illegal arguments or out of memory
+
+NOTES::
+	If a case-insensitive match is desired, both the pattern and
+	string should be transformed to the same case using
+	TTransformString().
+
+SEE ALSO::
+	TTokenizeString()
+
+@@ ABOUT @@
+
+SHORT::
+	API documentation for the Unistring module.
+
+VERSION::
+	$Id: unistring.doc,v 1.4 2005/09/11 09:15:56 tmueller Exp $
+
+REVISION HISTORY::
+	$Log: unistring.doc,v $
+	Revision 1.4  2005/09/11 09:15:56  tmueller
+	added conventional calls to synopsis
+	
+	Revision 1.3  2005/09/11 06:59:02  tmueller
+	documented improved position/lenth arguments
+	
+	Revision 1.2  2005/07/11 21:09:33  tmueller
+	transferred to new markup, re-generated
+	
+	Revision 1.1  2005/06/19 20:46:04  tmueller
+	moved
+	
+	Revision 1.16  2004/08/06 18:04:41  tmueller
+	renamed TNCmpString to TCmpNString
+	
+	Revision 1.15  2004/07/17 08:51:29  tmueller
+	slightly improved wording and formatting
+	
+	Revision 1.14  2004/07/16 20:13:57  tmueller
+	Proof-read by Patrick Roberts. All changes reflected
+	
+	Revision 1.13  2004/04/04 12:20:29  tmueller
+	Datatype TDIndex renamed to TUString. Docs and Prototypes adapted.
+	
+	Revision 1.12  2004/03/29 08:19:45  tmueller
+	added pattern-matching functions
+	
+	Revision 1.11  2004/02/22 04:19:48  tmueller
+	str_insert renamed to str_insertstrn, added a new dynamic str_insert
+	
+	Revision 1.10  2004/02/15 18:53:08  tmueller
+	Updated
+	
+	Revision 1.9  2004/02/15 16:28:53  tmueller
+	Updated

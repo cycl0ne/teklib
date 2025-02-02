@@ -1,0 +1,124 @@
+
+;
+;	$Id: lua.idf,v 1.5.2.1 2005/12/04 22:31:10 tmueller Exp $
+;	teklib/tek/idf/lua.idf - Lua interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class class
+.name lua5					; as in tek_init_lua5
+.filename lua				; as in "lua.h", default .name
+.this lua_State *L			; first/implicit argument, default "TAPTR base"
+.base LUASUPER(L)			; function vector base, default .this
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.defv TVOID
+.defp TAPTR, TSTRPTR
+.defp lua_CFunction, lua_Chunkreader, lua_Chunkwriter
+.defi TINT, TUINT, TBOOL, lua_Integer
+.deft TSIZE
+.defd lua_Number
+
+.offset 2
+/* -- state manipulation -- */
+lua_State *lua_newthread()
+lua_CFunction lua_atpanic(lua_CFunction panicf)
+/* -- load and call -- */
+TVOID lua_call(TINT narg, TINT nres)
+TINT lua_pcall(TINT narg, TINT nres, TINT errf)
+TINT lua_cpcall(lua_CFunction func, TAPTR udata)
+TINT lua_load(lua_Chunkreader readf, TAPTR data, TSTRPTR cname)
+TINT lua_dump(lua_Chunkwriter writef, TAPTR data)
+/* -- basic stack manipulation -- */
+TINT lua_gettop()
+TVOID lua_settop(TINT idx)
+TVOID lua_pushvalue(TINT idx)
+TVOID lua_remove(TINT idx)
+TVOID lua_insert(TINT idx)
+TVOID lua_replace(TINT idx)
+TINT lua_checkstack(TINT size)
+TVOID lua_xmove(TAPTR dest, TINT n)
+/* -- access functions (stack -> C) -- */
+TINT lua_isnumber(TINT idx)
+TINT lua_isstring(TINT idx)
+TINT lua_iscfunction(TINT idx)
+TINT lua_isuserdata(TINT idx)
+TINT lua_type(TINT idx)
+TINT lua_typename(TINT tp)
+TINT lua_equal(TINT i1, TINT i2)
+TINT lua_rawequal(TINT i1, TINT i2)
+TINT lua_lessthan(TINT i1, TINT i2)
+lua_Number lua_tonumber(TINT idx)
+TINT lua_toboolean(TINT idx)
+TSTRPTR lua_tostring(TINT idx)
+TINT lua_strlen(TINT idx)
+lua_CFunction lua_tocfunction(TINT idx)
+TAPTR lua_touserdata(TINT idx)
+lua_State *lua_tothread(TINT idx)
+TAPTR lua_topointer(TINT idx)
+/* -- push functions (C -> stack) -- */
+TVOID lua_pushnil()
+TVOID lua_pushnumber(lua_Number n)
+TVOID lua_pushlstring(TSTRPTR s, TINT l)
+TVOID lua_pushstring(TSTRPTR s)
+TVOID lua_pushinteger(lua_Integer n)
+TVOID lua_pushcclosure(lua_CFunction func, TINT n)
+TVOID lua_pushboolean(TINT b)
+TVOID lua_pushlightuserdata(TAPTR udata)
+/* -- get functions (Lua -> stack) -- */
+TVOID lua_gettable(TINT idx)
+TVOID lua_rawget(TINT idx)
+TVOID lua_rawgeti(TINT idx, TINT n)
+TVOID lua_newtable()
+TAPTR lua_newuserdata(TINT size)
+TINT lua_getmetatable(TINT idx)
+TVOID lua_getfenv(TINT idx)
+/* -- set functions (stack -> Lua) -- */
+TVOID lua_settable(TINT idx)
+TVOID lua_rawset(TINT idx)
+TVOID lua_rawseti(TINT idx, TINT n)
+TINT lua_setmetatable(TINT idx)
+TINT lua_setfenv(TINT idx)
+/* -- coroutine functions */
+TINT lua_yield(TINT nresults)
+TINT lua_resume(TINT narg)
+/* -- garbage-collection functions -- */
+TINT lua_getgcthreshold()
+TINT lua_getgccount()
+TVOID lua_setgcthreshold(TINT newth)
+/* -- misc functions */
+TSTRPTR lua_version()
+TINT lua_error()
+TINT lua_next(TINT idx)
+TVOID lua_concat(TINT n)
+.offset 70
+/* -- auxlib functions -- */
+TVOID luaL_openlib(TSTRPTR name, luaL_reg *, TINT nup)
+TINT luaL_getmetafield(TINT obj, TSTRPTR e)
+TINT luaL_callmeta(TINT obj, TSTRPTR e)
+TINT luaL_typerror(TINT narg, TSTRPTR tname)
+TINT luaL_argerror(TINT narg, TSTRPTR extramsg)
+TSTRPTR luaL_checklstring(TINT narg, TSIZE *l)
+TSTRPTR luaL_optlstring(TINT narg, TSTRPTR def, TSIZE *l)
+lua_Number luaL_checknumber(TINT narg)
+lua_Number luaL_optnumber(TINT narg, lua_Number def)
+TVOID luaL_checkstack(TINT sz, TSTRPTR msg)
+TVOID luaL_checktype(TINT narg, TINT t)
+TVOID luaL_checkany(TINT narg)
+TINT luaL_newmetatable(TSTRPTR name)
+TVOID luaL_getmetatable(TSTRPTR name)
+TAPTR luaL_checkudata(TINT ud, TSTRPTR name)
+TVOID luaL_where(TINT lvl)
+TINT luaL_ref(TINT t)
+TVOID luaL_unref(TINT t, TINT ref)
+TINT luaL_getn(TINT t)
+TVOID luaL_setn(TINT t, TINT n)
+TINT luaL_loadfile(TSTRPTR fname)
+TINT luaL_loadbuffer(TSTRPTR buf, TSIZE size, TSTRPTR name)
+.offset 93
+TSTRPTR luaL_gsub(TSTRPTR s, TSTRPTR p, TSTRPTR r)
+TSTRPTR luaL_getfield(TINT idx, TSTRPTR fname)
+TSTRPTR luaL_setfield(TINT idx, TSTRPTR fname)
+
+.end

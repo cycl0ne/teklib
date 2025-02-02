@@ -1,0 +1,73 @@
+
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="metatargets"]
+
+	[embed body="meta"]		hal					[/embed]
+	[embed body="meta"]		exec				[/embed]
+	[embed body="meta"]		util				[/embed]
+	[embed body="meta"]		time				[/embed]
+	[embed body="meta"]		io					[/embed]
+	[embed body="meta"]		hash				[/embed]
+	[embed body="meta"]		unistring			[/embed]
+	[embed body="meta"]		imgproc				[/embed]
+	[embed body="meta"]		datatypehandler		[/embed]
+	[embed body="meta"]		storagemanager		[/embed]
+	[embed body="meta"]		datatypes			[/embed]
+	[embed body="meta"]		visual				[/embed]
+	[embed body="meta"]		zlib				[/embed]
+	[embed body="meta"]		lua					[/embed]
+	
+	[switch]
+		[case_no_descend config="ps2"]
+			[embed body="meta"]		ps2			[/embed]
+		[/case_no_descend]
+		[default]
+			[embed body="meta"]		displayhandler		[/embed]
+		[/default]
+	[/switch]
+
+	
+	[!-- displays depend on X11, OpenGL, DirectX, ... --]
+ 	[switch]
+ 		[case config="amiga_gcc"]
+			[!-- clash with cybergraphics protos --]
+ 		[/case]
+ 		[case config="intent"]
+			[!-- not supported yet --]
+ 		[/case]
+ 		[default]
+ 			[embed body="meta"]		displays	[/embed]
+ 		[/default]
+ 	[/switch]
+	
+	[!-- audio depends on OSS, DirectSound, ... --]
+ 	[switch]
+ 		[case config="amiga"]
+			[!-- not supported yet --]
+ 		[/case]
+ 		[case config="intent"]
+			[!-- not supported yet --]
+ 		[/case]
+ 		[case config="morphos"]
+			[!-- not supported yet --]
+ 		[/case]
+ 		 		[case config="ps2"]
+			[!-- not supported yet --]
+ 		[/case]
+ 		[default]
+ 			[embed body="meta"]		audio	[/embed]
+ 		[/default]
+ 	[/switch]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                include makefile templates and render
+---------------------------------------------------------------------]
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] makefile_meta [/render]

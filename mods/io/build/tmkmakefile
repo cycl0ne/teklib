@@ -1,0 +1,35 @@
+
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="metatargets"]
+
+	[embed body="meta"] master [/embed]
+
+	[switch]
+		[case_no_descend config="ps2"]
+			[embed body="meta"] ps2 [/embed]
+			[embed body="meta"] memfile [/embed]
+		[/case_no_descend]
+		[default]
+			[embed body="meta"] default [/embed]
+		[/default]
+	[/switch]
+	
+	[switch]
+		[case config="intent"][/case]
+		[default]
+			[embed body="meta"] stdio [/embed]
+		[/default]
+	[/switch]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                include makefile templates and render
+---------------------------------------------------------------------]
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] makefile_meta [/render]

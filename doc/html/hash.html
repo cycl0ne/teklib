@@ -1,0 +1,879 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>hash</title>
+		<style type="text/css">
+			<!--
+				body { background-color: #fff; color: #000; }
+				a:link { color: #00e; }
+				a:visited { color: #44d; }
+				a:hover { color: #700; background-color: #ffb; }
+				body,td,dfn,div,li { font-family: Arial, Helvetica,
+					Geneva, sans-serif; }
+				div.block, li { margin-bottom: 0.4em; }
+				dfn { font-weight: bold; }
+				pre { background-color: #eef7df; border-style: solid;
+					border-width: 1px; padding: 0.4em; }
+				td { padding: 2px; }
+				td.noborder { padding: 0.1em 0.4em;
+					background-color: #fceed2; }
+				table.noborder { border-style: none; border-spacing: 4px;
+					margin-bottom: 0.4em; }
+				li.soft { list-style-type: none; }
+				ul { margin-left: 0cm; padding: 0cm;
+					list-style-position: inside; }
+				table.head { background-color: #d7d7f5; }
+			//-->
+		</style>
+	</head>
+	<body>
+		<hr><a name="INDEX"></a><table width="100%" class="head"><tr><td width="100%"><strong>hash : Index</strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h2>
+				TEKlib / Hash module reference manual
+			</h2>
+			<div class="block">
+				By Timm S. M&#252;ller and Daniel Adler -
+				Copyright &#169; 2005 TEK neoscientists. All rights reserved.
+			</div>
+			<hr>
+			<blockquote>
+				<table class="noborder">
+					<tr>
+						<td class="noborder">
+							<a href="#Constructor">Constructor</a> 
+						</td>
+						<td class="noborder">
+							Create a hash instance
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							<a href="#THashPut">THashPut</a> 
+						</td>
+						<td class="noborder">
+							Store a key/value pair
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							<a href="#THashGet">THashGet</a> 
+						</td>
+						<td class="noborder">
+							Retrieve a key/value pair
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							<a href="#THashRemove">THashRemove</a> 
+						</td>
+						<td class="noborder">
+							Remove a key/value pair
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							<a href="#THashValid">THashValid</a> 
+						</td>
+						<td class="noborder">
+							Test if a hash is valid
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							<a href="#THashFreeze">THashFreeze</a> 
+						</td>
+						<td class="noborder">
+							Freeze hash
+						</td>
+					</tr>
+				</table>
+			</blockquote>
+		</div>
+		<hr><a name="Constructor"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#Constructor">Constructor</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>CONSTRUCTOR</dfn>
+				<blockquote>
+<pre>
+hash = TOpenModule("hash", version, tags)
+TAPTR              TSTRPTR TUINT16  TTAGITEM*
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Create a hash instance, which can be used to store and retrieve
+						a large number of items indexed by keys.
+					</div>
+					<div class="block">
+						Hashes implement reasonable runtime behavior at the cost of some
+						overhead for the maintenance of internal <em>buckets</em>. The number of
+						buckets in a hash grows and shrinks on demand. Buckets group data
+						according to a numerical <em>hash value</em>, which is a 32bit digest
+						computed from the key according to a <em>hash function</em>.
+					</div>
+					<div class="block">
+						The hash function for a 32bit numerical key can return the key
+						itself, while for a string it is more likely some kind of checksum
+						calculated over the key's character sequence. The hash module
+						provides internal hashing and comparison functions for the most
+						popular data types.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>TAGS</dfn>
+				<blockquote>
+					<div class="block">
+						THash_Type, (TUINT)
+					</div>
+					<blockquote>
+						<div class="block">
+							Type of keys to store in the hash. Valid types:
+						</div>
+						<div class="block">
+							THASHTYPE_STRING
+						</div>
+						<blockquote>
+							<div class="block">
+								Store keys of type TSTRPTR
+							</div>
+						</blockquote>
+						<div class="block">
+							THASHTYPE_INT
+						</div>
+						<blockquote>
+							<div class="block">
+								Store keys of type TUINT
+							</div>
+						</blockquote>
+						<div class="block">
+							THASHTYPE_PTR
+						</div>
+						<blockquote>
+							<div class="block">
+								Store keys of type TAPTR
+							</div>
+						</blockquote>
+						<div class="block">
+							THASHTYPE_CUSTOM
+						</div>
+						<blockquote>
+							<div class="block">
+								Store keys of an user-specific type. This mode requires
+								the tags THash_HashFunc and THash_CmpFunc to be supplied
+								also.
+							</div>
+						</blockquote>
+						<div class="block">
+							Default: THASHTYPE_STRING
+						</div>
+					</blockquote>
+					<div class="block">
+						THash_HashFunc, (THASHFUNC)
+					</div>
+					<blockquote>
+						<div class="block">
+							Pointer to a function to generate a hash value from a
+							key. The function must be declared as follows:
+						</div>
+						<blockquote>
+<pre>
+TCALLBACK TUINT hashfunc(TAPTR userdata, TTAG key)
+</pre>
+						</blockquote>
+						<div class="block">
+							This tag is mandatory if the hash type is THASHTYPE_CUSTOM.
+							For any other type you are allowed to supply a hash function
+							as well, which will override the internal default for the
+							given THash_Type.
+						</div>
+						<div class="block">
+							Default: an internal function suitable for generating
+							hash values from keys of the specified type.
+						</div>
+					</blockquote>
+					<div class="block">
+						THash_CmpFunc, (TCMPFUNC)
+					</div>
+					<blockquote>
+						<div class="block">
+							Pointer to a function for the comparison of two hash keys.
+							The function must be declared as follows:
+						</div>
+						<blockquote>
+<pre>
+TCALLBACK TINT cmpfunc(TAPTR userdata, TTAG key1, TTAG key2)
+</pre>
+						</blockquote>
+						<div class="block">
+							The return value must be TTRUE if the keys are equal, otherwise
+							TFALSE.
+						</div>
+						<div class="block">
+							This tag is mandatory if the hash type is THASHTYPE_CUSTOM.
+							For any other type you are allowed to supply a comparison
+							function as well, which will override the internal default.
+						</div>
+						<div class="block">
+							Default: An internal comparison function suitable for
+							comparing keys of the specified type.
+						</div>
+					</blockquote>
+					<div class="block">
+						THash_UserData
+					</div>
+					<blockquote>
+						<div class="block">
+							Userdata passed to user-supplied hash and comparison functions.
+							Default: TNULL
+						</div>
+					</blockquote>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance, or TNULL if initialization failed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="exec.html#TOpenModule">exec:TOpenModule</a>, <a href="teklib.html#Tagitems">teklib:Tagitems</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="THashPut"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#THashPut">THashPut</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						THashPut - store a key/value pair
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+success = THashPut(hash, key, value)
+TBOOL              TAPTR TTAG TTAG
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Store a key/value pair in a hash.
+					</div>
+					<div class="block">
+						If the data cannot be stored in the hash (which is likely due to a
+						lack of memory) then the return value is TFALSE and the hash falls
+						into an 'invalid' state; it will furtheron reject attempts to store
+						more data using <a href="#THashPut">THashPut</a>. The 'invalid' state can be queried and
+						reset using <a href="#THashValid">THashValid</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								key
+							</td>
+							<td class="noborder">
+								key (data or pointer)
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								value
+							</td>
+							<td class="noborder">
+								value to store in the hash
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								success
+							</td>
+							<td class="noborder">
+								boolean
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Existing keys will be overwritten. Use <a href="#THashGet">THashGet</a> to check for
+							the presence of a key.
+						</li>
+						<li class="bullets">
+							If the hash is of the type THASHTYPE_INT then the key argument
+							refers to the key itself, all other types are pointer references.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#THashGet">THashGet</a>, 
+						<a href="#THashRemove">THashRemove</a>, 
+						<a href="#THashValid">THashValid</a>, <a href="#THashFreeze">THashFreeze</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="THashGet"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#THashGet">THashGet</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						THashGet - retrieve the value associated with a key
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+success = THashGet(hash, key, valuep)
+TBOOL              TAPTR TTAG TAPTR
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Retrieve the value from a hash that is associated with a key.
+						The return value indicates whether the key could be found.
+					</div>
+					<div class="block">
+						If present, the value will be placed in the variable being
+						pointed to by valuep. *valuep will be left untouched if the key
+						cannot be found. If valuep is TNULL then only the presence of
+						the key will be determined and returned to the caller.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								key
+							</td>
+							<td class="noborder">
+								key (data or pointer)
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								valuep
+							</td>
+							<td class="noborder">
+								pointer to a variable receiving the value, or TNULL
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								success
+							</td>
+							<td class="noborder">
+								boolean, TTRUE if the key was found
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							If the hash is of the type THASHTYPE_INT then the key argument
+							refers to the key itself, all other types are pointer references.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#THashPut">THashPut</a>, 
+						<a href="#THashRemove">THashRemove</a>, <a href="#THashValid">THashValid</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="THashRemove"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#THashRemove">THashRemove</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						THashRemove - remove a key/value pair
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+success = THashRemove(hash, key)
+TBOOL                 TAPTR TTAG
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function will lookup and remove the data item specified throughout
+						the key. The return value indicates whether the key could be found.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								key
+							</td>
+							<td class="noborder">
+								key (data or pointer)
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								success
+							</td>
+							<td class="noborder">
+								boolean, indicating whether the key was removed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							If the hash is of the type THASHTYPE_INT then the key argument
+							refers to the key itself, all other types are pointer references.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#THashPut">THashPut</a>, 
+						<a href="#THashGet">THashGet</a>, <a href="#THashValid">THashValid</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="THashValid"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#THashValid">THashValid</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						THashValid - test for integrity
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+valid = THashValid(hash, reset)
+TBOOL              TAPTR TBOOL
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function queries the state of the hash and returns TTRUE
+						if the hash is in 'valid' state, otherwise TFALSE. The reset
+						argument, if TTRUE, allows to reset the state to 'valid'.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								reset
+							</td>
+							<td class="noborder">
+								reset the hash state to 'valid'
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								valid
+							</td>
+							<td class="noborder">
+								TFALSE if the hash was in 'invalid' state
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#THashPut">THashPut</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="THashFreeze"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#THashFreeze">THashFreeze</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						THashFreeze - disallow changes of the number of buckets
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+frozen = THashFreeze(hash, freeze)
+TBOOL                TAPTR TBOOL
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						This function allows to freeze and unfreeze a hash. A frozen
+						hash does not recompute and try to update the number of buckets
+						when new data is being added. This may result in a faster operation.
+						Note, however, that the efficiency of the hash algorithm may suffer
+						from an unbalanced number of buckets.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								freeze
+							</td>
+							<td class="noborder">
+								boolean; TTRUE to freeze, TFALSE to unfreeze
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								frozen
+							</td>
+							<td class="noborder">
+								previous 'frozen' state of the hash
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#THashPut">THashPut</a>, <a href="#THashValid">THashValid</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="THashToList"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#THashToList">THashToList</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						THashToList - render a hash into a linked list [TODO]
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+numnodes = THashToList(hash, listp)
+TINT                   TAPTR struct THashNode **
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Render the contents of a hash into a singly-linked list. A pointer to
+						the first node is placed in the variable being pointed to by listp.
+					</div>
+					<div class="block">
+						If the operation succeeds then the list contains nodes of the type
+						struct THashNode. It can be traversed until the next time a method
+						is applied to the hash, as it will convert the list back to the hash's
+						internal representation, thus rendering the list invalid.
+					</div>
+					<div class="block">
+						If you unlink a node from the hash using <a href="teklib.html#TRemove">teklib:TRemove</a> then you
+						might want to free it using <a href="#THashFreeNode">THashFreeNode</a>, so that its memory
+						is getting returned to the hash's memory manager. Note, however, that
+						all memory occupied by a hash is returned to the system anyway when
+						the hash is being destroyed.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								listp
+							</td>
+							<td class="noborder">
+								ptr to a variable receiving a pointer to the first node
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>RESULTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								numnodes
+							</td>
+							<td class="noborder">
+								number of nodes inserted to the list
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>NOTES</dfn>
+				<blockquote>
+					<ul>
+						<li class="bullets">
+							Do not add nodes to the list.
+						</li>
+					</ul>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#THashFreeNode">THashFreeNode</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="THashFreeNode"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#THashFreeNode">THashFreeNode</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>NAME</dfn>
+				<blockquote>
+					<div class="block">
+						THashFreeNode - free a hash node [TODO]
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SYNOPSIS</dfn>
+				<blockquote>
+<pre>
+THashFreeNode(hash, hashnode)
+              TAPTR struct THashNode *
+</pre>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>FUNCTION</dfn>
+				<blockquote>
+					<div class="block">
+						Free a node that has been unlinked from a list generated
+						with <a href="#THashToList">THashToList</a>.
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>INPUTS</dfn>
+				<blockquote>
+					<table class="noborder">
+						<tr>
+							<td class="noborder">
+								hash
+							</td>
+							<td class="noborder">
+								hash instance
+							</td>
+						</tr>
+						<tr>
+							<td class="noborder">
+								hashnode
+							</td>
+							<td class="noborder">
+								pointer to a hash node to be freed
+							</td>
+						</tr>
+					</table>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>SEE ALSO</dfn>
+				<blockquote>
+					<div class="block">
+						<a href="#THashToList">THashToList</a> 
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="ABOUT"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#ABOUT">ABOUT</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="definition"><dfn>SHORT</dfn>
+				<blockquote>
+					<div class="block">
+						API documentation for the hash module
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>VERSION</dfn>
+				<blockquote>
+					<div class="block">
+						$Id: hash.html,v 1.6 2005/07/03 13:16:53 tmueller Exp $
+					</div>
+				</blockquote>
+			</div><p>
+			<div class="definition"><dfn>REVISION HISTORY</dfn>
+				<blockquote>
+					<div class="block">
+						$Log: hash.html,v $
+						Revision 1.6  2005/07/03 13:16:53  tmueller
+						key/value type changes to TTAG reflected
+						
+						Revision 1.4  2005/06/29 21:41:02  tmueller
+						minor fixes
+					</div>
+					<div class="block">
+						Revision 1.2  2005/06/28 21:55:53  tmueller
+						reworked, rerendered
+					</div>
+				</blockquote>
+			</div><p>
+		</div>
+		<hr><a name="TOC"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">hash</a> : <a href="#TOC">Table of contents</a></strong></td></tr></table><p><div class="node">
+			<blockquote>
+				<ul>
+					<li class="soft">
+						<a href="#ABOUT">ABOUT</a>
+					</li>
+					<li class="soft">
+						<a href="#Constructor">Constructor</a>
+					</li>
+					<li class="soft">
+						<a href="#INDEX">Index</a>
+					</li>
+					<li class="soft">
+						<a href="#THashFreeNode">THashFreeNode</a>
+					</li>
+					<li class="soft">
+						<a href="#THashFreeze">THashFreeze</a>
+					</li>
+					<li class="soft">
+						<a href="#THashGet">THashGet</a>
+					</li>
+					<li class="soft">
+						<a href="#THashPut">THashPut</a>
+					</li>
+					<li class="soft">
+						<a href="#THashRemove">THashRemove</a>
+					</li>
+					<li class="soft">
+						<a href="#THashToList">THashToList</a>
+					</li>
+					<li class="soft">
+						<a href="#THashValid">THashValid</a>
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<hr>
+		<p align="right">Generated Sun Jul  3 15:15:44 2005 from hash.doc</p>
+	</body>
+</html>

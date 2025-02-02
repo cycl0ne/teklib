@@ -1,0 +1,617 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+	<head>
+		<title>INSTALL</title>
+		<style type="text/css">
+			<!--
+				body { background-color: #fff; color: #000; }
+				a:link { color: #00e; }
+				a:visited { color: #44d; }
+				a:hover { color: #700; background-color: #ffb; }
+				body,td,dfn,div,li { font-family: Arial, Helvetica,
+					Geneva, sans-serif; }
+				div.block, li { margin-bottom: 0.4em; }
+				dfn { font-weight: bold; }
+				pre { background-color: #eef7df; border-style: solid;
+					border-width: 1px; padding: 0.4em; }
+				td { padding: 2px; }
+				td.noborder { padding: 0.1em 0.4em;
+					background-color: #fceed2; }
+				table.noborder { border-style: none; border-spacing: 4px;
+					margin-bottom: 0.4em; }
+				li.soft { list-style-type: none; }
+				ul { margin-left: 0cm; padding: 0cm;
+					list-style-position: inside; }
+				table.head { background-color: #d7d7f5; }
+			//-->
+		</style>
+	</head>
+	<body>
+		<hr><a name="INDEX"></a><table width="100%" class="head"><tr><td width="100%"><strong>INSTALL : Index</strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h2>
+				TEKlib build instructions and installation
+			</h2>
+			<ul>
+				<li class="soft">
+					<a href="#Linux">Linux</a> 
+				</li>
+				<li class="soft">
+					<a href="#Windows">Windows</a> 
+				</li>
+				<li class="soft">
+					<a href="#FreeBSD">FreeBSD</a> 
+				</li>
+				<li class="soft">
+					<a href="#MorphOS">MorphOS</a> 
+				</li>
+				<li class="soft">
+					<a href="#AmigaOS">AmigaOS</a> 
+				</li>
+				<li class="soft">
+					<a href="#PS2">Playstation 2</a> 
+				</li>
+				<li class="soft">
+					<a href="#MacOSX">Mac OS X</a> 
+				</li>
+			</ul>
+		</div>
+		<hr><a name="Linux"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#Linux">Linux</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h3>
+				Requirements
+			</h3>
+			<div class="block">
+				Notable dependencies on the Linux platform are X11, OpenGL and OSS.
+				Modules requiring these can be commented out in <code>mods/build/tmkmakefile</code>:
+			</div>
+			<blockquote>
+				<table class="noborder">
+					<tr>
+						<td class="noborder">
+							visual
+						</td>
+						<td class="noborder">
+							depends on X11
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							displays
+						</td>
+						<td class="noborder">
+							depends on X11 and OpenGL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							audio
+						</td>
+						<td class="noborder">
+							requires OSS support
+						</td>
+					</tr>
+				</table>
+			</blockquote>
+			<h3>
+				Installation
+			</h3>
+			<div class="block">
+				At the top-level directory, type:
+			</div>
+			<blockquote>
+<pre>
+$ make help
+</pre>
+			</blockquote>
+			<div class="block">
+				This will guide you through the build process. The normal build procedure
+				is invoked with:
+			</div>
+			<blockquote>
+<pre>
+$ make linux
+</pre>
+			</blockquote>
+			<div class="block">
+				The global installation path on the Linux platform is <code>/opt/tek</code>.
+				It will be used as a fallback if modules cannot be found locally in
+				an application's module directory, <code>PROGDIR:mod</code>. Installation
+				is optional, but recommended for side projects to work:
+			</div>
+			<blockquote>
+<pre>
+$ make linux_install
+</pre>
+			</blockquote>
+			<h3>
+				Notes
+			</h3>
+			<ul>
+				<li class="bullets">
+					Tests can be found in <code>bin/linux</code>.
+				</li>
+				<li class="bullets">
+					To disable modules from the build procedure, remove or comment the
+					appropriate lines in <code>mods/build/tmkmakefile</code>, and then regenerate the
+					makefiles using
+					<blockquote>
+<pre>
+$ build/bin/tmkmf_linux tmkmakefile -c linux_gcc -r
+</pre>
+					</blockquote>
+				</li>
+				<li class="bullets">
+					To rebuild a (sub-) project, invoke from any level in the directory
+					hierarchy:
+					<blockquote>
+<pre>
+$ make -f build/tmk_linux_gcc all
+</pre>
+					</blockquote>
+				</li>
+			</ul>
+		</div>
+		<hr><a name="Windows"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#Windows">Windows</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h3>
+				Requirements
+			</h3>
+			<div class="block">
+				The only notable dependency on the Windows platform is DirectX.
+				Modules requiring it can be commented out in <code>mods/build/tmkmakefile</code>:
+			</div>
+			<blockquote>
+				<table class="noborder">
+					<tr>
+						<td class="noborder">
+							displays
+						</td>
+						<td class="noborder">
+							depends on DirectX
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							audio
+						</td>
+						<td class="noborder">
+							depends on DirectX
+						</td>
+					</tr>
+				</table>
+			</blockquote>
+			<h3>
+				Installation
+			</h3>
+			<ul>
+				<li class="bullets">
+					Microsoft Visual C++ v6
+					<blockquote>
+						<div class="block">
+							The Microsoft Visual C++ makefile build requires version 6 of the
+							compiler suite and a <code>cmd</code> shell from Windows 2000 or better.
+						</div>
+						<div class="block">
+							At the top-level directory, type:
+						</div>
+						<blockquote>
+<pre>
+&#062; nmake help
+</pre>
+						</blockquote>
+						<div class="block">
+							This will guide you through the build process. The normal build
+							procedure is invoked with:
+						</div>
+						<blockquote>
+<pre>
+&#062; nmake win32
+</pre>
+						</blockquote>
+						<div class="block">
+							To install modules globally:
+						</div>
+						<blockquote>
+<pre>
+&#062; nmake win32_install
+</pre>
+						</blockquote>
+						<div class="block">
+							To rebuild a (sub-) project, invoke from any level in the directory
+							hierarchy:
+						</div>
+						<blockquote>
+<pre>
+&#062; nmake /f build\tmk_win32_vcpp all
+</pre>
+						</blockquote>
+					</blockquote>
+				</li>
+				<li class="bullets">
+					GNU-C compiler (MinGW32)
+					<blockquote>
+						<div class="block">
+							There are two possible configurations for this compiler:
+						</div>
+						<blockquote>
+							<div class="block">
+								1.) MSys and GCC (both available at <a href="http://www.mingw.org">http://www.mingw.org</a>)
+							</div>
+						</blockquote>
+						<div class="block">
+							or
+						</div>
+						<blockquote>
+							<div class="block">
+								2.) Cygwin (need to have the MinGW32 link-kit installed)
+							</div>
+						</blockquote>
+						<div class="block">
+							We assume the compiler is set up correctly to build native Windows
+							applications (we set <code>-mno-cygwin</code> to request a native build) and that
+							native headers, such as <code>windows.h</code> can be found (this should be the
+							case by default).
+						</div>
+						<div class="block">
+							Further we assume that the <code>PATH</code> environment variable is set in a way
+							that the command <code>make</code> invokes the GNU make program (please note that
+							this is important even if we invoke <code>mingw32-make</code>).
+						</div>
+						<div class="block">
+							Make sure the DirectX headers can be found by the compiler:
+						</div>
+						<blockquote>
+<pre>
+$ export C_INCLUDE_PATH=&#060;DirectX-SDK&#062;/Include
+</pre>
+						</blockquote>
+						<div class="block">
+							To start the build:
+						</div>
+						<blockquote>
+<pre>
+$ mingw32-make win32_gcc
+</pre>
+						</blockquote>
+						<div class="block">
+							To install modules globally:
+						</div>
+						<blockquote>
+<pre>
+$ mingw32-make win32_gcc_install
+</pre>
+						</blockquote>
+						<div class="block">
+							To rebuild a (sub-) project, invoke from any level in the directory
+							hierarchy:
+						</div>
+						<blockquote>
+<pre>
+$ mingw32-make -f build/tmk_win32_gcc all
+</pre>
+						</blockquote>
+						<div class="block">
+							If you are using Cygwin, use just type <code>make</code> instead of
+							<code>mingw32-make</code>.
+						</div>
+					</blockquote>
+				</li>
+			</ul>
+			<h3>
+				Notes
+			</h3>
+			<ul>
+				<li class="bullets">
+					The global installation path on the Windows platform is
+					<code>%CommonProgramFiles%\tek</code>. It will be used as a fallback if modules
+					cannot be found locally in an application's module directory,
+					<code>PROGDIR:mod</code>. Installation is optional, but recommended for side
+					projects to work.
+				</li>
+				<li class="bullets">
+					Tests can be found in <code>bin\win32</code>.
+				</li>
+				<li class="bullets">
+					To disable modules from the build procedure, remove or comment the
+					appropriate lines in <code>mods\build\tmkmakefile</code>, and then regenerate
+					the makefiles using (depending on the compiler):
+					<blockquote>
+<pre>
+&#062; build\bin\tmkmf_win32 tmkmakefile -c win32_vcpp -r
+</pre>
+					</blockquote>
+					or
+					<blockquote>
+<pre>
+$ ./build/bin/tmkmf_win32 tmkmakefile -c win32_gcc -r
+</pre>
+					</blockquote>
+				</li>
+			</ul>
+		</div>
+		<hr><a name="FreeBSD"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#FreeBSD">FreeBSD</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h3>
+				Requirements
+			</h3>
+			<div class="block">
+				Notable dependencies of the FreeBSD build are X11, OpenGL and OSS.
+				Modules requiring these can be commented out in <code>mods/build/tmkmakefile</code>:
+			</div>
+			<blockquote>
+				<table class="noborder">
+					<tr>
+						<td class="noborder">
+							visual
+						</td>
+						<td class="noborder">
+							depends on X11
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							displays
+						</td>
+						<td class="noborder">
+							depends on X11 and OpenGL
+						</td>
+					</tr>
+					<tr>
+						<td class="noborder">
+							audio
+						</td>
+						<td class="noborder">
+							requires OSS support
+						</td>
+					</tr>
+				</table>
+			</blockquote>
+			<h3>
+				Installation
+			</h3>
+			<div class="block">
+				At the top-level directory, type:
+			</div>
+			<blockquote>
+<pre>
+$ make help
+</pre>
+			</blockquote>
+			<div class="block">
+				This will guide you through the build process. The normal build procedure
+				is invoked with:
+			</div>
+			<blockquote>
+<pre>
+$ make fbsd
+</pre>
+			</blockquote>
+			<div class="block">
+				The global installation path on the FreeBSD platform is <code>/usr/local/tek</code>.
+				It will be used as a fallback if modules cannot be found locally in
+				an application's module directory, <code>PROGDIR:mod</code>. Installation
+				is optional, but recommended for side projects to work:
+			</div>
+			<blockquote>
+<pre>
+$ make fbsd_install
+</pre>
+			</blockquote>
+			<h3>
+				Notes
+			</h3>
+			<ul>
+				<li class="bullets">
+					Tests can be found in <code>bin/fbsd</code>.
+				</li>
+				<li class="bullets">
+					To disable modules from the build procedure, remove or comment the
+					appropriate lines in <code>mods/build/tmkmakefile</code>, and then regenerate the
+					makefiles using
+					<blockquote>
+<pre>
+$ build/bin/tmkmf_linux tmkmakefile -c fbsd_gcc -r
+</pre>
+					</blockquote>
+				</li>
+				<li class="bullets">
+					To rebuild a (sub-) project, invoke from any level in the directory
+					hierarchy:
+					<blockquote>
+<pre>
+$ make -f build/tmk_fbsd_gcc all
+</pre>
+					</blockquote>
+				</li>
+			</ul>
+		</div>
+		<hr><a name="MorphOS"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#MorphOS">MorphOS</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h3>
+				Installation
+			</h3>
+			<div class="block">
+				At the top-level directory, type:
+			</div>
+			<blockquote>
+<pre>
+$ make help
+</pre>
+			</blockquote>
+			<div class="block">
+				This will guide you through the build process. The normal build procedure
+				is invoked with:
+			</div>
+			<blockquote>
+<pre>
+$ make morphos_gcc
+</pre>
+			</blockquote>
+			<div class="block">
+				The global installation path on the MorphOS platform is <code>TEKLIB:</code>.
+				It will be used as a fallback if modules cannot be found locally in
+				an application's module directory, <code>PROGDIR:mod</code>. Installation
+				is optional, but recommended for side projects to work:
+			</div>
+			<blockquote>
+<pre>
+$ make morphos_gcc_install
+</pre>
+			</blockquote>
+			<div class="block">
+				To rebuild a (sub-) project, invoke from any level in the directory
+				hierarchy:
+			</div>
+			<blockquote>
+<pre>
+$ make -f build/tmk_morphos_gcc all
+</pre>
+			</blockquote>
+			<h3>
+				Notes
+			</h3>
+			<ul>
+				<li class="bullets">
+					Tests can be found in <code>bin/morphos</code>.
+				</li>
+				<li class="bullets">
+					To disable modules from the build procedure, remove or comment the
+					appropriate lines in <code>mods/build/tmkmakefile</code>, and then regenerate the
+					makefiles using
+					<blockquote>
+<pre>
+$ build/bin/tmkmf_morphos_gcc tmkmakefile -c morphos_gcc -r
+</pre>
+					</blockquote>
+				</li>
+			</ul>
+		</div>
+		<hr><a name="AmigaOS"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#AmigaOS">AmigaOS</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<h3>
+				Requirements
+			</h3>
+			<div class="block">
+				Dependencies on the Amiga platform are render.library and guigfx.library.
+				Modules requiring these can be commented out in <code>mods/build/tmkmakefile</code>:
+			</div>
+			<blockquote>
+				<table class="noborder">
+					<tr>
+						<td class="noborder">
+							visual
+						</td>
+						<td class="noborder">
+							render.library, guigfx.library
+						</td>
+					</tr>
+				</table>
+			</blockquote>
+			<div class="block">
+				Supported compilers are SAS/C and GCC. The GCC build is currently
+				unmaintained.
+			</div>
+			<h3>
+				Installation
+			</h3>
+			<div class="block">
+				At the top-level directory, type:
+			</div>
+			<blockquote>
+<pre>
+$ smake help
+</pre>
+			</blockquote>
+			<div class="block">
+				This will guide you through the build process. The normal build procedure
+				is invoked with:
+			</div>
+			<blockquote>
+<pre>
+$ smake amiga
+</pre>
+			</blockquote>
+			<div class="block">
+				The global installation path on the Amiga platform is <code>TEKLIB:</code>.
+				It will be used as a fallback if modules cannot be found locally in
+				an application's module directory, <code>PROGDIR:mod</code>. Installation
+				is optional, but recommended for side projects to work:
+			</div>
+			<blockquote>
+<pre>
+$ smake amiga_install
+</pre>
+			</blockquote>
+			<h3>
+				Notes
+			</h3>
+			<ul>
+				<li class="bullets">
+					Tests can be found in <code>bin/amiga</code>.
+				</li>
+				<li class="bullets">
+					To disable modules from the build procedure, remove or comment the
+					appropriate lines in <code>mods/build/tmkmakefile</code>, and then regenerate the
+					makefiles using
+					<blockquote>
+<pre>
+$ build/bin/tmkmf_amiga tmkmakefile -c amiga_sasc -r
+</pre>
+					</blockquote>
+				</li>
+				<li class="bullets">
+					To rebuild a (sub-) project, invoke from any level in the directory
+					hierarchy:
+					<blockquote>
+<pre>
+$ smake -f build/tmk_amiga_sasc all
+</pre>
+					</blockquote>
+				</li>
+				<li class="bullets">
+					The render.library and guigfx.library packages can be downloaded from
+					<a href="http://www.neoscientists.org/~tmueller/binarydistillery/">http://www.neoscientists.org/~tmueller/binarydistillery/</a> .
+				</li>
+			</ul>
+		</div>
+		<hr><a name="PS2"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#PS2">Playstation 2</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				Please refer to <code>teklib/doc/README.ps2</code>.
+			</div>
+		</div>
+		<hr><a name="MacOSX"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#MacOSX">Mac OS X</a></strong></td><td valign=top><a href="#TOC">Toc</a></td></tr></table><p><div class="node">
+			<div class="block">
+				The Mac OS X port (formerly named <code>darwin_gcc</code>) is currently unmaintained,
+				and the build is likely to fail. Refer to the instructions for a Unix version
+				for getting started.
+			</div>
+		</div>
+		<hr><a name="TOC"></a><table width="100%" class="head"><tr><td width="100%"><strong><a href="#INDEX">INSTALL</a> : <a href="#TOC">Table of contents</a></strong></td></tr></table><p><div class="node">
+			<blockquote>
+				<ul>
+					<li class="soft">
+						<a href="#AmigaOS">AmigaOS</a>
+					</li>
+					<li class="soft">
+						<a href="#FreeBSD">FreeBSD</a>
+					</li>
+					<li class="soft">
+						<a href="#INDEX">Index</a>
+					</li>
+					<li class="soft">
+						<a href="#Linux">Linux</a>
+					</li>
+					<li class="soft">
+						<a href="#MacOSX">Mac OS X</a>
+					</li>
+					<li class="soft">
+						<a href="#MorphOS">MorphOS</a>
+					</li>
+					<li class="soft">
+						<a href="#PS2">Playstation 2</a>
+					</li>
+					<li class="soft">
+						<a href="#Windows">Windows</a>
+					</li>
+				</ul>
+			</blockquote>
+		</div>
+		<hr>
+		<p align="right">Generated Fri Oct  7 16:46:59 2005 from INSTALL</p>
+	</body>
+</html>

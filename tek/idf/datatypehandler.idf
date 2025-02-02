@@ -1,0 +1,27 @@
+
+;
+;	$Id: datatypehandler.idf,v 1.3 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/datatypehandler.idf - Datatypehandler description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name datatypehandler		; as in tek_init_...
+.this TAPTR dth				; first/implicit argument, default "TAPTR base"
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix TDth				; name prefix heading non-inline functions
+
+.defv TVOID					; aliases for void
+.defp TAPTR, TSTRPTR		; ptr types
+.defi TINT, TUINT, TBOOL	; 32bit integer types
+
+THNDL *Open(TTAGITEM *tags)
+TTAGITEM *GetAttrs(THNDL *handle)
+TINT DoMethod(THNDL *handle, TTAGITEM *tags)
+TLIST *ListDatatypes(TTAGITEM *filtertags)
+TBOOL SimpleLoadPicture(TSTRPTR filename, TIMGPICTURE *pic)
+
+.end
+

@@ -1,0 +1,25 @@
+This directory contains some useful files and code.
+Unlike the code in ../src, everything here is in the public domain.
+
+all.c
+	Full Lua interpreter in a single file.
+	Do "make 1".
+
+lua.hpp
+	Lua header files for C++.
+	This keeps the C interface to Lua. But Lua also compiles as clean C++.
+
+lua.ico
+	A Lua icon for Windows (and web sites, as favicon.ico).
+	Drawn by hand by Markus Gritsch <gritsch@iue.tuwien.ac.at>.
+
+min.c
+	A minimal Lua interpreter.
+	Good for learning and for starting your own.
+
+noparser.c
+	Linking with noparser.o avoids loading the parsing modules in lualib.a.
+	Do "make noparser" to see a demo.
+
+saconfig.c
+	Configuration for Lua interpreter.

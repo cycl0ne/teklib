@@ -1,0 +1,52 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(PLATFORM)
+[/body]
+
+[body name="modtargets"]
+
+	[!-- modules to be built --]
+	[embed body="mods"]		hash				[/embed]
+
+	[!-- objects --]
+	OBJECTS =	$(LIBDIR)/hash_mod.o
+
+	[!-- link modules. first argument: modname, second: objects --]
+	[embed body="modlink"]		hash
+								$(OBJECTS)		[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="moddep"]	$(LIBDIR)/hash_mod.o
+							hash_mod.c			[/embed]
+
+[/body]
+
+[body name="tooltargets"]
+
+	[!-- all executables must be listed under "TOOLS" --]
+	[embed body="tools"]	hashtest				[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="tooldep"]	$(LIBDIR)/hashtest.o
+							tests/hashtest.c			[/embed]
+
+	[!-- link tools. first argument: target name, second: objects --]
+	[embed body="toollink"]	hashtest
+							$(LIBDIR)/hashtest.o		[/embed]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] 
+	makefile_modules_and_tools
+[/render]

@@ -1,0 +1,42 @@
+[!-----------------------------------------------------------------------------
+
+	tmkmf config include -
+	This is the master switch for platform specific builds.
+
+------------------------------------------------------------------------------]
+
+[switch]
+
+	[case config="linux_gcc"]
+		[include name="config_linux.tmk"/]
+	[/case]
+
+	[case config="fbsd_gcc"]
+		[include name="config_fbsd.tmk"/]
+	[/case]
+
+	[case config="amiga"]
+		[include name="config_amiga.tmk"/]
+	[/case]
+
+	[case config="morphos_gcc"]
+		[include name="config_morphos.tmk"/]
+	[/case]
+
+	[case config="win32"]
+		[include name="config_win32.tmk"/]
+	[/case]
+
+	[case config="intent_vpcc"]
+		[include name="config_intent.tmk"/]
+	[/case]
+
+	[case config="darwin_gcc"]
+		[include name="config_darwin.tmk"/]
+	[/case]
+
+	[case config="ps2_gcc"]
+		[include name="config_ps2.tmk"/]
+	[/case]
+
+[/switch]

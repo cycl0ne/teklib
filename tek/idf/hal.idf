@@ -1,0 +1,48 @@
+
+;
+;	$Id: hal.idf,v 1.4 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/hal.idf - HAL interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name hal					; as in tek_init_...
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix THAL				; name prefix heading non-inline functions
+
+.defv TVOID					; aliases for void
+.defp TAPTR, TTASKFUNC, TSTRPTR		; pointer types
+.defi TINT, TUINT, TBOOL	; 32bit integer types
+.deft TTAG
+.defs TUINT16
+.defb TUINT8
+.defd TDOUBLE
+
+.offset 9
+TTAG GetAttr(TUINT tag, TTAG defval)
+TVOID GetSysTime(TTIME *time)
+TAPTR Alloc(TUINT size)
+TVOID Free(TAPTR mem, TUINT size)
+TAPTR Realloc(TAPTR mem, TUINT oldsize, TUINT newsize)
+TVOID CopyMem(TAPTR src, TAPTR dst, TUINT size)
+TVOID FillMem(TAPTR dst, TUINT len, TUINT8 val)
+TBOOL InitLock(THALO *lock)
+TVOID DestroyLock(THALO *lock)
+TVOID Lock(THALO *lock)
+TVOID Unlock(THALO *lock)
+TBOOL InitThread(THALO *thread, TTASKFUNC func, TAPTR data)
+TVOID DestroyThread(THALO *thread)
+TAPTR FindSelf()
+TUINT Wait(TUINT signals)
+TVOID Signal(THALO *thread, TUINT signals)
+TUINT SetSignal(TUINT newsigs, TUINT sigs)
+TAPTR LoadModule(TSTRPTR name, TUINT16 version, TUINT *possize, TUINT *newgsize)
+TBOOL CallModule(TAPTR mod, TAPTR task, TAPTR data)
+TVOID UnloadModule(TAPTR mod)
+TBOOL ScanModules(TSTRPTR prefix, TAPTR cbfunc, TAPTR data)
+TDOUBLE DateToJulian(TDATE *date)
+TVOID JulianToDate(TDOUBLE jd, TDATE *date)
+
+.end

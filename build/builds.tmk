@@ -1,0 +1,133 @@
+
+[!--------------------------------------------------------------------
+
+	Makefile templates for the different build types: 
+	tools, modules, libs, meta, and some combinations of these.
+
+---------------------------------------------------------------------]
+
+[body name="makefile_tools"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	#
+	[embed body="guitooltargets"/]
+	#
+	[embed body="guitoolbuild"/]
+	#
+	[embed body="tooltargets"/]
+	#
+	[embed body="toolbuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	modules:
+		\t$(VOID)
+	libs:
+		\t$(VOID)
+	install:
+		\t$(VOID)
+	do_install: install
+
+[/body]
+
+[body name="makefile_modules"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	#
+	[embed body="modtargets"/]
+	#
+	[embed body="modbuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	tools:
+		\t$(VOID)
+	libs:
+		\t$(VOID)
+
+[/body]
+
+[body name="makefile_modules_and_tools"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	#
+	[embed body="modtargets"/]
+	#
+	[embed body="modbuild"/]
+	#
+	[embed body="guitooltargets"/]
+	#
+	[embed body="guitoolbuild"/]
+	#
+	[embed body="tooltargets"/]
+	#
+	[embed body="toolbuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	libs:
+		\t$(VOID)
+
+[/body]
+
+[body name="makefile_libs"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	#
+	[embed body="libtargets"/]
+	#
+	[embed body="libbuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	modules: libs
+		\t$(VOID)
+	tools: libs
+		\t$(VOID)
+	install: libs
+		\t$(VOID)
+	do_install: install
+
+[/body]
+
+[body name="makefile_libs_and_tools"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	#
+	[embed body="libtargets"/]
+	#
+	[embed body="libbuild"/]
+	#
+	[embed body="guitooltargets"/]
+	#
+	[embed body="guitoolbuild"/]
+	#
+	[embed body="tooltargets"/]
+	#
+	[embed body="toolbuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	modules:
+		\t$(VOID)
+	install: libs
+		\t$(VOID)
+	do_install: install
+
+[/body]
+
+[body name="makefile_meta"]
+	[embed body="metabuild"/]
+	[embed body="metatargets"/]
+[/body]
+

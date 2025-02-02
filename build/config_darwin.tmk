@@ -1,0 +1,292 @@
+
+[!-------------------------------------------------------------------------
+
+	$Id: config_darwin.tmk,v 1.3 2004/01/10 13:04:32 mtaubert Exp $
+	tmkmf configuration for the MacOSX/Darwin platform.
+	Supported contexts:
+
+	darwin_gcc					- debug symbols, debug level 10
+	darwin_gcc_debug			- debug symbols, debug level 5
+	darwin_gcc_release			- no debug symbols, optimized
+
+--------------------------------------------------------------------------]
+
+[body name="help"]
+	help:
+		\t@echo "==================================================================="
+		\t@echo "=="
+		\t@echo "== darwin_gcc supported builds"
+		\t@echo "== ---------------------------"
+		\t@echo "== all ............... build linklibs, modules, executables"
+		\t@echo "== libs .............. build linklibs"
+		\t@echo "== modules ........... build shared modules"
+		\t@echo "== tools ............. build executables (tests, tools)"
+		\t@echo "== install ........... install modules in /usr/local/tek"
+		\t@echo "== clean ............. clean"
+		\t@echo "== help .............. this help"
+		\t@echo "=="
+		\t@echo "==================================================================="
+[/body]
+
+[body name="config"]
+
+	#
+	#\tTEKlib darwin_gcc makefile
+	#\tAutomatically generated with tmkmf TEKlib Makefile generator
+	#
+
+	PLATFORM	= darwin
+	HOST        = darwin
+
+	PARENT      = ../
+	DEF			= -DTEKLIB -DTSYS_DARWIN $(EXTRADEFS)
+	WARN		= -Wall
+
+	MKDIR       = mkdir -p
+	RM          = rm
+	RMDIR       = rm -R
+	CC          = gcc
+	LD          = ld
+	AR          = ar r	
+	LN			= ln -s
+	LIBTOOL		= libtool
+	
+	LIBPREFIX    = lib
+	LIBSUFFIX    = a
+	MODSUFFIX    = dylib
+	FRMSUFFIX    = framework
+
+	EXTRAMODLIBS = 
+	EXTRAFRAMEWORKLIBS = -framework CoreFoundation -lSystem
+	
+	[switch]
+		[case config="_release"]
+			OPT 	= -O2 -fomit-frame-pointer -no-cpp-precomp -fpascal-strings
+		[/case]
+		[case config="_debug"]
+			OPT 	= -O1 -no-cpp-precomp -fpascal-strings
+			DEBUG	= -DTDEBUG=2 -g
+		[/case]
+		[default]
+			OPT 	= -O2 -no-cpp-precomp -fpascal-strings
+			DEBUG	= -DTDEBUG=10 -g
+		[/default]
+	[/switch]
+
+	[embed body="help"/]
+	
+[/body]
+
+[body name="paths"]
+
+	INCL		 = -I$(TEKLIB) -I. -I./include
+	LIBDIR       = lib/$(PLATFORM)
+	MODDIR       = $(BINDIR)/mod
+
+    TEKSYSDIR    = /usr/local/tek/			[!--- you can adjust this to your needs --]
+	MODINSTDIR   = $(TEKSYSDIR)mod
+
+	#
+
+	$(BINDIR):
+		\t-$(MKDIR) $(BINDIR)
+		\t-$(MKDIR) $(MODDIR)
+	$(LIBDIR):
+		\t-$(MKDIR) $(LIBDIR)
+
+[/body]
+
+
+[!---------- toolbuild ------------]
+
+[body name="tools"]
+	TOOLS = \\
+		$(BINDIR)/%n
+[/body]
+
+[body name="toolbuild"]
+	TOOLCFLAGS	= $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) $(EXTRATOOLINCL)
+	TOOLLIBS	= -framework CoreFoundation -lpthread -L$(TEKLIB)lib/$(PLATFORM) -ltekcmain $(EXTRATOOLLIBS)
+	tools: $(BINDIR) $(LIBDIR) libs $(TOOLS)
+[/body]
+
+[body name="tooldep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="toollink"]
+	$(BINDIR)/%1: %2
+		\t@echo "--- (TOOLINK) %1"
+		\t$(LD) -o $@ -lcrt1.o %2 -lSystem -lgcc $(TOOLLIBS)
+	[!--		 
+		[if config="_release"]
+			\tstrip $(BINDIR)/%1
+		[/if]
+	--]
+[/body]
+
+
+[!---------- libbuild ------------]
+
+[body name="libs"]
+	LIBS = \\
+		$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+[/body]
+
+[body name="libbuild"]
+	LIBCFLAGS	= $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) -DTEKHOST_SYSDIR="\\"$(TEKSYSDIR)\\""
+	libs: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(LIBS) $(FRAMEWORKS)
+	$(TEKLIB)$(LIBDIR):
+		\t-$(MKDIR) $(TEKLIB)$(LIBDIR)
+[/body]
+
+[body name="libdep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(LIBCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="liblink"]
+	$(TEKLIB)$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+		\t@echo "--- (ARCHIVE) %1.$(LIBSUFFIX)"
+		\t$(AR) $@ %2
+		\tranlib $@
+[/body]
+
+
+[!---------- frameworkbuild ------------]
+
+[body name="frameworks"]
+	FRAMEWORKS = \\
+		$(TEKLIB)$(LIBDIR)/%n.$(FRMSUFFIX)/%n
+[/body]
+
+[body name="frameworkbuild"]
+	LIBCFLAGS	= $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) -DTEKHOST_SYSDIR="\\"$(TEKSYSDIR)\\""
+	frameworks: $(TEKLIB)$(LIBDIR) $(LIBDIR) $(FRAMEWORKS)
+	$(TEKLIB)$(LIBDIR):
+		\t-$(MKDIR) $(TEKLIB)$(LIBDIR)
+[/body]
+
+[body name="frameworkdep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(LIBCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="frameworklink"]
+	$(TEKLIB)$(LIBDIR)/%1.$(FRMSUFFIX)/%1: %2
+		\t@echo "--- (FRAMEWORK STRUCTURE) %1.$(FRMSUFFIX)"
+		\t$(MKDIR) $(TEKLIB)$(LIBDIR)/%1.$(FRMSUFFIX)/Version/A/Headers
+		\t$(MKDIR) $(TEKLIB)$(LIBDIR)/%1.$(FRMSUFFIX)/Version/A/Resources
+		\t$(MKDIR) $(TEKLIB)$(LIBDIR)/%1.$(FRMSUFFIX)/Version/A/mod
+
+		\tcd $(TEKLIB)$(LIBDIR)/%1.$(FRMSUFFIX)/Version; \
+		\t$(LN) A Current
+		
+		\tcd $(TEKLIB)$(LIBDIR)/%1.$(FRMSUFFIX);			\	
+		\t$(LN) Version/Current/Headers Headers;			\
+		\t$(LN) Version/Current/Resources Resources;		\
+		\t$(LN) Version/Current/mod mod
+		
+		\t@echo "--- (FRAMEWORK LINKING) %1.$(FRMSUFFIX)"
+		\t$(LIBTOOL) -dynamic -prebind -seg1addr 16000 %2 -o $@ $(EXTRAFRAMEWORKLIBS)
+[/body]
+
+[!---------- modbuild ------------]
+
+[body name="mods"]
+	MODS = \\
+		$(MODDIR)/%n.$(MODSUFFIX)
+[/body]
+
+[body name="modbuild"]
+	MODCFLAGS	= -fPIC -DPIC $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) -DTEKHOST_SYSDIR="\\"$(TEKSYSDIR)\\""
+	MODLIBS		= -L$(TEKLIB)lib/$(PLATFORM) -ltek $(EXTRAMODLIBS)
+	modules: $(LIBDIR) $(BINDIR) $(MODS)
+	install: libs modules
+		\t@echo "--- (INSTALL) $(MODS)"
+		\t-install -d $(MODINSTDIR)
+		\t-install $(MODS) $(MODINSTDIR)
+[/body]
+
+[body name="moddep"]
+	%1: %2 %3
+		\t@echo "--- (COMPILE) %2"
+		\t$(CC) $(MODCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="modlink"]
+	$(MODDIR)/%1.$(MODSUFFIX): %2
+		\t@echo "--- (MODLINK) %1.$(MODSUFFIX)"
+		\t$(CC) $(MODCFLAGS) %2 -single_module -dynamiclib -o $@ $(MODLIBS) 
+	[!--
+		[if config="_release"]
+			\tstrip $(MODDIR)/%1.$(MODSUFFIX)
+		[/if]
+	--]
+	[if config="darwin"]
+		\t$(CP) $(MODDIR)/%1.$(MODSUFFIX) $(TEKLIB)$(LIBDIR)/tekc.$(FRMSUFFIX)/mod
+	[/if]
+
+[/body]
+
+
+[!---------- metabuild ------------]
+
+[body name="metabuild"]
+	[embed body="help"/]
+	all: libs modules tools
+	modules tools install clean libs:
+[/body]
+
+[body name="meta"]
+	\t@cd %1; $(MAKE) -f build/tmk_%0 $@
+[/body]
+
+
+[!---------- masterbuild ------------]
+
+[body name="masterbuild"]
+
+	all: modules libs tools
+
+	clean:
+		\tfind $(LIBDIR) -name "*.o" -type f | xargs rm -f
+		\trm -f $(MODS) $(TOOLS) $(LIBS)
+		\trm $(TEKLIB)$(LIBDIR)/tek.framework
+
+[/body]
+
+[!-------------------------------------------------------------------------
+
+	Revision History
+	$Log: config_darwin.tmk,v $
+	Revision 1.3  2004/01/10 13:04:32  mtaubert
+	This is the initial version of the Mac OS X display modules.
+	
+	The current implementation contains only OpenGL-based display modules.
+	
+	Also, there is a new build target in the top makefile called darwin_install,
+	which will build a Mac OS X framework and installs it with the help of
+	sudo into /Library/Frameworks/.
+	
+	The search paths for the darwin platform has changed too.
+	There are a few locations from where the modules tried to be loaded from,
+	such as /Library/Frameworks/tek.framework/mod/,
+	/System/Library/Frameworks/... or ~/Library/Frameworks. At last the
+	application directory should contain the modules.
+	
+	Revision 1.2  2004/01/01 12:18:02  tmueller
+	Unix builds now using CC instead of gcc
+	
+	Revision 1.1.1.1  2003/12/11 07:22:05  tmueller
+	Krypton import
+	
+	Revision 1.9  2003/10/27 22:45:43  tmueller
+	CVS headers added, various cleanup
+	
+
+--------------------------------------------------------------------------]

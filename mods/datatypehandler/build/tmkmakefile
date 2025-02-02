@@ -1,0 +1,39 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(PLATFORM)
+[/body]
+
+[body name="modtargets"]
+
+	[!-- modules to be built --]
+	[embed body="mods"]		datatypehandler		[/embed]
+
+	[!-- objects --]
+	MODOBJECTS =	$(LIBDIR)/datatypehandler_mod.o $(LIBDIR)/simpleloadpicture.o
+
+	[!-- link modules. first argument: modname, second: objects --]
+	[embed body="modlink"]	datatypehandler
+				$(MODOBJECTS)		[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="moddep"]	$(LIBDIR)/datatypehandler_mod.o
+				datatypehandler.c	[/embed]
+	[embed body="moddep"]	$(LIBDIR)/simpleloadpicture.o
+				simpleloadpicture.c	[/embed]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] 
+	makefile_modules
+[/render]

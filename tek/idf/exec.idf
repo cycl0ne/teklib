@@ -1,0 +1,99 @@
+
+;
+;	$Id: exec.idf,v 1.7 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/exec.idf - Exec interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name exec					; as in tek_init_exec
+;.filename exec				; as in "exec.h", default name
+;.this TAPTR exec			; first/implicit argument, default "TAPTR base"
+;.base exec					; function vector base, default .this
+;.author Timm S. Mueller <tmueller at neoscientists.org>
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix TExec				; name prefix heading non-inline functions
+.iprefix T					; name prefix heading inline functions
+.ibase TAPTR TExecBase
+
+.defv TVOID					; aliases for void
+.defp TAPTR, TTASKFUNC, TINITFUNC, TSTRPTR	; ptr types
+.defi TINT, TUINT, TBOOL	; 32bit integer types
+.defs TUINT16				; 16bit integer types
+.defb TUINT8				; 8bit integer types
+.deft TTAG, TUINTPTR		; tag types
+
+.offset 9
+/* -- Functions for bootstrapping Exec, not needed outside init code -- */
+TBOOL DoExec(TTAGITEM *tags)
+TAPTR CreateSysTask(TTASKFUNC func, TTAGITEM *tags)
+.inline	on
+/* -- Grant access to the HAL module base, needed by device drivers -- */
+TAPTR GetHALBase()
+.offset 13
+/* -- General public Exec API -- */
+TAPTR OpenModule(TSTRPTR name, TUINT16 version, TTAGITEM *tags)
+TVOID CloseModule(TAPTR mod)
+.offset 16
+TVOID CopyMem(TAPTR src, TAPTR dst, TUINT len)
+TVOID FillMem(TAPTR dst, TUINT len, TUINT8 val)
+TVOID FillMem32(TAPTR dst, TUINT len, TUINT val)
+TAPTR CreateMMU(TAPTR object, TUINT type, TTAGITEM *tags)
+TAPTR Alloc(TAPTR mmu, TUINT size)
+TAPTR Alloc0(TAPTR mmu, TUINT size)
+.offset 24
+TVOID Free(TAPTR mem)
+TAPTR Realloc(TAPTR mem, TUINT nsize)
+TAPTR GetMMU(TAPTR mem)
+TUINT GetSize(TAPTR mem)
+TAPTR CreateLock(TTAGITEM *tags)
+TVOID Lock(TAPTR lock)
+TVOID Unlock(TAPTR lock)
+TUINT AllocSignal(TUINT sig)
+TVOID FreeSignal(TUINT sig)
+TVOID Signal(TAPTR task, TUINT sig)
+TUINT SetSignal(TUINT newsig, TUINT sigmask)
+TUINT Wait(TUINT sig)
+.offset 37
+TAPTR CreatePort(TTAGITEM *tags)
+TVOID PutMsg(TAPTR port, TAPTR port, TAPTR msg)
+TAPTR GetMsg(TAPTR port)
+TVOID AckMsg(TAPTR msg)
+TVOID ReplyMsg(TAPTR msg)
+TVOID DropMsg(TAPTR msg)
+TUINT SendMsg(TAPTR port, TAPTR msg)
+TAPTR WaitPort(TAPTR port)
+TUINT GetPortSignal(TAPTR port)
+TAPTR GetUserPort(TAPTR task)
+TAPTR GetSyncPort(TAPTR task)
+TAPTR CreateTask(TTASKFUNC func, TINITFUNC ifunc, TTAGITEM *tags)
+TAPTR FindTask(TSTRPTR name)
+TAPTR GetTaskData(TAPTR task)
+TAPTR SetTaskData(TAPTR task, TAPTR data)
+TAPTR GetTaskMMU(TAPTR task)
+TAPTR AllocMsg(TUINT size)
+TAPTR AllocMsg0(TUINT size)
+.offset 59
+TAPTR LockAtom(TAPTR atom, TUINT mode)
+TVOID UnlockAtom(TAPTR atom, TUINT mode)
+TTAG GetAtomData(TAPTR atom)
+TTAG SetAtomData(TAPTR atom, TTAG data)
+TAPTR CreatePool(TTAGITEM *tags)
+TAPTR AllocPool(TAPTR pool, TUINT size)
+TVOID FreePool(TAPTR pool, TAPTR mem, TUINT size)
+TAPTR ReallocPool(TAPTR pool, TAPTR mem, TUINT oldsize, TUINT newsize)
+TVOID PutIO(struct TIORequest *ioreq)
+TINT WaitIO(struct TIORequest *ioreq)
+TINT DoIO(struct TIORequest *ioreq)
+TINT CheckIO(struct TIORequest *ioreq)
+TINT AbortIO(struct TIORequest *ioreq)
+.offset 74
+.inline	off
+/* -- Semi-private; to manipulate msgs in ports, not normally needed -- */
+TVOID InsertMsg(TAPTR port, TAPTR msg, TAPTR prevmsg, TUINT status)
+TVOID RemoveMsg(TAPTR port, TAPTR msg)
+TUINT GetMsgStatus(TAPTR msg)
+TUINT SetMsgReplyPort(TAPTR msg, TAPTR rport)
+.end

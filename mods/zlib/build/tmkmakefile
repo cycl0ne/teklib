@@ -1,0 +1,75 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="BUILD:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(PLATFORM)
+[/body]
+
+[body name="modtargets"]
+		
+	[!-- modules to be built --]
+	[embed body="mods"]		zlib				[/embed]
+
+	[!-- objects --]
+	OBJECTS =	$(LIBDIR)/zlib_mod.o $(LIBDIR)/adler32.o $(LIBDIR)/crc32.o \
+				$(LIBDIR)/deflate.o $(LIBDIR)/infback.o $(LIBDIR)/compress.o \
+				$(LIBDIR)/inffast.o $(LIBDIR)/inflate.o $(LIBDIR)/inftrees.o \
+				$(LIBDIR)/trees.o $(LIBDIR)/zutil.o
+
+	[!-- link modules. first argument: modname, second: objects --]
+	[embed body="modlink"]		zlib
+								$(OBJECTS)		[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="moddep"]	$(LIBDIR)/zlib_mod.o
+							zlib_mod.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/adler32.o
+							adler32.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/crc32.o
+							crc32.c				[/embed]
+	[embed body="moddep"]	$(LIBDIR)/compress.o
+							compress.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/deflate.o
+							deflate.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/infback.o
+							infback.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/inffast.o
+							inffast.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/inflate.o
+							inflate.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/inftrees.o
+							inftrees.c			[/embed]
+	[embed body="moddep"]	$(LIBDIR)/trees.o
+							trees.c				[/embed]
+	[embed body="moddep"]	$(LIBDIR)/zutil.o
+							zutil.c				[/embed]
+
+[/body]
+
+[body name="tooltargets"]
+
+	[!-- all executables must be listed under "TOOLS" --]
+	[embed body="tools"]	zlibtest				[/embed]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="tooldep"]	$(LIBDIR)/zlibtest.o
+							tests/zlibtest.c		[/embed]
+
+	[!-- link tools. first argument: target name, second: objects --]
+	[embed body="toollink"]	zlibtest
+							$(LIBDIR)/zlibtest.o		[/embed]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] 
+	makefile_modules_and_tools
+[/render]

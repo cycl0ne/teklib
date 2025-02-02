@@ -1,0 +1,35 @@
+
+;
+;	$Id: imgproc.idf,v 1.5 2005/09/13 02:44:41 tmueller Exp $
+;	teklib/tek/idf/imgproc.idf - Imgproc interface description
+;
+;	See copyright notice in teklib/COPYRIGHT
+;
+
+.class library
+.name imgproc				; as in tek_init_...
+.copyright See copyright notice in teklib/COPYRIGHT
+
+.prefix TImg				; name prefix heading non-inline functions
+
+.defv TVOID					; aliases for void
+.defp TAPTR					; pointer types
+.defi TINT, TUINT, TBOOL	; 32bit integer types
+
+TBOOL DoMethod(TIMGPICTURE *src, TIMGPICTURE *dst, TINT method, TTAGITEM *tags)
+TINT BytesPerPel(TINT format)
+TUINT ColToFmt(TIMGARGBCOLOR *col, TINT format)
+TVOID Fill(TIMGPICTURE *pic, TIMGARGBCOLOR *col)
+TVOID Plot(TIMGPICTURE *pic, TINT x, TINT y, TIMGARGBCOLOR *col)
+TVOID Line(TIMGPICTURE *pic, TINT sx, TINT sy, TINT ex, TINT ey, TIMGARGBCOLOR *col) 
+TVOID Box(TIMGPICTURE *pic, TINT sx, TINT sy, TINT w, TINT h, TIMGARGBCOLOR *col)
+TVOID Boxf(TIMGPICTURE *pic, TINT sx, TINT sy, TINT w, TINT h, TIMGARGBCOLOR *col)
+TVOID Ellipse(TIMGPICTURE *pic, TINT x, TINT y, TINT rx, TINT ry, TIMGARGBCOLOR *col)
+TVOID Ellipsef(TIMGPICTURE *pic, TINT x, TINT y, TINT rx, TINT ry, TIMGARGBCOLOR *col)
+TVOID Poly(TIMGPICTURE *pic, TINT numpoints, TINT *points, TIMGARGBCOLOR *col)
+TVOID Polyf(TIMGPICTURE *pic, TINT numpoints, TINT *points, TIMGARGBCOLOR *col)
+TIMGPICTURE *AllocBitmap(TINT w, TINT h, TINT format)
+TVOID FreeBitmap(TIMGPICTURE *pic)
+TVOID Point(TIMGPICTURE *pic, TINT x, TINT y, TIMGARGBCOLOR *col)
+
+.end

@@ -1,0 +1,1214 @@
+TABLE OF CONTENTS
+
+mod_displayhandler/0_ABOUT
+mod_displayhandler/1_INDEX
+mod_displayhandler/2_STRUCTURES
+mod_displayhandler/TDisFindDisplay
+mod_displayhandler/TDisGetDisplayProperties
+mod_displayhandler/TDisGetModeList
+mod_displayhandler/TDisGetBestMode
+mod_displayhandler/TDisCreateView
+mod_displayhandler/TDisSimpleCreateView
+mod_displayhandler/TDisGetDisplayCaps
+mod_displayhandler/TDisWaitMsg
+mod_displayhandler/TDisGetMsg
+mod_displayhandler/TDisSetAttrs
+mod_displayhandler/TDisFlush
+mod_displayhandler/TDisAllocPen
+mod_displayhandler/TDisSetDPen
+mod_displayhandler/TDisSetBPen
+mod_displayhandler/TDisSetPalette
+mod_displayhandler/TDisAllocBitmap
+mod_displayhandler/TDisDescribe
+mod_displayhandler/TDisLock
+mod_displayhandler/TDisUnlock
+mod_displayhandler/TDisBegin
+mod_displayhandler/TDisEnd
+mod_displayhandler/TDisBlit
+mod_displayhandler/TDisTextout
+mod_displayhandler/TDisPutImage
+mod_displayhandler/TDisFill
+mod_displayhandler/TDisPlot
+mod_displayhandler/TDisLine
+mod_displayhandler/TDisBox
+mod_displayhandler/TDisBoxf
+mod_displayhandler/TDisPoly
+mod_displayhandler/TDisPolyf
+mod_displayhandler/TDisEllipse
+mod_displayhandler/TDisEllipsef
+mod_displayhandler/TDisMovePixels
+
+mod_displayhandler/0_ABOUT
+
+    SHORT
+        API documentation for the displayhandler module.
+        
+        the displayhandler module manages the creation, handling and drawing
+        inside of windows and screens with the various display modules depending
+        on the underlaying host operating system.
+        
+    VERSION
+        $Id: displayhandler.doc,v 1.1 2005/06/19 20:46:04 tmueller Exp $
+
+    REVISION HISTORY
+        $Log:
+        
+mod_displayhandler/1_INDEX
+
+    FUNCTIONS
+        TDisFindDisplay()
+        TDisGetDisplayProperties()
+        TDisGetModeList()
+        TDisGetBestMode()
+        TDisCreateView()
+        TDisSimpleCreateView()
+        TDisGetDisplayCaps()
+        TDisWaitMsg()
+        TDisGetMsg()
+        TDisSetAttrs()
+        TDisFlush()
+        TDisAllocPen()
+        TDisSetDPen()
+        TDisSetBPen()
+        TDisSetPalette()
+        TDisAllocBitmap()
+        TDisDescribe()
+        TDisLock()
+        TDisUnlock()
+        TDisBegin()
+        TDisEnd()
+        TDisBlit()
+        TDisTextout()
+        TDisPutImage()
+        TDisFill()
+        TDisPlot()
+        TDisLine()
+        TDisBox()
+        TDisBoxf()
+        TDisPoly()
+        TDisPolyf()
+        TDisEllipse()
+        TDisEllipsef()
+        TDisMovePixels()
+                
+mod_displayhandler/2_STRUCTURES
+
+    TDISRECT()
+    TDISPROPS()
+    TDISCAPS()
+    TDISDESCRIPTOR()
+    TDISKEY()
+    TDISMOUSEPOS()
+    TDISMBUTTON()
+    TDISMSG()
+    TDISMODE()
+           
+mod_displayhandler/TDisFindDisplay
+
+    NAME
+        TDisFindDisplay - find a display host according to the given tags
+
+    SYNOPSIS 
+        display = TDisFindDisplay(dhandler, tags)
+        THNDL*                    TAPTR     TTAGITEM*    
+
+    FUNCTION
+        according to the given tags, this functions returns the handle of the 
+        best matching display host module.
+
+    INPUT TAGS
+        TDISMUSTHAVE_CLASS, (TINT)
+        TDISMUSTNOTHAVE_CLASS, (TINT)
+            the class the display has to be or not
+            available tyes: TDISCLASS_STANDARD  
+                            TDISCLASS_OPENGL    
+
+        TDISMUSTHAVE_MODE, (TINT)
+        TDISMUSTNOTHAVE_MODE, (TINT)
+            the mode the display has to support or not
+            available tyes: TDISMODE_WINDOW 
+                            TDISMODE_FULLSCREEN
+        
+        TDISMUSTHAVE_COLORS, (TINT)
+        TDISMUSTNOTHAVE_COLORS, (TINT)
+            colordepth the display has to support or not
+            available tyes: TDISCOLORS_CLUT
+                            TDISCOLORS_TRUECOLOR
+
+        TDIS_MINWIDTH, (TINT)
+        TDIS_MINHEIGHT, (TINT)
+            minimum width and height the display has to support
+
+    RESULTS
+        display - a handle of a display host module or TNULL
+
+    NOTES
+        to close a display call TDestroy from exec
+      
+    SEE ALSO
+        TDisGetDisplayCaps(), TDisGetModeList(), TDisGetBestMode(),
+        TDisCreateView()
+
+
+mod_displayhandler/TDisGetDisplayProperties
+
+    NAME
+        TDisGetDisplayProperties - get properties of a display host module
+
+    SYNOPSIS 
+        TDisGetDisplayProperties(dhandler, display, props)
+                                 TAPTR     THNDL*   TDISPROPS()*
+    
+    FUNCTION
+        fills a TDISPROPS() struct with the properties of the given display host
+             
+    INPUTS
+        display - handle to display host
+
+    RESULTS
+        props - the properties of the display host will be available in the 
+                TDISPROPS() structure
+
+    NOTES
+        before a application creates a view, this can be called to determine, 
+        if this display module has the properties needed by the application.
+
+    SEE ALSO
+        TDisGetDisplayCaps(), TDisGetModeList(), TDisGetBestMode(),
+        TDisCreateView()
+              
+mod_displayhandler/TDisGetModeList
+
+    NAME
+        TDisGetModeList - fills a list with available displaymodes
+
+    SYNOPSIS 
+        nummodes=TDisGetModeList(dhandler, display, modelist)
+        TINT                     TAPTR     THNDL*   TDISMODE()**
+    
+    FUNCTION
+        fills a list with all available display modes, and return the number
+        of available modes.
+        
+    INPUTS
+        display - handle to display host
+      
+    RESULTS
+        modelist    - points to a field of TDISMODE() structures
+        nummodes    - number of available modes
+
+    NOTES
+        only of use for fullscreen display, windowed displays will return zero
+      
+    SEE ALSO
+        TDisGetDisplayProperties(), TDisGetDisplayCaps(), TDisGetBestMode(),
+        TDisCreateView()
+       
+mod_displayhandler/TDisGetBestMode
+
+    NAME
+        TDisGetBestMode - gets best displaymode
+
+    SYNOPSIS 
+        mode=TDisGetBestMode(dhandler, display, w,   h,   d)
+        TDISMODE()*          TAPTR     THNDL*   TINT TINT TINT
+    
+    FUNCTION
+        seek and return the best displaymode for the chosen display host
+        according to the given parameters
+
+    INPUTS
+        display - handle to display host
+        w       - desired width
+        h       - desired height
+        d       - desired color depth
+       
+    RESULTS
+        a pointer to a valid TDISMODE() struct, or TNULL if no matching mode was
+        found
+
+    SEE ALSO
+        TDisGetDisplayProperties(), TDisGetDisplayCaps(), TDisGetModeList(),
+        TDisCreateView()
+               
+mod_displayhandler/TDisCreateView
+
+    NAME
+        TDisCreateView - creates a view according to the given tags
+
+    SYNOPSIS 
+        res = TDisCreateView(dhandler, display, tags)
+        TBOOL                TAPTR     THNDL*   TTAGITEM*
+    
+    FUNCTION
+        this creates a view with the chosen display host module according to the
+        given tags
+     
+    INPUTS
+        display - handle to display host
+
+    INPUT TAGS
+        TDISC_WIDTH     - desired width
+        TDISC_HEIGHT    - desired height
+        TDISC_DEPTH     - desired color depth
+        TDISC_TITLE     - window title string
+        TDISC_XPOS      - desired x-position of the window
+        TDISC_YPOS      - desired y-position of the window
+        TDISC_FLAGS     - custom flags
+        
+    FLAGS
+        TDISCF_DOUBLEBUFFER - display should be double buffered
+        TDISCF_RESIZEABLE   - window should be resizeable
+
+    RESULTS
+        res - TTRUE, if a screen/window could be created, else TFALSE
+       
+    SEE ALSO
+        TDisGetDisplayProperties(), TDisGetDisplayCaps(), TDisGetModeList(),
+        TDisGetBestMode()
+        
+mod_displayhandler/TDisSimpleCreateView
+
+    NAME
+        TDisSimpleCreateView - creates a view on the easy way
+
+    SYNOPSIS 
+        display = TDisSimpleCreateView(dhandler, title,  w,   h,   d,
+                                       opengl, fullscreen, dblbuf, resize)
+        THNDL*                         TAPTR     TSTRPTR TINT TINT TINT
+                                       TBOOL   TBOOL       TBOOL   TBOOL
+    
+    FUNCTION
+        simplifies the creation of a windows/screen to one single call. this 
+        uses the functions above and should cover the most needed features for
+        a display.
+
+    INPUTS
+        title       - title for application
+        w           - desired width
+        h           - desired height
+        d           - desired color depth
+        opengl      - TTRUE, if the display must support OpenGL
+        fullscreen  - TTRUE, if the display should be fullscreen
+        dblbuf      - TTRUE for doublebuffering
+        resize      - TTRUE, if a window has to be resizable
+
+    RESULTS
+        display - a THNDL* to a valid display or TNULL
+        
+    NOTES
+        opengl is a MUSTBE - condition. doublebuffering is always supported
+        by the display host modules, same for resize. if no fullscreen
+        is available, the displayhandler tries to create a windowed display.
+        The values for width, height and depth HAVE to be checked with 
+        dis_describe() after the view was created, they can differ from the 
+        wished values!
+
+        to close a display call TDestroy from exec
+
+    SEE ALSO
+        TDisDescribe(), TDisGetDisplayCaps()
+        
+mod_displayhandler/TDisGetDisplayCaps
+
+    NAME
+        TDisGetDisplayCaps - get capabilities of a display host module
+
+    SYNOPSIS 
+        TDisGetDisplayCaps(dhandler, display, caps)
+                           TAPTR     THNDL*   TDISCAPS()*
+    
+    FUNCTION
+        fills a TDISCAPS() struct with the capabilities of the given display
+        host
+             
+    INPUTS
+        display - handle to display host
+
+    RESULTS
+        caps - the capabilities of the display host will be available in the 
+                TDISCAPS() structure
+    NOTES
+        in contrast to TDisGetDisplayProperties(), this should be called AFTER
+        a view was created. 
+
+    SEE ALSO
+        TDisGetDisplayProperties(), TDisGetModeList(), TDisGetBestMode(),
+        TDisCreateView(), TDisSimpleCreateView()
+              
+mod_displayhandler/TDisWaitMsg
+
+    NAME
+        TDisWaitMsg - waits for a message
+
+    SYNOPSIS 
+        TDisWaitMsg(dhandler, display)
+                    TAPTR     THNDL*
+    
+    FUNCTION
+        waits for a message from the chosen display
+              
+    INPUTS
+        display - handle to display host
+
+    RESULTS
+       
+    SEE ALSO
+        TDisGetMsg()
+
+mod_displayhandler/TDisGetMsg
+
+    NAME
+        TDisGetMsg - returns a message, if theres any
+
+    SYNOPSIS 
+        msg = TDisGetMsg(dhandler, display)
+        TDISMSG()*       TAPTR     THNDL*
+    
+    FUNCTION
+        get a message from the chosen display and remove the message from the
+        messagequeue. 
+        
+        msg->code can be one of the following:
+            TDISMSG_CLOSE       - user has pressed the close button of a window
+            TDISMSG_RESIZE      - window has changed his size, msg->data points
+                                  to a TDISRECT() structure
+            TDISMSG_REDRAW      - content of window has to redrawn
+            TDISMSG_ACTIVATED   - application was activated
+            TDISMSG_DEACTIVATED - application was deactivated
+            TDISMSG_ICONIC      - application is iconified (no redraw!)
+            TDISMSG_MOVE        - windows was moved, msg->data points to a 
+                                  TDISRECT() structure
+            TDISMSG_KEYDOWN     - a key was pressed, msg->data points to a 
+                                  TDISKEY() structure
+            TDISMSG_KEYUP       - a key was released, msg->data points to a 
+                                  TDISKEY() structure
+            TDISMSG_MOUSEMOVE   - the mouse was moved, msg->data points to a
+                                  TDISMOUSEPOS() structure
+            TDISMSG_MBUTTONDOWN - a mousebutton was pressed, msg->data points to
+                                  a TDISMBUTTON() structure
+            TDISMSG_MBUTTONUP   - a mousebutton was released, msg->data points
+                                  to a TDISMBUTTON() structure
+            TDISMSG_MWHEELDOWN  - the mousewheel was scrolled down
+            TDISMSG_MWHEELUP    - the mousewheel was scrolled up
+            
+            (the following are not implemented yet)
+            TDISMSG_MWHEELLEFT  - the mousewheel was scrolled left
+            TDISMSG_MWHEELRIGHT - the mousewheel was scrolled up
+
+              
+    INPUTS
+        display - handle to display host
+
+    RESULTS
+        a pointer to a TDISMSG() structure, or TNULL, if there were no pending
+        messages
+
+    SEE ALSO
+        TDisWaitMsg()
+
+mod_displayhandler/TDisSetAttrs
+
+    NAME
+        TDisSetAttrs - allows the change of some display attributes at runtime
+
+    SYNOPSIS 
+        TDisGetMsg(dhandler, display, tags)
+                   TAPTR     THNDL*   TTAGITEM*
+    
+    FUNCTION
+        controls the behavior of some display properties
+                      
+    INPUTS
+        display - handle to display host
+
+    INPUT TAGS
+        TDISTAG_POINTERMODE - can be TDISPTR_NORMAL for the host typical 
+                              standard  mouse pointer, TDISPTR_BUSY for the 
+                              host typical busy mouse pointer, or 
+                              TDISPTR_INVISIBLE to make the pointer invisible
+        TDISTAG_DELTAMOUSE  - TTRUE to get delta mickeys instead of absolute
+                              mouse coordinates
+        TDISTAG_VSYNCHINT   - if supported, a TTRUE forces TDisFlush() to be 
+                              synced to the display refresh to avoid teasing
+                              effects
+        TDISTAG_SMOOTHHINT  - if supported, a TTRUE forces bilinear
+                              interpolation for scaled blits 
+
+    RESULTS
+    
+    NOTES
+        please remark, that any attribute whose name ends up with "HINT" is a
+        possiblity, not a necessity
+
+    SEE ALSO
+
+mod_displayhandler/TDisFlush
+
+    NAME
+        TDisFlush - makes the display content visible
+
+    SYNOPSIS 
+        TDisFlush(dhandler, display)
+                  TAPTR     THNDL*
+
+    FUNCTION
+        flushes the chosen display. this one is ABSOLUTELY required to make
+        display contents visible! 
+        exchanges also front/backbuffer for doublebuffered displays. 
+           
+    INPUTS
+        display - handle to display host
+
+    RESULTS
+    
+    NOTES
+        on some hosts is vertical sync available via TDisSetAttrs()
+       
+    SEE ALSO
+        TDisSetAttrs()
+
+mod_displayhandler/TDisAllocPen
+
+    NAME
+        TDisAllocPen - allocate a pen
+
+    SYNOPSIS 
+        pen = TDisAllocPen(dhandler, display, color)
+        THNDL*             TAPTR     THNDL*   TUINT
+
+    FUNCTION
+        allocates a pen for drawing on the chosen display
+
+    INPUTS
+        display - handle to display host
+        color   - a integer containing a RGB value
+
+    RESULTS
+        handle to pen, or TNULL
+
+    NOTES
+        to release a allocated pen call TDestroy from exec
+
+    SEE ALSO
+        TDisSetDPen()
+
+mod_displayhandler/TDisSetDPen
+
+    NAME
+        TDisSetDPen - set the drawing pen
+
+    SYNOPSIS
+        TDisSetDPen(dhandler, display, pen)
+                    TAPTR     THNDL*   THNDL*
+                    
+    FUNCTION
+        set the pen for drawing functions
+
+    INPUTS
+        display - handle to display host
+        pen     - handle to pen
+
+    RESULTS
+
+    SEE ALSO
+        TDisAllocPen()
+
+mod_displayhandler/TDisSetPalette
+
+    NAME
+        TDisSetPalette - set the palette for 8bit displays
+
+    SYNOPSIS
+        TDisSetPalette(dhandler, display, palette,         sp,  sd,  numentries)
+                       TAPTR     THDNL*   TIMGARGBCOLOR()* TINT TINT TINT
+
+    FUNCTION
+        set the color lookup table for a 8bit display
+
+    INPUTS
+        display     - handle to display host
+        palette     - pointer to a TIMGARGBCOLOR() structure containing the
+                      palette
+        sp          - start color inside the palette
+        sd          - start color inside the display palette
+        numentries  - number of palette entries to set
+
+    RESULTS
+    
+    NOTES
+        does nothing for hi- or truecolor displays
+
+    SEE ALSO
+        
+mod_displayhandler/TDisAllocBitmap
+
+    NAME
+        TDisAllocBitmap - allocates a bitmap 
+
+    SYNOPSIS
+        bm = TDisAllocBitmap(dhandler, display, w,   h,   flags)
+        THNDL*               TAPTR     THNDL*   TINT TINT TINT
+
+    FUNCTION
+        allocates a bitmap from a display. the color depth and color
+        format of the bitmap will be the same like the display.
+
+    INPUTS
+        display - handle to display host
+        w       - width
+        h       - height
+        flags   - some of the following:
+            
+            TDISCF_SCALEBLIT    - scaling is needed for blitting 
+            TDISCF_CKEYBLIT     - color keying is needed for blitting
+            TDISCF_CALPHABLIT   - alpha blending is needed for blitting
+
+    RESULTS
+        bm  - a handle to a allocated bitmap or TNULL
+
+    NOTES
+        displayhandler returns zero, if a host isn't able to handle the wished
+        bitmap flags.
+        
+        to release a allocated bitmap call TDestroy from exec
+
+    SEE ALSO
+        TDisBlit()
+
+mod_displayhandler/TDisDescribe
+
+    NAME
+        TDisDescribe - get the image properties of a display or bitmap
+
+    SYNOPSIS
+        TDisDescribe(dhandler, handle, desc)
+                     TAPTR     THNDL*  TDISDESCRIPTOR()*
+
+    FUNCTION
+        fills the given TDISDESCRIPTOR() - structure with the properties of
+        the chosen display or bitmap
+
+    INPUTS
+        handle  - handle to a display or bitmap
+
+    RESULTS
+        desc    - TDISDESCRIPTOR() structure with the properties of the display
+                  or bitmap
+
+    NOTES
+
+    SEE ALSO
+
+mod_displayhandler/TDisLock
+
+    NAME
+        TDisLock - locks a display or bitmap
+
+    SYNOPSIS
+        res = TDisLock(dhandler, handle, img)
+        TBOOL          TAPTR     THNDL*  TIMGPICTURE*
+
+    FUNCTION
+        locks a display or the chosen bitmap and grants direct access to the
+        pixel data buffer.
+
+    INPUTS
+        handle  - handle to a display or bitmap
+
+    RESULTS
+        img - TIMGPICTURE structure with the properties of the display
+              or bitmap, and a valid data pointer to access to
+
+        res - TTRUE, if successfull locked, else TFALSE
+        
+    NOTES
+        NEVER forget to do TDisUnlock()! No rendering calls (text,line,plot and
+        so one) are allowed inside a lock! A lock has to be as short as 
+        possible, because on most hosts it will stall the multitasking!
+        NOT allowed inside a TDisBegin()/TDisEnd() area!!!
+
+        for TIMGPICTURE look into the documentation of imgproc
+
+    SEE ALSO
+        TDisUnlock()
+
+mod_displayhandler/TDisUnlock
+
+    NAME
+        TDisUnlock - unlocks a locked display or bitmap
+
+    SYNOPSIS
+        TDisUnlock(dhandler, handle)
+                   TAPTR     THNDL*
+
+    FUNCTION
+        unlocks a locked display or bitmap, makes rendering calls possible again
+
+    INPUTS
+        handle  - handle to a display or bitmap
+
+    RESULTS
+        
+    NOTES
+
+    SEE ALSO
+        TDisLock()
+
+mod_displayhandler/TDisBegin
+
+    NAME
+        TDisBegin - allows use of rendering functions
+
+    SYNOPSIS
+        res = TDisBegin(dhandler, handle)
+        TBOOL           TAPTR     THNDL*
+
+    FUNCTION
+        Allowes rendering inside the chosen display or bitmap with following
+        functions: TDisTextOut(), TDisFill(), TDisPlot(), TDisLine(), TDisBox(),
+        TDisBoxf(), TDisPoly(), TDisPolyf(), TDisEllipse(), TDisEllipsef(), 
+        TDisMovePixels().
+        This has NOT to be called for TDisBlit() and TDisFlush()!
+
+    INPUTS
+        handle  - handle to a display or bitmap
+
+    RESULTS
+        res     - TTRUE, if rendering can start after this, else TFALSE
+        
+    NOTES
+        NEVER forget to do TDisEnd()!!! NOT allowed inside a 
+        TDisLock()/TDisUnlock() area!!!
+
+    SEE ALSO
+        TDisEnd()
+
+mod_displayhandler/TDisEnd
+
+    NAME
+        TDisEnd - finish usage of rendering functions
+
+    SYNOPSIS
+        TDisEnd(dhandler)
+                TAPTR
+
+    FUNCTION
+        Stop and finish for rendering functions.
+
+    INPUTS
+
+    RESULTS
+        
+    SEE ALSO
+        TDisBegin()
+
+mod_displayhandler/TDisBlit
+
+    NAME
+        TDisBlit - blits a bitmap to their display
+
+    SYNOPSIS
+        res = TDisBlit(dhandler, bmhndl, tags)
+                       TAPTR     THNDL*  TTAGITEM*
+
+    FUNCTION
+        blits a bitmap to their parent display, according to the given tags
+
+    INPUTS
+        bmhndl  - handle to bitmap
+        tags    - taglist
+
+    INPUT TAGS
+        TDISB_SRCX      - x start in bitmap
+        TDISB_SRCY      - y start in bitmap
+        TDISB_SRCWIDTH  - width of area to blit
+        TDISB_SRCHEIGHT - height of area to blit
+        TDISB_DSTX      - x destination in display
+        TDISB_DSTY      - y destination in display
+        TDISB_DSTWIDTH  - width of blitted area in display
+        TDISB_DSTHEIGHT - height of blitted area in display
+        TDISB_CKEY      - color key value for color key blits
+        TDISB_CALPHA    - alpha blending value for blitting with constant alpha
+
+    RESULTS
+        res - TTRUE, if blit occured, else TFALSE
+        
+    SEE ALSO
+
+mod_displayhandler/TDisTextout
+
+    NAME
+        TDisTextout - draws some text
+
+    SYNOPSIS
+        TDisTextout(dhandler, text,   row, column)
+                    TAPTR     TSTRPTR TINT TINT
+
+    FUNCTION
+        renders text at the given position into a display or bitmap
+
+    INPUTS
+        text    - string pointer to text
+        row     - row for first char
+        column  - column for first char
+
+    RESULTS
+        
+    NOTES
+        uses the default font from the display host.
+
+    SEE ALSO
+
+mod_displayhandler/TDisPutImage
+
+    NAME
+        TDisPutImage - transfers a offscreenimage to a display or bitmap
+
+    SYNOPSIS
+        TDisPutImage(dhandler, handle, img,         tags)
+                     TAPTR     THNDL*  TIMGPICTURE* TTAGITEM*
+
+    FUNCTION
+        draws a offscreen image to the chosen display or bitmap, does 
+        converting or scaling, if needed
+
+    INPUTS
+        handle  - handle to a display or bitmap
+        img     - TIMGPICTURE structure describing the offscreen image
+        tags    - taglist
+
+    INPUT TAGS
+        TDISB_SRCX      - x start in image
+        TDISB_SRCY      - y start in image
+        TDISB_SRCWIDTH  - width of area to transfer
+        TDISB_SRCHEIGHT - height of area to transfer
+        TDISB_DSTX      - x destination in display or bitmap
+        TDISB_DSTY      - y destination in display or bitmap
+        TDISB_DSTWIDTH  - width of blitted area in display or bitmap
+        TDISB_DSTHEIGHT - height of blitted area in display or bitmap
+
+    RESULTS
+        
+    NOTES
+        for TIMGPICTURE look into the documentation of imgproc
+
+    SEE ALSO
+
+mod_displayhandler/TDisFill
+
+    NAME
+        TDisFill - color fills display or bitmap
+
+    SYNOPSIS
+        TDisFill(dhandler)
+                 TAPTR
+
+    FUNCTION
+        fill display or bitmap with actual drawpen
+
+    INPUTS
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisPlot
+
+    NAME
+        TDisPlot - draws a pixel
+
+    SYNOPSIS
+        TDisPlot(dhandler, x,   y)
+                 TAPTR     TINT TINT
+
+    FUNCTION
+        sets a pixel at given position into display or bitmap
+
+    INPUTS
+        x   - x position of pixel
+        y   - y position of pixel
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisLine
+
+    NAME
+        TDisLine - draws a line
+
+    SYNOPSIS
+        TDisLine(dhandler, sx,  sy,  ex,  ey)
+                 TAPTR     TINT TINT TINT TINT
+
+    FUNCTION
+        draws a line into display or bitmap
+
+    INPUTS
+        sx  - start x position of line
+        sy  - start y position of line
+        ex  - end x position of line
+        ey  - end y position of line
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisBox
+
+    NAME
+        TDisBox - draws a box
+
+    SYNOPSIS
+        TDisBox(dhandler, sx,  sy,  w,   h)
+                TAPTR     TINT TINT TINT TINT
+
+    FUNCTION
+        draws a box into display or bitmap
+
+    INPUTS
+        sx  - start x position of line
+        sy  - start y position of line
+        w   - width of box
+        h   - height of box
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisBoxf
+
+    NAME
+        TDisBoxf - draws a filled box
+
+    SYNOPSIS
+        TDisBoxf(dhandler, sx,  sy,  w,   h)
+                 TAPTR     TINT TINT TINT TINT
+
+    FUNCTION
+        draws a filled box into display or bitmap
+
+    INPUTS
+        sx  - start x position of line
+        sy  - start y position of line
+        w   - width of box
+        h   - height of box
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisPoly
+
+    NAME
+        TDisPoly - draws a polygon
+
+    SYNOPSIS
+        TDisPoly(dhandler, numpoints, points)
+                 TAPTR     TINT       TINT*
+
+    FUNCTION
+        draws a polygon into display or bitmap
+
+    INPUTS
+        numpoints   - number of points
+        points      - a field describing the polygon points, containing a 
+                      sequence of x and y coordinates
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisPolyf
+
+    NAME
+        TDisPolyf - draws a filled polygon
+
+    SYNOPSIS
+        TDisPolyf(dhandler, numpoints, points)
+                  TAPTR     TINT       TINT*
+
+    FUNCTION
+        draws a filled polygon into display or bitmap
+
+    INPUTS
+        numpoints   - number of points
+        points      - a field describing the polygon points, containing a 
+                      sequence of x and y coordinates
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisEllipse
+
+    NAME
+        TDisEllipse - draws a ellipse
+
+    SYNOPSIS
+        TDisEllipse(dhandler, x,   y,   rx,  ry)
+                    TAPTR     TINT TINT TINT TINT
+
+    FUNCTION
+        draws a ellipse into display or bitmap
+
+    INPUTS
+        x   - x position of center of the ellipse
+        y   - y position of center of the ellipse
+        rx  - x radius of the ellipse
+        ry  - y radius of the ellipse
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisEllipsef
+
+    NAME
+        TDisEllipsef - draws a filled ellipse
+
+    SYNOPSIS
+        TDisEllipsef(dhandler, x,   y,   rx,  ry)
+                     TAPTR     TINT TINT TINT TINT
+
+    FUNCTION
+        draws a filled ellipse into display or bitmap
+
+    INPUTS
+        x   - x position of center of the ellipse
+        y   - y position of center of the ellipse
+        rx  - x radius of the ellipse
+        ry  - y radius of the ellipse
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+
+mod_displayhandler/TDisMovePixels
+
+    NAME
+        TDisMovePixels - moves a rectangle array of pixels
+
+    SYNOPSIS
+        TDisMovePixels(dhandler, sx,  sy,  dx,  dy,  w,   h)
+                       TAPTR     TINT TINT TINT TINT TINT TINT
+
+    FUNCTION
+        moves a rectangle inside a bitmap or display to another position
+
+    INPUTS
+        sx - x position of rectangle
+        sy - y position of rectangle
+        dx - destination x position of rectangle
+        dy - destination x position of rectangle
+        w  - width of rectangle
+        h  - height of rectangle
+
+    RESULTS
+        
+    SEE ALSO
+        TDisAllocPen(), TDisSetDPen(), TDisBegin()
+        
+mod_displayhandler/TDISRECT
+
+    NAME
+        TDISRECT - a rectangle definition
+
+    CONTENTS
+        TINT x
+        TINT y
+        TINT width
+        TINT height
+
+    NOTES
+    
+    SEE ALSO
+        TDisGetMsg()
+
+mod_displayhandler/TDISPROPS
+
+    NAME
+        TDISPROPS - contains the properties of a display host module
+        
+    CONTENTS
+        TSTRPTR name            - name of the module
+        TINT    version         - version number of displayhandler module, for
+                                  which this host module was compiled
+        TINT    priority        - priority in relation to other host modules
+        TINT    dispmode        - TDISMODE_WINDOW or TDISMODE_FULLSCREEN
+        TINT    dispclass       - TDISCLASS_STANDARD or TDISCLASS_OPENGL
+        TINT    minwidth        - minimum width of a view
+        TINT    maxwidth        - maximum width of a view
+        TINT    minheight       - minimum height of a view
+        TINT    maxheight       - maximum height of a view
+        TINT    mindepth        - minimal supported color depth
+        TINT    maxdepth        - maximal supported color depth
+        TINT    defaultwidth    - standard width of a view
+        TINT    defaultheight   - standard height of a view
+        TINT    defaultdepth    - standard color depth of a view
+
+    NOTES   
+    
+    SEE ALSO
+        TDisGetDisplayProperties()
+
+mod_displayhandler/TDISCAPS
+
+    NAME
+        TDISCAPS - contains the capabilities of a display host module
+        
+    CONTENTS
+        TINT    minbmwidth      - minimum width of a bitmap from this host
+        TINT    minbmheight     - minimum height of a bitmap from this host
+        TINT    maxbmwidth      - maximum width of a bitmap from this host
+        TINT    maxbmheight     - maximum height of a bitmap from this host
+        TBOOL   blitscale       - TTRUE, if this host can scale during a blit
+        TBOOL   blitalpha       - TTRUE, if this host can do alpha blending
+                                  during a blit
+        TBOOL   blitckey        - TTRUE, if this host can maintaining a color
+                                  key during a blit
+                                  
+        TBOOL   canconvertdisplay 
+                                - TTRUE, if this host can convert color formats
+                                  to the display during a TDisPutImage() call
+                                  
+        TBOOL   canconvertscaleddisplay 
+                                - TTRUE, if this host can convert and scale 
+                                  color formats to the display during a 
+                                  TDisPutImage() call
+                                  
+        TBOOL   canconvertbitmap
+                                - TTRUE, if this host can convert color formats
+                                  to a bitmap during a TDisPutImage() call
+                                  
+        TBOOL   canconvertscaledbitmap
+                                - TTRUE, if this host can convert and scale 
+                                  color formats to a bitmap during a 
+                                  TDisPutImage() call
+
+        TBOOL   candrawbitmap   - TTRUE, if this host can draw to bitmaps
+
+    NOTES   
+        the "can" - capabilities are just indicators, if the respective 
+        functions will be done by the host os and so eventually hardware
+        accelerated, or if they will be emulated through the imgproc - module
+    
+    SEE ALSO
+        TDisGetDisplayCaps()
+
+mod_displayhandler/TDISDESCRIPTOR
+
+    NAME
+        TDISDESCRIPTOR - describes size and properties of a display buffer or a
+                         bitmap
+        
+    CONTENTS
+        TINT x
+        TINT y
+        TINT width
+        TINT height
+        TINT depth
+        TINT format         - color format, the formats are defined in imgproc.h
+        TINT bytesperrow
+
+    NOTES
+    
+    SEE ALSE
+        TDisDescribe()
+    
+mod_displayhandler/TDISKEY
+
+    NAME
+        TDISKEY - key codes and qualifiers
+    
+    CONTENTS
+        TINT code
+        TINT qualifier
+
+    NOTES
+        code and qualifier definitions can be found in mod/displayhandler.h
+        
+        This are only rawkey codes, no translation happens (in example, on
+        german keyboards you will have y and z exchanged).
+    
+    SEE ALSO
+        TDisGetMsg()
+        
+mod_displayhandler/TDISMOUSEPOS
+
+    NAME
+        TDISMOUSEPOS - mouse position
+        
+    CONTENTS
+        TINT x
+        TINT y
+
+    NOTES
+    
+    SEE ALSO
+        TDisGetMsg()
+
+mod_displayhandler/TDISMBUTTON
+
+    NAME
+        TDISMBUTTON - mouse buttons
+    
+    CONTENTS
+        TUINT code
+        
+    NOTES
+        available codes are:
+            TDISMB_LBUTTON  - left button   
+            TDISMB_MBUTTON  - middle button
+            TDISMB_RBUTTON  - right button
+            TDISMB_E1BUTTON - and a lot more buttons...
+            TDISMB_E2BUTTON 
+            TDISMB_E3BUTTON 
+            TDISMB_E4BUTTON 
+            TDISMB_E5BUTTON 
+            TDISMB_E6BUTTON 
+
+        the E1 - E6 button codes are meant for mices with 5, 7 or more buttons
+        
+    SEE ALSO
+        TDisGetMsg()
+
+mod_displayhandler/TDISMSG
+
+    NAME
+        TDISMSG - contains code and data for a message
+        
+    CONTENTS
+        TUINT code  - message code
+        TAPTR data  - pointer to message data, depending on the message code
+        
+    NOTES
+
+    SEE ALSO
+        TDisGetMsg()
+
+mod_displayhandler/TDISMODE
+
+    NAME
+        TDISMODE - describes a display mode
+
+    CONTENTS
+        TINT width
+        TINT height
+        TINT depth
+
+    NOTES
+
+    SEE ALSO
+        TDisGetModeList(), TDisGetBestMode()
+
