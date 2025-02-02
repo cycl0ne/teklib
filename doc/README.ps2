@@ -1,21 +1,21 @@
-TEKlib for Playstation 2
-=========================
+TEKlib3 for Playstation 2
+==========================
 
 REQUIREMENTS
 
 You'll need a PS2 cross development setup including
 
-    * EE GCC 2.95.2 
-      => http://ps2dev.sourceforge.net/downloads/ee/gnu-ee-binutils-gcc-1.1.tar.gz
-    
+    * EE GCC 2.95.2
+      => http://users.neoscientists.org/~blue/downloads/gnu-ee-binutils-gcc-1.1.tar.gz
+
     * Ps2lib 2.1
-      => http://ps2dev.sourceforge.net/downloads/ps2lib/ps2lib-2.1.tar.gz
-      
-    * Newlib 1.10.0 
-      => http://ps2dev.sourceforge.net/downloads/ps2lib/ee-newlib-binary-1.81.tar.gz
+      => http://users.neoscientists.org/~blue/downloads/ps2lib-2.1.tar.gz
+
+    * Newlib 1.10.0
+      => http://users.neoscientists.org/~blue/downloads/ee-newlib-binary-1.81.tar.gz
 
 Instructions on setting up the compiler and libs can be found here:
- => http://ps2dev.sourceforge.net/downloads/ps2dev_guide.txt
+ => http://users.neoscientists.org/~blue/downloads/ps2dev_guide.txt
 
 You could also download our precompiled Linux/x86 package
  => ftp://ftp.neoscientists.org/ps2dev/ps2dev-toolchain_20050313.tar.gz
@@ -30,18 +30,20 @@ Now append the following to e.g. your /etc/profile
 	EE=$PS2DEV/ee
 	PS2LIB=$PS2DEV/ps2lib
 	PATH=$PATH:$PS2DEV/bin:$EE/bin
-	export PS2DEV EE PS2LIB PATH 
+	export PS2DEV EE PS2LIB PATH
 
 -----------------------------------------------------------------------------------------------
 
 INSTALL
 
-Get your copy of TEKlib here:
- => http://teklib.org/current/teklib.tar.gz
+This is a development branch so there are no pre-packaged source
+distributions yet. To get your copy of TEKlib you will need the
+Mercurial (=> http://www.selenic.com/mercurial/) version control
+system. Then proceed with:
 
-	$ tar xzvf teklib.tar.gz
+	$ hg clone http://hg.teklib.org/teklib
 	$ cd teklib
-	$ make ps2_gcc 
+	$ HOST=ps2 PLATFORM=ps2 make all
 
 Start your favourite loader and try some of the tests in teklib/bin/ps2.
 
@@ -49,18 +51,10 @@ Start your favourite loader and try some of the tests in teklib/bin/ps2.
 
 STATUS
 
-An overview of available modules can be found here:
- => http://teklib.org/index.shtml?section=status
-
-The following modules are currently not available:
-
-	* audio 
-	* displays 
-	* gldisplay 
-	* truetype 
-	* visual (work in progress) 
-
-Dynamic loading of modules is not yet supported; modules are linked statically.
+This branch is still missing datatype support and the PS2 visual
+backend has to be rewritten. And just as in the previous version:
+dynamic loading of modules is not supported; modules are linked
+statically.
 
 -----------------------------------------------------------------------------------------------
 

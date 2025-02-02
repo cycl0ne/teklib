@@ -1,0 +1,167 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[switch]
+		[case config="ps2"]
+			[embed body="mods"]
+				io
+				iohnd_ps2io
+				iohnd_stdio
+				iohnd_memfile
+			[/embed]
+		[/case]
+		[default]
+			[embed body="mods"]
+				io
+				iohnd_default
+				iohnd_stdio
+			[/embed]
+		[/default]
+	[/switch]
+
+	[switch]
+		[case config="posix_linux_gcc_release"]
+			[embed body="modlink"]
+				io
+				$(OBJDIR)/io_all.mo
+			[/embed]
+		[/case]
+		[default]
+			[embed body="modlink"]
+				io
+				$(OBJDIR)/io_mod.mo \
+					$(OBJDIR)/io_names.mo \
+					$(OBJDIR)/io_filelock.mo \
+					$(OBJDIR)/io_standard.mo
+			[/embed]
+		[/default]
+	[/switch]
+
+	[embed body="modlink"]
+		iohnd_default
+		$(OBJDIR)/iohnd_default.mo
+	[/embed]
+	[embed body="modlink"]
+		iohnd_stdio
+		$(OBJDIR)/iohnd_stdio.mo
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/io_mod.mo
+		io_mod.c
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/io_names.mo
+		io_names.c
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/io_filelock.mo
+		io_filelock.c
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/io_standard.mo
+		io_standard.c
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/iohnd_default.mo
+		$(PLATFORM)/iohnd_default.c
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/iohnd_stdio.mo
+		$(PLATFORM)/iohnd_stdio.c
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/io_all.mo
+		io_all.c
+		io_mod.h
+	[/embed]
+
+	[embed body="modlink"]
+		iohnd_ps2io
+		$(OBJDIR)/iohnd_ps2io.mo
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/iohnd_ps2io.mo
+		$(PLATFORM)/iohnd_ps2io.c
+	[/embed]
+
+	[embed body="modlink"]
+		iohnd_memfile
+		$(OBJDIR)/iohnd_memfile.mo
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/iohnd_memfile.mo
+		memfile/iohnd_memfile.c
+	[/embed]
+[/body]
+
+[body name="tooltargets"]
+
+	[embed body="tools"]
+		dirscan
+		delete
+		makedir
+		rename
+		touch
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/dirscan.to
+		tests/dirscan.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/delete.to
+		tests/delete.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/makedir.to
+		tests/makedir.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/rename.to
+		tests/rename.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/touch.to
+		tests/touch.c
+	[/embed]
+
+	[embed body="toollink"]
+		dirscan
+		$(OBJDIR)/dirscan.to
+	[/embed]
+	[embed body="toollink"]
+		delete
+		$(OBJDIR)/delete.to
+	[/embed]
+	[embed body="toollink"]
+		makedir
+		$(OBJDIR)/makedir.to
+	[/embed]
+	[embed body="toollink"]
+		rename
+		$(OBJDIR)/rename.to
+	[/embed]
+	[embed body="toollink"]
+		touch
+		$(OBJDIR)/touch.to
+	[/embed]
+
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules_tools
+[/render]

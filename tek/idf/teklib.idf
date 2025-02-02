@@ -1,0 +1,985 @@
+
+.name teklib
+.class linklib
+.author Timm S. Mueller <tmueller at neoscientists.org>
+.copyright See copyright notice in teklib/COPYRIGHT
+.defp TAPTR, TSTRPTR, THOOKFUNC
+.defv void
+.deft TTAG, TSIZE
+.defi TINT, TUINT, TBOOL
+.defs TUINT16
+
+;------------------------------------------------------------------------------
+;
+;	tek/idf/teklib.idf - TEKlib link library
+;	Written by Timm S. Mueller <tmueller at schulze-mueller.de>
+;	See copyright notice in COPYRIGHT
+;
+;	OVERVIEW::
+;	The majority of TEKlib's functionality is located in shared modules.
+;	The link libraries provide only functions that operate on elementary
+;	data structures (such as [[#lists]], hooks and [[#taglists]]), and
+;	they allow the setup of applications and modules.
+;
+;	LIBRARIES::
+;	* {{tek}} -
+;	Common functions for elementary datatypes and module setup,
+;	usually linked to modules
+;
+;	* {{tekc}} -
+;	Additionally provides teklib:TEKCreate(). This library is linked
+;	to applications that wish to embed TEKlib, but do not use
+;	teklib:TEKMain() as their application entrypoint.
+;
+;	* {{tekcmain}} -
+;	Additionally resolves a platform-specific {{main()}} and calls
+;	teklib:TEKMain(). This is the typical C/C++ language startup of a
+;	freestanding TEKlib application.
+;
+;	* {{tekmain}} -
+;	This library is based on {{tekc}} and additionally defines an
+;	entrypoint for applications on platforms on which TEKlib constitutes
+;	the operating system. This is the case on the Playstation 2
+;	architecture, for example.
+;
+;	FUNCTIONS::
+;	- teklib:TAddDate() - Add number of days and a time to a date
+;	- teklib:TAddHead() - Add a node at the head of a list
+;	- teklib:TAddTail() - Add a node at the tail of a list
+;	- teklib:TAddTime() - Add a time to another
+;	- teklib:TCallHookPkt() - Invoke a hook
+;	- teklib:TCmpTime() - Compare times
+;	- teklib:TCreateTime() - Create a time from days, seconds, micros
+;	- teklib:TDestroy() - Destroy a handle
+;	- teklib:TDestroyList() - Unlink all nodes in a list and destroy them
+;	- teklib:TDiffDate() - Calculate days and time difference between dates
+;	- teklib:TEKCreate() - Create an initial TEKlib task/thread context
+;	- teklib:TEKMain() - Entrypoint for a freestanding application
+;	- teklib:TExtractTime() - Extract days, seconds, micros from a time
+;	- teklib:TFindHandle() - Find a named handle in a list
+;	- teklib:TForEachTag() - Traverse all key/value pairs in a tag list
+;	- teklib:TFreeInstance() - Free a module instance
+;	- teklib:TGetTag() - Get a value from a list of tagitems
+;	- teklib:TInitHook() - Initialize a hook with a function and data
+;	- teklib:TInitInterface() - Initialize an interface structure
+;	- teklib:TInitList() - Initialize a list structure
+;	- teklib:TInitVectors() - Initialize a module function table
+;	- teklib:TInsert() - Insert a node into a list
+;	- teklib:TNewInstance() - Create a module instance copy
+;	- teklib:TNodeUp() - Move a node towards the head of its list
+;	- teklib:TRemHead() - Remove a node from the head of a list
+;	- teklib:TRemove() - Remove a node from whatever list it is linked to
+;	- teklib:TRemTail() - Remove a node from the tail of a list
+;	- teklib:TSubDate() - Subtract a number of days and a time from a date
+;	- teklib:TSubTime() - Subtract a time from another
+;
+;	---------------------------------------------------------------------------
+;
+;	==( taglists : Taglists )==
+;
+;	One of the most versatile data structures in TEKlib are arrays of
+;	key/value pairs. These pairs are called ''tags'', hence the term
+;	''tagitem'' for the resulting data structure, and ''taglist'' for an
+;	array composed of tagitems. Example:
+;
+;			struct TTagItem my_taglist[5] =
+;			{
+;			    MY_Points, vertices,
+;			    MY_NumPoints, (TTAG) 3,
+;			    MY_Color, (TTAG) 0xff0000,
+;			    MY_Name, "Red triangle",
+;			    TTAG_DONE
+;			};
+;
+;	The {{TTAG}} type has the guaranteed ability to carry pointers on all
+;	architectures. This allows, in essence, to transport any kind of data
+;	in tagitems. The {{tti_Tag}} field can contain user codes or control
+;	codes. User codes are identified by their combination with
+;	{{TTAG_USER}}, for example
+;
+;			#define MY_Points    (TTAG_USER + 0x10001)
+;			#define MY_NumPoints (TTAG_USER + 0x10002)
+;			#define MY_Color     (TTAG_USER + 0x10003)
+;			#define MY_Name      (TTAG_USER + 0x10004)
+;
+;	A tag not containing {{TTAG_USER}} is considered a control tag, which
+;	determines how a single item is to be interpreted, or how an array
+;	of tagitems should be traversed. The meanings of control tags are:
+;
+;		- {{TTAG_DONE}}
+;			End of the taglist; traversal stops at this item.
+;
+;		- {{TTAG_IGNORE}}
+;			{{tti_Value}} of this item is to be ignored.
+;
+;		- {{TTAG_SKIP}}
+;			The current item plus the number of items in
+;			{{tti_Value}} is to be ignored.
+;
+;		- {{TTAG_MORE}}
+;			{{tti_Value}} points to another taglist, at which
+;			traversal is to be continued. The control does not
+;			return to the current item.
+;
+;		- {{TTAG_GOSUB}}
+;			{{tti_Value}} points to another taglist, which is
+;			traversed recursively. After traversal, control
+;			returns to the current item.
+;
+;	Once a function is designed to accept a taglist argument, it becomes
+;	more flexible for future API changes. By assigning a default
+;	value to each tag argument, any number of new taglist arguments can
+;	be added to the function, without ever breaking existing code:
+;
+;			void API_func(TTAGITEM *tags)
+;			{
+;			    TINT numv = (TINT) TGetTag(tags, MY_NumPoints, (TTAG) 3);
+;			    TFLOAT *v = (TFLOAT *) TGetTag(tags, MY_Points, def_vertices);
+;			    TSTRPTR n = (TSTRPTR) TGetTag(tags, MY_Name, "Def. Triangle");
+;			    TUINT rgb = (TUINT) TGetTag(tags, MY_Color, (TTAG) 0xff0000);
+;			    /* ... more tags in the future ... */
+;			}
+;
+;	NOTES::
+;		* As the sizes of {{TFLOAT}} and {{TDOUBLE}} types are not regulated
+;		in TEKlib, they should be transported as pointer references. Aside
+;		from {{TTAG}} type values and pointers, only integers (up to the size
+;		of {{TUINTPTR}}) should be placed into the field {{tti_Value}}.
+;
+;	---------------------------------------------------------------------------
+;
+;	==( lists : Lists )==
+;
+;	TEKlib lists are doubly-linked, with a ''stop node'', which appears
+;	before the first and after the last node of a list.
+;
+;	The forward iterator for this topology looks like this:
+;
+;			struct TNode *next, *node = list->tlh_Head;
+;			for (; (next = node->tln_Succ); node = next)
+;			{
+;			    /*
+;			     * you can operate on 'node' here, remove it safely,
+;			     * insert past it, as well as 'break' out from and
+;			     * 'continue' the loop.
+;			     */
+;			}
+;
+;------------------------------------------------------------------------------
+
+;------------------------------------------------------------------------------
+;
+;	TEKMain():
+;			void TEKMain(struct TTask *task)
+;
+;	FUNCTION::
+;	In a freestanding application, TEKlib resolves a platform-specific
+;	entrypoint like {{main()}} or intercepts the entrypoint provided by the
+;	platform's binary loader, performs initializations with reasonable
+;	defaults, and then enters TEKMain().
+;
+;	Resources such as {{argc}}, {{argv}}, return values and other properties
+;	are made available to the framework in named atoms. See TEKCreate(),
+;	util:TGetArgC(), util:TGetArgV(), util:TSetRetVal() for details.
+;
+;	If you need more control over the startup procedure then you can
+;	write your own startup library using TEKCreate().
+;
+;	EXAMPLE::
+;	Unless you write a more convenient C++ startup library of your own,
+;	the TEKlib application entrypoint for a C++ application would look
+;	like this:
+;
+;			extern "C" void TEKMain(struct TTask *task)
+;			{
+;			    /* ... */
+;			}
+;
+;	SEE ALSO::
+;	teklib:TEKCreate(), exec:TGetExecBase()
+;
+;------------------------------------------------------------------------------
+
+;------------------------------------------------------------------------------
+;
+;	TEKCreate():
+;			basetask = TEKCreate(tags)
+;			struct TTask*        TTAGITEM*
+;
+;	FUNCTION::
+;	This function creates an initial TEKlib context. All further
+;	functionality is related to and derived from this handle.
+;	If initialization fails, the return value is {{TNULL}}. If successful,
+;	the initial task handle refers to the process/thread context in which the
+;	caller is running. The handle is being destroyed with a call to
+;	teklib:TDestroy(), which will clean up and free all resources.
+;
+;	This kind of startup allows for integratation of TEKlib into
+;	foreign environments, and you can use it for writing your own
+;	startup library.
+;
+;	RESULTS::
+;		- {{basetask}} - initial context handle.
+;
+;	INPUTS::
+;		- {{tags}} - Pointer to an array of tag items, or {{TNULL}}.
+;			* {{TExecBase_ArgC, (TUINT)}} - Submit a {{main()}} entrypoint's
+;			number of arguments to the framework. If applicable, {{argc}},
+;			{{argv}} will be made available in a named atom {{sys.argv}}. See
+;			also util:TGetArgC(). Default: undefined
+;			* {{TExecBase_ArgV, (TSTRPTR)}} - Submit a {{main()}} entrypoint's
+;			array of arguments to the framework. If applicable, {{argc}},
+;			{{argv}} will be made available in a named atom {{sys.argv}}.
+;			See also util:TGetArgV(). Default: undefined
+;			* {{TExecBase_RetValP, (TINT *)}} - Submit a pointer to a possible
+;			return value. The pointer will be made available in a named atom
+;			{{sys.returnvalue}}. The variable being pointed to should be
+;			initialized with zero. See also util:TSetRetVal() for setting the
+;			return value in an application. Default: undefined
+;			* {{TExecBase_ModInit, (struct TInitModule *)}} - Submit a
+;			{{TNULL}}-terminated array of internal startup modules to your
+;			application. This allows you to link modules to applications
+;			statically. Internal modules will be looked up first, i.e. before
+;			any of the search strategies for modules from disk apply.
+;			Default: {{TNULL}}
+;			* {{TExecBase_ProgDir, (TSTRPTR)}} - Override the path to TEKlib's
+;			logical {{PROGDIR:}} volume, which by default resembles to the
+;			directory in which the application resides. Default: the
+;			application directory
+;			* {{TExecBase_ModDir, (TSTRPTR)}} - Some platforms support this tag
+;			argument for setting a global search path for modules, overriding
+;			the hardcoded internal default (e.g. {{/opt/tek/mod}}). Local
+;			modules (those in {{PROGDIR:mod}}) are not affected, as those will
+;			always be probed first. Default: platform-specific.
+;			* {{TExecBase_SysDir, (TSTRPTR)}} - Some platforms support this tag
+;			argument for setting a global system directory, overriding the
+;			hardcoded internal default (e.g.
+;			{{C:\Programs\Common Shared Files\tek}}), which also resembles to
+;			the logical {{SYS:}} volume in TEKlib's filesystem namespace.
+;			Default: platform-specific
+;
+;	NOTES::
+;		* It is platform-specific whether you are allowed to create more than
+;		one instance of TEKlib per application. Most platforms currently
+;		supported do, but this would be something unadvisable to depend on.
+;
+;		* Applications running in the POSIX environment depend on the {{argv}}
+;		vector to determine their logical program directory. You are advised
+;		to pass the tags {{TExecBase_ArgC}} and {{TExecBase_ArgV}}. If they are
+;		unavailable, use {{TExecBase_ProgDir}} to supply this information.
+;
+;		* Not all platforms support this kind of startup, since a fully-fledged
+;		TEKlib context cannot be described by the basetask handle alone. For
+;		example, if associating thread-specific data requires manipulation of
+;		the stack layout, then it is possible that the respective platform can
+;		only provide TEKMain().
+;
+;	SEE ALSO::
+;	teklib:TEKMain()
+;
+;------------------------------------------------------------------------------
+struct TTask *TEKCreate(struct TTagItem *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TAddHead():
+;			TAddHead(list,         node)
+;			         struct TList* struct TNode *
+;
+;	FUNCTION::
+;	Add a node at the head of a doubly linked list.
+;
+;	INPUTS::
+;		- {{list}} - Pointer to a list header
+;		- {{node}} - Pointer to a node to be added
+;
+;	SEE ALSO::
+;	teklib:TAddTail(), teklib:TInitList()
+;
+;------------------------------------------------------------------------------
+void TAddHead(struct TList *list, struct TNode *node)
+
+;------------------------------------------------------------------------------
+;
+;	TAddTail():
+;			TAddTail(list,         node)
+;			         struct TList* struct TNode *
+;
+;	FUNCTION::
+;	Add a node at the tail of a doubly linked list.
+;
+;	INPUTS::
+;		- {{list}} - Pointer to a list header
+;		- {{node}} - Pointer to a node to be added
+;
+;	SEE ALSO::
+;	teklib:TAddHead(), teklib:TInitList()
+;
+;------------------------------------------------------------------------------
+void TAddTail(struct TList *list, struct TNode *node)
+
+;------------------------------------------------------------------------------
+;
+;	TRemove():
+;			TRemove(node)
+;			        struct TNode*
+;
+;	FUNCTION::
+;	Unlink a node from whatever list it is linked to.
+;
+;	INPUTS::
+;		- {{node}} - Pointer to a node to be removed
+;
+;	NOTES::
+;		* Using this function with a node not being part of a list will
+;		be fatal.
+;
+;	SEE ALSO::
+;	teklib:TRemHead(), teklib:TRemTail(), teklib:TInitList()
+;
+;------------------------------------------------------------------------------
+void TRemove(struct TNode *node)
+
+;------------------------------------------------------------------------------
+;
+;	TRemHead():
+;			node = TRemHead(list)
+;			struct TNode*   struct TList*
+;
+;	FUNCTION::
+;	Unlink and return the first node from a doubly linked list.
+;
+;	RESULTS::
+;		- {{node}} - Pointer to the node being unlinked from the list,
+;		or {{TNULL}}
+;
+;	INPUTS::
+;		- {{list}} - Pointer to a list header
+;
+;	SEE ALSO::
+;	teklib:TRemTail(), teklib:TRemove(), teklib:TInitList()
+;
+;------------------------------------------------------------------------------
+struct TNode *TRemHead(struct TList *list)
+
+;------------------------------------------------------------------------------
+;
+;	TRemTail():
+;			node = TRemTail(list)
+;			struct TNode*   struct TList*
+;
+;	FUNCTION::
+;	Unlink and return the last node from a doubly linked list.
+;
+;	RESULTS::
+;		- {{node}} - Pointer to the node being unlinked from the list,
+;		or {{TNULL}}
+;
+;	INPUTS::
+;		- {{list}} - Pointer to a list header
+;
+;	SEE ALSO::
+;	teklib:TRemHead(), teklib:TRemove(), teklib:TInitList()
+;
+;------------------------------------------------------------------------------
+struct TNode *TRemTail(struct TList *list)
+
+;------------------------------------------------------------------------------
+;
+;	TDestroy():
+;			TDestroy(handle)
+;			         struct THandle*
+;
+;	FUNCTION::
+;	Destroy a generic handle by calling its destructor. If either
+;	handle or {{handle->thn_DestroyFunc}} is {{TNULL}}, then nothing
+;	will happen.
+;
+;	INPUTS::
+;		- {{handle}} - Pointer to a generic object handle
+;
+;	NOTES::
+;		* No memory whatsoever will be freed by this function
+;
+;	SEE ALSO::
+;	teklib:TDestroyList(), teklib:TFindHandle()
+;
+;------------------------------------------------------------------------------
+void TDestroy(struct THandle *handle)
+
+;------------------------------------------------------------------------------
+;
+;	TInitList():
+;			TInitList(list)
+;			          struct TList*
+;
+;	FUNCTION::
+;	Prepare a list header structure. After initialization the list
+;	will be empty and ready for use.
+;
+;	INPUTS::
+;		- {{list}} -  Pointer to a list structure
+;
+;	SEE ALSO::
+;	teklib:TAddHead(), teklib:TAddTail(), teklib:TRemove(), teklib:TRemHead(),
+;	teklib:TRemTail()
+;
+;------------------------------------------------------------------------------
+void TInitList(struct TList *list)
+
+;------------------------------------------------------------------------------
+;
+;	TInsert():
+;			TInsert(list,         node,         prednode)
+;			        struct TList* struct TNode* struct TNode*
+;
+;	FUNCTION::
+;	Insert a node into a list after prednode. If prednode
+;	is {{TNULL}}, then this function is equivalent to teklib:TAddTail().
+;
+;	INPUTS::
+;		- {{list}} - Pointer to a list to insert to
+;		- {{node}} - Pointer to a node to insert
+;		- {{prednode}} - Pointer to a node in the list after which to insert
+;
+;	SEE ALSO::
+;	teklib:TRemove(), teklib:TAddTail(), teklib:TAddHead()
+;
+;------------------------------------------------------------------------------
+void TInsert(struct TList *list, struct TNode *node, struct TNode *prednode)
+
+;------------------------------------------------------------------------------
+;
+;	TNodeUp():
+;			TNodeUp(node)
+;			        struct TNode*
+;
+;	FUNCTION::
+;	Move a node one position towards the head of the list it is linked
+;	to. In other words, if the node is not already at the head of the
+;	list, swap its position with its predecessor.
+;
+;	INPUTS::
+;		- {{node}} - Pointer to a node
+;
+;	NOTES::
+;		* Using this function with a node not being part of a list will
+;		be fatal.
+;
+;	SEE ALSO::
+;	teklib:TRemove(), teklib:TAddTail(), teklib:TAddHead()
+;
+;------------------------------------------------------------------------------
+void TNodeUp(struct TNode *node)
+
+;------------------------------------------------------------------------------
+;
+;	TGetTag():
+;			value = TGetTag(taglist,  tag,  defvalue)
+;			TTAG            TTAGITEM* TUINT TTAG
+;
+;	FUNCTION::
+;	Parse a list of tag items and return the value associated with
+;	the first matching tag identifier. If the specified tag is not
+;	contained in the list, then the default value is returned.
+;
+;	[[#taglists]] are arrays of tagitems. Each tagitem is
+;	composed from a key/value pair. Many TEKlib functions accept
+;	a taglist argument for making them more robust for future
+;	extensions.
+;
+;	The tag field can contain control tags and user tags. User tags
+;	must be combined with the TTAG_USER flag. Control tags are:
+;
+;	- {{TTAG_DONE}}
+;		This is the last entry of the array. traversal
+;		stops here.
+;
+;	- {{TTAG_IGNORE}}
+;		This item is being ignored.
+;
+;	- {{TTAG_SKIP}}
+;		Skip this item plus the number of items contained in value.
+;
+;	- {{TTAG_MORE}}
+;		Value is a pointer to another array oftagitems.
+;		Traversal is continued at the new array, and does not return.
+;
+;	- {{TTAG_GOSUB}}
+;		Value is a pointer to another array of tagitems. After return
+;		from the sub-array, traversal continues here.
+;
+;	RESULTS::
+;		- {{value}} - Value associated with the tag in the taglist,
+;		otherwise the default value
+;
+;	INPUTS::
+;		- {{taglist}} - Pointer to an array of tag items
+;		- {{tag}} - Tag to be queried
+;		- {{defvalue}} - Default value
+;
+;	NOTES::
+;		* The {{TTAG}} type is capable of carrying pointers. This allows, in
+;		essence, to transport any kind of data in tag items, even on 64bit
+;		architectures. An unfortunate side-effect is that assigning a value to
+;		{{tti_Value}} may require a typecast to {{TTAG}} for getting rid of
+;		complaints from the compiler.
+;
+;	SEE ALSO::
+;	teklib:TForEachTag()
+;
+;------------------------------------------------------------------------------
+TTAG TGetTag(TTAGITEM *taglist, TUINT tag, TTAG defvalue)
+
+;------------------------------------------------------------------------------
+;
+;	TDestroyList():
+;			TDestroyList(list)
+;			             struct TList*
+;
+;	FUNCTION::
+;	Unlinks all nodes from a list (in first-to-last order) and calls
+;	teklib:TDestroy() on each individual entry. Note that this function
+;	expects all nodes (their heading structure) to be of the generic
+;	handle datatype, otherwise the consequences would be nasty.
+;
+;	Nothing will happen if list is {{TNULL}} or if the list is empty.
+;
+;	INPUTS::
+;		- {{list}} - list to clear
+;
+;	SEE ALSO::
+;	teklib:TDestroy(), teklib:TFindHandle()
+;
+;------------------------------------------------------------------------------
+void TDestroyList(struct TList *list)
+
+;------------------------------------------------------------------------------
+;
+;	TNewInstance():
+;			inst = TNewInstance(mod,  possize, negsize)
+;			TAPTR               TAPTR TUINT    TUINT
+;
+;	FUNCTION::
+;	This function creates a module instance copy. The module base
+;	can be duplicated alongside with a preceding function table.
+;
+;	{{possize}} and {{negsize]] determine the size of the module base and the
+;	size of a preceding function table, respectively. Usually these
+;	arguments will be set to {{mod->tmd_PosSize}} and {{mod->tmd_NegSize}},
+;	which will create an exact copy a of the module. However, it is also
+;	possible to extend the module base and function table.
+;
+;	A pointer to the duplicated module base is returned.
+;	teklib:TNewInstance() is typically used in a module's instance open
+;	function.
+;
+;	RESULTS::
+;		- {{inst}} - A copy of the module base and function table, or {{TNULL}}
+;
+;	INPUTS::
+;		- {{mod}} - Pointer to module base
+;		- {{possize}} - Positive size of the module, in bytes
+;		- {{negsize}} - Negative size of the module, in bytes
+;
+;	The negative size is the size of the function table that
+;	normally precedes the module base.
+;
+;	SEE ALSO::
+;	teklib:TFreeInstance(), teklib:TInitVectors()
+;
+;------------------------------------------------------------------------------
+struct TModule *TNewInstance(struct TModule *mod, TSIZE possize, TSIZE negsize)
+
+;------------------------------------------------------------------------------
+;
+;	TFreeInstance():
+;			TFreeInstance(inst)
+;			              struct TModule *
+;
+;	FUNCTION::
+;	This function frees a module instance. It respects the size of the
+;	module base as well as its negative size, that is, the size of the
+;	function table preceding it.
+;
+;	This function is normally used in a module's instance close
+;	function.
+;
+;	INPUTS::
+;		- {{inst}} - Pointer to a module instance
+;
+;	SEE ALSO::
+;	teklib:TNewInstance(), teklib:TInitVectors()
+;
+;------------------------------------------------------------------------------
+void TFreeInstance(struct TModule *mod)
+
+;------------------------------------------------------------------------------
+;
+;	TInitVectors():
+;			TInitVectors(mod,  vectors, numv)
+;			             TAPTR TAPTR*   TUINT
+;
+;	FUNCTION::
+;	This function takes a pointer to a table of function pointers
+;	and places them in front of a module base (in reverse order -
+;	a simple memory copy would be inappropriate here). This function
+;	is normally used in a module's init function.
+;
+;	INPUTS::
+;		- {{mod}} - Module base pointer
+;		- {{vectors}} - Pointer to a table of function pointers
+;		- {{numv}} - Number of entries
+;
+;	SEE ALSO::
+;		teklib:TNewInstance(), teklib:TFreeInstance()
+;
+;------------------------------------------------------------------------------
+void TInitVectors(struct TModule *mod, const TMFPTR *vectors, TUINT numv)
+
+;------------------------------------------------------------------------------
+;
+;	TFindHandle():
+;			handle = TFindHandle(list,  name)
+;			TAPTR                TLIST* TSTRPTR
+;
+;	FUNCTION::
+;	Find the first occurance of a named handle in a list. The name
+;	is expected in each node's handle->thn_Data field. Only [[#lists]]
+;	containing only nodes with a conforming object handle may be
+;	searched with this function. Name comparison is case-sensitive.
+;
+;	RESULTS::
+;		- {{handle}} - Ptr to named handle, or TNULL if not found in the list
+;
+;	INPUTS::
+;		- {{list}} - Pointer to a list structure
+;		- {{name}} - Name of a handle to look up
+;
+;	SEE ALSO::
+;	teklib:TDestroy(), teklib:TDestroyList()
+;
+;------------------------------------------------------------------------------
+struct THandle *TFindHandle(struct TList *list, TSTRPTR name)
+
+;------------------------------------------------------------------------------
+;
+;	TForEachTag(): (TODO)
+;			complete = TForEachTag(taglist,  function,       userdata)
+;			TBOOL                  TTAGITEM* TTAGFOREACHFUNC TAPTR
+;
+;	FUNCTION::
+;	This function traverses a list of tagitems, and for each item it
+;	calls a user-supplied function according of the following type:
+;
+;			TCALLBACK TBOOL function(TAPTR userdata, TTAGITEM *item)
+;
+;	The {{userdata}} argument is passed to the callback function and
+;	otherwise remains invisible to TForEachTag(). The callback function
+;	has to return TTRUE to continue traversal, or TFALSE to abort.
+;
+;	RESULTS::
+;		- {{complete}} - TTRUE if the list was traversed completely
+;
+;	When all items were traversed without interruption, then the
+;	return value from TForEachTag() will be {{TTRUE}}. {{TFALSE}} will be
+;	returned otherwise.
+;
+;	INPUTS::
+;		- {{taglist}} - an array of tagitems to traverse
+;		- {{function}} - callback function to call for each item traversed
+;		- {{userdata}} - user data argument passed to the callback function
+;
+;	SEE ALSO::
+;	teklib:TGetTag()
+;
+;------------------------------------------------------------------------------
+TBOOL TForEachTag(struct TTagItem *taglist, struct THook *hook)
+
+;------------------------------------------------------------------------------
+;
+;	TInitHook():
+;			TInitHook(hook,         func,     data)
+;			          struct THook* THOOKFUNC TAPTR
+;
+;	FUNCTION::
+;	Initialize a hook structure with a function and user data.
+;
+;	INPUTS::
+;		- {{hook}} - Hook structure to be initialized
+;		- {{func}} - C calling conventions function pointer
+;		- {{data}} - User data to be associated with the hook
+;
+;	PURPOSE::
+;	TEKlib hooks allow the transparent transition from e.g. register- to
+;	stack-based calling conventions. {{hook->thk_Entry}} is invoked by
+;	teklib:TCallHookPkt() and follows TEKlib's per-platform calling
+;	conventions (as declared with {{THOOKENTRY}}). It however may point
+;	to a stub function calling the actual user function in
+;	{{hook->thk_SubEntry}}, which in turn may be entirely specific for
+;	the used language or compiler.
+;
+;	SEE ALSO::
+;	teklib:TCallHookPkt()
+;
+;------------------------------------------------------------------------------
+void TInitHook(struct THook *hook, THOOKFUNC func, TAPTR data)
+
+;------------------------------------------------------------------------------
+;
+;	TCallHookPkt():
+;			result = TCallHookPkt(hook,         object, message)
+;			TTAG                  struct THook* TAPTR   TTAG
+;
+;	FUNCTION::
+;	Invokes a hook function, passing it an {{object}} and {{message}}.
+;
+;	RESULTS::
+;		- {{result}} - specific to the invoked hook function
+;
+;	INPUTS::
+;		- {{object}} - An object to be processed by the hook
+;		- {{message}} - An action code
+;
+;	NOTES::
+;		* TEKlib hooks are commonly used for destructors, hashing functions,
+;		module initialization, task creation, tag iterators etc. Therefore,
+;		TEKlib comes with a range of pre-defined hook message types, such as
+;		{{TMSG_DESTROY}}, {{TMSG_CALCHASH32}}, {{TMSG_OPENMODULE}},
+;		{{TMSG_INITTASK}}, {{TMSG_FOREACHTAG}}, to name only examples.
+;		User-defined messages start at {{TMSG_USER}}, but the user is free to
+;		bypass TEKlib's message codes altogether by seperating system hooks
+;		from his own.
+;
+;	SEE ALSO:
+;	teklib:TInitHook()
+;
+;------------------------------------------------------------------------------
+TTAG TCallHookPkt(struct THook *hook, TAPTR obj, TTAG msg)
+
+;------------------------------------------------------------------------------
+;
+;	TAddTime():
+;			TAddTime(a,     b)
+;			         TTIME* TTIME*
+;
+;	FUNCTION::
+;	Add time {{b}} to time {{a}}, leaving the result in time {{a}}.
+;
+;	INPUTS::
+;		- {{a}} - Pointer to a time structure to add to
+;		- {{b}} - Pointer to a time structure to be added
+;
+;	SEE ALSO::
+;	teklib:TSubTime(), teklib:TCmpTime(), teklib:TAddDate(),
+;	teklib:CreateTime()
+;
+;------------------------------------------------------------------------------
+void TAddTime(TTIME *a, TTIME *b)
+
+;------------------------------------------------------------------------------
+;
+;	TSubTime():
+;			TSubTime(a,     b)
+;			         TTIME* TTIME*
+;
+;	FUNCTION::
+;	Subtract time {{b}} from time {{a}}, leaving the result in time {{a}}.
+;
+;	INPUTS::
+;		- {{a}} - Pointer to a time structure to subtract from
+;		- {{b}} - Pointer to a time structure to be subtracted
+;
+;	SEE ALSO::
+;	teklib:TAddTime(), teklib:TCmpTime(), teklib:TSubDate()
+;
+;------------------------------------------------------------------------------
+void TSubTime(TTIME *a, TTIME *b)
+
+;------------------------------------------------------------------------------
+;
+;	TCmpTime():
+;			res = TCmpTime(a,     b)
+;			TINT           TTIME* TTIME*
+;
+;	FUNCTION::
+;	Compare time {{a}} with time {{b}}.
+;
+;	RESULTS::
+;		- {{res}} - result of comparison:
+;			* {{1}} - if time a refers to a later point in time than time b
+;			* {{-1}} - if time a refers to a earlier point in time than time b
+;			* {{0}} - if time a is equal to time b.
+;
+;	INPUTS::
+;		- {{a}} - Pointer to a time structure, first operand
+;		- {{b}} - Pointer to a time structure, second operand
+;
+;	SEE ALSO::
+;	teklib:TAddTime(), teklib:TSubTime(), teklib:TDiffDate()
+;
+;------------------------------------------------------------------------------
+TINT TCmpTime(TTIME *a, TTIME *b)
+
+;------------------------------------------------------------------------------
+;
+;	TAddDate():
+;			TAddDate(date,  ndays, time)
+;			         TDATE* TINT   TTIME*
+;
+;	FUNCTION::
+;	Add a number of days and optionally a time to a date.
+;
+;	INPUTS::
+;		- {{tdate}} - Date structure
+;		- {{ndays}} - Number of days to add. Can be 0.
+;		- {{time}} - Pointer to a TTIME structure. Can be TNULL.
+;
+;	NOTES::
+;		* Do not add negative values in the time structure, use
+;		the function teklib:TSubDate() instead.
+;
+;	SEE ALSO::
+;	teklib:TSubDate(), teklib:TDiffDate()
+;
+;------------------------------------------------------------------------------
+void TAddDate(TDATE *d, TINT ndays, TTIME *tm)
+
+;------------------------------------------------------------------------------
+;
+;	TSubDate():
+;			TSubDate(date,  ndays, time)
+;			         TDATE* TINT   TTIME*
+;
+;	FUNCTION::
+;	Subtract a number of days and optionally a time from a date.
+;
+;	INPUTS::
+;		- {{tdate}} - Date structure
+;		- {{ndays}} - Number of days to subtract. Can be 0.
+;		- {{time}} - Pointer to a TTIME structure. Can be TNULL.
+;
+;	NOTES::
+;		* Do not subtract negative values in the time structure,
+;		use the function TAddDate() instead.
+;
+;	SEE ALSO::
+;	teklib:TAddDate(), teklib:TDiffDate()
+;
+;------------------------------------------------------------------------------
+void TSubDate(TDATE *d, TINT ndays, TTIME *tm)
+
+;------------------------------------------------------------------------------
+;
+;	TDiffDate():
+;			days = TDiffDate(date1, date2, timep)
+;			TINT             TDATE* TDATE* TTIME*
+;
+;	FUNCTION::
+;	This function returns the difference in number of days between
+;	date1 and date2. The difference in time will be inserted,
+;	optionally, into the time structure being pointed to by timep.
+;
+;	Note that if date1 is before date2, the resulting number
+;	of days will be negative, but the time difference (in seconds
+;	and microseconds) will always be inserted as positive numbers.
+;
+;	RESULTS::
+;		- {{days}} - Number of days difference
+;
+;	INPUTS::
+;		- {{date1, date2}} - Pointers to TDATE structures
+;		- {{timep}} - Pointer to a {{TTIME}} structure receiving a
+;		time difference, or {{TNULL}}
+;
+;	SEE ALSO::
+;	teklib:TAddDate(), teklib:TSubDate()
+;
+;------------------------------------------------------------------------------
+TINT TDiffDate(TDATE *d1, TDATE *d2, TTIME *tm)
+
+;------------------------------------------------------------------------------
+;
+;	TCreateTime():
+;			success = TCreateTime(timep, d,   s,   us)
+;			TBOOL                 TTIME* TINT TINT TINT
+;
+;	FUNCTION::
+;	This function composes a TEKlib time from days, seconds and microseconds.
+;
+;	RESULTS::
+;		- {{success}} - Boolean
+;
+;	INPUTS::
+;		- {{timep}} - Pointer to a {{TIME}} structure receiving the result
+;		- {{d}} - Number of days
+;		- {{s}} - Number of seconds
+;		- {{us}} - Number of microseconds
+;
+;	SEE ALSO::
+;	teklib:ExtractTime(), teklib:AddTime()
+;
+;------------------------------------------------------------------------------
+TBOOL TCreateTime(TTIME *t, TINT d, TINT s, TINT us)
+
+;------------------------------------------------------------------------------
+;
+;	TExtractTime():
+;			success = TExtractTime(timep, dp,   sp,   usp)
+;			TBOOL                  TTIME* TINT* TINT* TINT*
+;
+;	FUNCTION::
+;	This function extracts from a TEKlib time the number of days, seconds
+;	and microseconds.
+;
+;	RESULTS::
+;		- {{success}} - Boolean
+;
+;	INPUTS::
+;		- {{timep}} - Pointer to a {{TIME}} structure
+;		- {{dp}} - Pointer to a number of days, or {{TNULL}}
+;		- {{sp}} - Pointer to a number of seconds, or {{TNULL}}
+;		- {{usp}} - Pointer to a number of microseconds, or {{TNULL}}
+;
+;	SEE ALSO::
+;	teklib:TCreateTime()
+;
+;------------------------------------------------------------------------------
+TBOOL TExtractTime(TTIME *t, TINT *d, TINT *s, TINT *us)
+
+;------------------------------------------------------------------------------
+;
+;	TInitInterface():
+;			TInitInterface(interface,         module,         name,   version)
+;			               struct TInterface* struct TModule* TSTRPTR TUINT16
+;
+;	FUNCTION::
+;	This function initializes an interface structure.
+;
+;	INPUTS::
+;		- {{interface}} - Pointer to an {{TInterface}} structure
+;		- {{module}} - Pointer to a {{TModule}} structure to which the
+;		interface belongs
+;		- {{name}} - Name of the interface
+;		- {{version}} - Version of the interface
+;
+;------------------------------------------------------------------------------
+void TInitInterface(struct TInterface *iface, struct TModule *mod, TSTRPTR name, TUINT16 version)
+
+;------------------------------------------------------------------------------
+;
+;	TGetNextEntry():
+;			entry = TGetNextEntry(handle)
+;			TAPTR                 struct THandle*
+;
+;	FUNCTION::
+;	Get the next entry from a handle by dispatching TMSG_GETNEXTENTRY.
+;
+;	RESULTS::
+;		- {{entry}} - Next entry, or {{TNULL}} if no next entry available
+;
+;	INPUTS::
+;		- {{handle}} - Pointer to a generic object handle
+;
+;------------------------------------------------------------------------------
+TAPTR TGetNextEntry(struct THandle *handle)

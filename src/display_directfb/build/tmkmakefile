@@ -1,0 +1,51 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		display_directfb
+	[/embed]
+
+	EXTRAMODLIBS = `pkg-config --libs directfb`
+	EXTRADEFS = -I/usr/include/freetype2/ `pkg-config --cflags directfb`
+
+	[embed body="modlink"]
+		display_directfb
+		$(OBJDIR)/display_dfb_mod.mo \
+		$(OBJDIR)/display_dfb_font.mo \
+		$(OBJDIR)/display_dfb_api.mo \
+		$(OBJDIR)/display_dfb_utf8.mo
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_dfb_mod.mo
+		display_dfb_mod.c
+		display_dfb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_dfb_font.mo
+		display_dfb_font.c
+		display_dfb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_dfb_api.mo
+		display_dfb_api.c
+		display_dfb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_dfb_utf8.mo
+		display_dfb_utf8.c
+		display_dfb_mod.h
+	[/embed]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules
+[/render]

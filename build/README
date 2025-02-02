@@ -1,0 +1,27 @@
+
+Build contexts
+--------------
+
+Template:
+
+[platform]_[host]_[toolchain]_[flavour]_[arch]
+
+platform  : API for which a software is written [posix, winnt, amiga, ...]
+host      : operating system that provides said API [winnt, linux, ...]
+toolchain : compiler suite and tools [gcc, sasc, vcpp, ...]
+flavour   : type of build [debug, release, ...]
+arch      : processor architecture [x86, amd64, ppc, mips, 68k...]
+
+
+Examples:
+
+posix_linux_gcc_debug
+posix_fbsd
+posix_macosx
+posix_win2k
+winnt_winxp_vcpp_release_amd64
+winnt_win2k
+macosx_macosx
+amiga_aos3_sasc_release
+amiga_morphos
+amiga_aros_gcc_debug

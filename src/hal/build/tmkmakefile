@@ -1,0 +1,79 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[switch]
+		[case config="posix_linux"]
+			EXTRAMODLIBS = -ldl -lpthread
+		[/case]
+		[case config="posix_fbsd"]
+			EXTRAMODLIBS = -export-dynamic -pthread
+		[/case]
+	[/switch]
+
+	[embed body="mods"]
+		hal
+	[/embed]
+
+	[switch]
+		[case config="ps2"]
+			[embed body="modlink"]
+				hal
+				$(OBJDIR)/hal_mod.mo \
+					$(OBJDIR)/lowlevel.mo \
+					$(OBJDIR)/hal.mo
+			[/embed]
+		[/case]
+		[default]
+			[embed body="modlink"]
+				hal
+				$(OBJDIR)/hal_mod.mo \
+					$(OBJDIR)/hal.mo
+			[/embed]
+		[/default]
+	[/switch]
+
+	[embed body="moddep"]
+		$(OBJDIR)/hal_mod.mo
+		hal_mod.c
+		hal_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/hal.mo
+		$(PLATFORM)/hal.c
+		hal_mod.h
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/lowlevel.mo
+		$(PLATFORM)/lowlevel.S
+	[/embed]
+
+[/body]
+
+[body name="sourcetargets"]
+	[embed body="sources"]
+		hal_mod.c
+		hal_mod.h
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/hal_mod.c
+		hal_mod.c $(PLATFORM)/hal.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/hal_mod.h
+		hal_mod.h
+	[/embed]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules_sources
+[/render]

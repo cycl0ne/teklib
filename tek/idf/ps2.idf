@@ -1,6 +1,6 @@
 
 ;
-;	$Id: ps2.idf,v 1.2 2005/10/05 22:03:55 fschulze Exp $
+;	$Id: ps2.idf,v 1.6 2007/05/19 14:12:20 fschulze Exp $
 ;	teklib/tek/idf/ps2.idf - PS2 interface description
 ;
 ;	See copyright notice in teklib/COPYRIGHT
@@ -14,13 +14,14 @@
 
 .defv TVOID								; aliases for void
 .defp TAPTR, TSTRPTR, DMACB				; pointer types
+.defs TUINT16							; 16bit integer types
 .defi TINT, TUINT, TBOOL, GSvmode		; 32bit integer types
 .defl TUINT64
 
 .offset 9
 
 TVOID DebugDumpReg(TUINT regdesc);
-TVOID DebugHexDump(TINT8 *s, TQWDATA *data, TINT qwc);
+TVOID DebugHexDump(TSTRPTR s, TQWDATA *data, TINT qwc);
 
 .offset 15
 TVOID    DMAInit(TUINT channel, TUINT size);
@@ -42,14 +43,14 @@ TVOID GSSetDepthClear(TINT ctx, TINT clear);
 TINT  GSInitImage(GSimage *gsimage, TINT w, TINT h, TINT psm, TAPTR data);
 TVOID GSLoadImage(GSimage *gsimage);
 TVOID GSFreeImage(GSimage *gsimage);
-TVOID GSInitScreen(GSvmode mode, TINT inter, TINT ffmd);
+TVOID GSInitScreen(TUINT16 mode, TUINT16 inter, TUINT16 ffmd);
 TVOID GSInitDisplay(TINT ctx, TINT dx, TINT dy, TINT magh, TINT magv, TINT w, TINT h, TINT d, TINT xc, TINT yc);
-TVOID GSInitContext(TINT ctx, TINT fbp0, TINT fbp1, TINT psm);
+TVOID GSInitFramebuffer(TINT ctx, TINT fbp0, TINT fbp1, TINT psm);
 TVOID GSEnableContext(TINT ctx, TBOOL onoff);
 TVOID GSInitZBuf(TINT ctx, TINT zbp, TINT zpsm, TINT dfunc, TINT dclear);
 TVOID GSInitTexEnv(TINT tbp, TINT tw, TINT th);
 TVOID GSInitTexReg(TINT ctx, TINT tcc, TINT tfx, GSimage *gsimage);
-TVOID GSInit(GSvmode mode, TINT inter, TINT ffmd);
+TVOID GSInit(TINT mode, TINT inter, TINT ffmd);
 TINT  GSAllocMem(TINT ctx, TINT memtype, TINT psm);
 TVOID GSFreeMem(TINT ctx, TINT memtype, TINT startpage);
 TVOID DrawTRect(TINT ctx, TINT x, TINT y, TINT w, TINT h, GSimage *gsimage);
@@ -62,5 +63,16 @@ TVOID DrawTPointUV(TINT ctx, TINT x, TINT y, TINT u, TINT v, GSimage *gsimage);
 TINT  GSSyncPath(TINT mode);
 TVOID GSGetImage(GSimage *img);
 TVOID GSSetActiveFb(TINT ctx, TINT fbp);
+TUINT64 GSGetReg(TINT reg);
+TVOID GSSetCsr(TINT signal, TINT finish, TINT hsint, TINT vsint, TINT edwint,TINT flush, TINT reset, TINT nfield, TINT field, TINT fifo, TINT rev, TINT id);
+TVOID GSSetPmode(TINT en1, TINT en2, TINT mmod, TINT amod, TINT slbg, TINT alp);
+TVOID GSSetSmode2(TINT inter, TINT ffmd, TINT dpms);
+TVOID GSSetDispfb1(TINT fbp, TINT fbw, TINT psm, TINT dbx, TINT dby);
+TVOID GSSetDisplay1(TINT dx, TINT dy, TINT magh, TINT magv, TINT dw, TINT dh);
+TVOID GSSetDispfb2(TINT fbp, TINT fbw, TINT psm, TINT dbx, TINT dby);
+TVOID GSSetDisplay2(TINT dx, TINT dy, TINT magh, TINT magv, TINT dw, TINT dh);
+TVOID GSSetBgcolor(TINT r, TINT g, TINT b);
+TVOID GSSetRegCb(TINT reg, TUINT64 data, DMACB cbfunc, TAPTR cbdata);
+TVOID GSSetVisibleFb(TINT ctx, TINT fbp);
 
 .end

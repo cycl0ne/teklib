@@ -1,70 +1,107 @@
-
 #ifndef _TEK_MOD_UTIL_H
 #define _TEK_MOD_UTIL_H
 
 /*
-**	$Id: util.h,v 1.4 2005/09/13 02:45:09 tmueller Exp $
-**	teklib/tek/mod/util.h - Utility module types and definitions
-**
-**	Written by Timm S. Mueller <tmueller at neoscientists.org>,
-**	Daniel Trompetter <dtrompetter at oxyron.de>,
-**	Frank Pagels <copper at coplabs.org>
+**	tek/mod/util.h - Internal Util module types and structures
+**	Written by Timm S. Mueller <tmueller at neoscientists.org>
 **	See copyright notice in teklib/COPYRIGHT
+**
+**	Do not depend on this include file, as it may break your code's
+**	binary compatibility with newer versions of the Util module.
+**	Normal applications require only tek/util.h
 */
 
-#include <tek/type.h>
+#include <tek/exec.h>
+#include <tek/mod/time.h>
 
 /*****************************************************************************/
-/* 
-**	Callback functions
+/*
+**	Forward declarations. Actual internal structures of the Util module
+**	can be found in <tek/mod/util.h>, which shouldn't be included in
+**	code that is designed for upwards compatibility.
 */
 
-typedef TCALLBACK TINT (*TCMPFUNC)(TAPTR userdata, TTAG arg1, TTAG arg2);
-typedef TCALLBACK TINT (*TFINDFUNC)(TAPTR userdata, TTAG ref);
+/* Util module base structure: */
+struct TUtilBase;
+
+/* Hash structure: */
+struct THash;
 
 /*****************************************************************************/
-/* 
-**	Module entry node, as returned by TUtilGetModules()
+/*
+**	Module entry node, as returned by TGetModules()
 */
 
 struct TModuleEntry
 {
-	struct TModObject tme_Handle;	/* Object handle */
-	TTAGITEM *tme_Tags;				/* Reserved for future extensions */
+	/* Object handle: */
+	struct THandle tme_Handle;
+	/* Reserved for future extensions: */
+	TTAGITEM *tme_Tags;
 };
 
 /*****************************************************************************/
 /*
-**	Revision History
-**	$Log: util.h,v $
-**	Revision 1.4  2005/09/13 02:45:09  tmueller
-**	updated copyright reference
-**	
-**	Revision 1.3  2005/06/29 09:09:15  tmueller
-**	changed types of TCMPFUNC, TFINDFUNC, HeapSort refarray
-**	
-**	Revision 1.2  2003/12/12 03:50:15  tmueller
-**	Email address in headers fixed
-**	
-**	Revision 1.1.1.1  2003/12/11 07:17:50  tmueller
-**	Krypton import
-**	
-**	Revision 1.4  2003/10/30 20:07:09  dtrompetter
-**	added util_qsort
-**	
-**	Revision 1.3  2003/10/22 03:17:10  tmueller
-**	Removed util_itoa and util_atoi, made util_strol and util_strtod public,
-**	documented them, cleaned up util module documentation
-**	
-**	Revision 1.2  2003/10/22 03:14:48  tmueller
-**	mods/util/util_mod.c
-**	
-**	Revision 1.1.1.1  2003/03/08 18:28:40  tmueller
-**	Import to new chrooted pserver repository.
-**	
-**	Revision 1.1.1.1  2002/11/30 05:15:33  bifat
-**	import
+**	Hashes
 */
 
-#endif
+#define THash_Type			(TTAG_USER + 0x1000)
+#define THash_Hook			(TTAG_USER + 0x1001)
 
+/* Keys are strings (default): */
+#define THASHTYPE_STRING		0
+/* As above; internally manages copies of the key names: */
+#define THASHTYPE_STRINGCOPY	1
+/* Keys are values of type TTAG (integers, pointers, ...): */
+#define THASHTYPE_VALUE			2
+/* Keys are of a custom type; supply a Hook implementing
+** the message types TMSG_CALCHASH32 and TMSG_COMPAREKEYS: */
+#define THASHTYPE_CUSTOM		3
+
+struct THashNode
+{
+	struct TNode thn_Node;
+	TTAG thn_Key;
+	TTAG thn_Value;
+	TUINT thn_HashValue;
+};
+
+/*****************************************************************************/
+/*
+**	"Datebox" - Date/Time container
+*/
+
+struct TDateBox
+{
+	TUINT16 tdb_Fields;		/* 0  Fields, see below */
+	TUINT16 tdb_Reserved1;	/* 2  Reserved for future use */
+	TUINT tdb_Year;			/* 4  Year */
+	TUINT16 tdb_YDay;		/* 8  Day of year 1...366 */
+	TUINT16 tdb_Month;		/* 10 Month 1...12 */
+	TUINT16 tdb_Week;		/* 12 Week of year 1...53 */
+	TUINT16 tdb_WDay;		/* 14 Day of week 0 (sunday) ... 6 (saturday) */
+	TUINT16 tdb_Day;		/* 16 Day of month 1...31 */
+	TUINT16 tdb_Hour;		/* 18 Hour of day 0...23 */
+	TUINT16 tdb_Minute;		/* 20 Minute of hour 0...59 */
+	TUINT16 tdb_Sec;		/* 22 Second of minute 0...59 */
+	TUINT tdb_USec;			/* 24 Microsecond of second 0... 999999 */
+	TUINT tdb_Reserved2;	/* 28 Reserved for future extensions */
+};							/* 32 bytes */
+
+/*
+**	Corresponding flags in datebox->tdb_Fields if value present
+*/
+
+#define TDB_YEAR		0x0001
+#define TDB_YDAY		0x0002
+#define TDB_MONTH		0x0004
+#define TDB_WEEK		0x0008
+#define TDB_WDAY		0x0010
+#define TDB_DAY			0x0020
+#define TDB_HOUR		0x0040
+#define TDB_MINUTE		0x0080
+#define TDB_SEC			0x0100
+#define TDB_USEC		0x0200
+#define TDB_ALL         0x03ff
+
+#endif

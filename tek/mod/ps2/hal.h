@@ -3,7 +3,7 @@
 #define _TEK_MOD_PS2_HAL_H
 
 /*
-**	$Id: hal.h,v 1.4 2005/09/18 11:27:22 tmueller Exp $
+**	$Id: hal.h,v 1.6 2006/03/11 17:13:03 tmueller Exp $
 **	teklib/tek/mod/hal/ps2/hal.h - HAL internal structures on PS2
 **
 **	Written by Timm S. Mueller <tmueller at neoscientists.org>
@@ -45,41 +45,40 @@ struct HALPS2Boot
 	TAPTR (*hpb_Realloc)(TAPTR, TAPTR, TUINT, TUINT);
 };
 
-struct HALPS2Specific
+struct HALSpecific
 {
-	TTAGITEM hps_Tags[4];				/* Host properties container */
-	TSTRPTR hps_SysDir;					/* Global system directory */
-	TSTRPTR hps_ModDir;					/* Global module directory */
-	TSTRPTR hps_ProgDir;				/* Application local directory */
-	TUINT hps_RefCount;					/* Open reference counter */
-	TAPTR hps_ExecBase;					/* Inserted at device open */
-	TAPTR hps_DevTask;					/* Created at device open */
-	TLIST hps_ReqList;					/* List of pending requests */
-	TFLOAT hps_TZDays;					/* Days west of GMT */
-	TINT hps_TZSec;						/* Seconds west of GMT */
-	TINT hps_LockCount;					/* Global locking counter */
-	struct TLock hps_DevLock;			/* Device lock */
+	TTAGITEM hsp_Tags[4];				/* Host properties container */
+	TSTRPTR hsp_SysDir;					/* Global system directory */
+	TSTRPTR hsp_ModDir;					/* Global module directory */
+	TSTRPTR hsp_ProgDir;				/* Application local directory */
+	TUINT hsp_RefCount;					/* Open reference counter */
+	TAPTR hsp_ExecBase;					/* Inserted at device open */
+	TAPTR hsp_DevTask;					/* Created at device open */
+	struct TList hsp_ReqList;			/* List of pending requests */
+	TFLOAT hsp_TZDays;					/* Days west of GMT */
+	TINT hsp_TZSec;						/* Seconds west of GMT */
+	TINT hsp_LockCount;					/* Global locking counter */
+	struct TLock hsp_DevLock;			/* Device lock */
 };
 
-struct HALPS2Thread
+struct HALThread
 {
-	ee_thread_t hpt_TCB;				/* Thread control block */
-	TINT hpt_TID;						/* Thread ID */
-	TAPTR hpt_Data;						/* Task data ptr */
-	TVOID (*hpt_Function)(TAPTR);		/* Task function */
-	TAPTR hpt_HALBase;					/* HAL module base ptr */
-	ee_sema_t hpt_SigSemaphore;			/* Signal semaphore control block */
-	TINT hpt_SigSID;					/* Signal semaphore ID */
-	TUINT hpt_SigState;					/* Signal state */
-	TUINT *hpt_Stack;
+	ee_thread_t hth_TCB;				/* Thread control block */
+	TINT hth_TID;						/* Thread ID */
+	TAPTR hth_Data;						/* Task data ptr */
+	TVOID (*hth_Function)(TAPTR);		/* Task function */
+	TAPTR hth_HALBase;					/* HAL module base ptr */
+	ee_sema_t hth_SigSemaphore;			/* Signal semaphore control block */
+	TINT hth_SigSID;					/* Signal semaphore ID */
+	TUINT hth_SigState;					/* Signal state */
+	TUINT *hth_Stack;
 };
 
-struct HALPS2Mod
+struct HALModule
 {
-	TAPTR hpm_Lib;						/* Host-specific module handle */
-	TUINT (*hpm_InitFunc)(TAPTR, TAPTR, TUINT16, TAPTR);
-										/* Initfunction ptr */
-	TUINT16 hpm_Version;				/* Module major version */
+	TAPTR hmd_Lib;						/* Host-specific module handle */
+	TMODINITFUNC hwm_InitFunc;			/* Initfunction */
+	TUINT16 hmd_Version;				/* Module major version */
 };
 
 
@@ -87,15 +86,21 @@ struct HALPS2Mod
 /*
 **	Revision History
 **	$Log: hal.h,v $
+**	Revision 1.6  2006/03/11 17:13:03  tmueller
+**	renamed HAL structures and fields
+**
+**	Revision 1.5  2005/11/20 16:08:39  tmueller
+**	added stricter funcptr declarations for modentries
+**
 **	Revision 1.4  2005/09/18 11:27:22  tmueller
 **	added authors
-**	
+**
 **	Revision 1.3  2005/04/01 18:52:51  tmueller
 **	Added HALPS2Boot structure containing the platform's global allocator
-**	
+**
 **	Revision 1.2  2005/03/19 19:25:09  fschulze
 **	added decent device locks and fixed timer device
-**	
+**
 **	Revision 1.1  2005/03/13 20:01:39  fschulze
 **	added
 */

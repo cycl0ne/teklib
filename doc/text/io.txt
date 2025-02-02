@@ -1,0 +1,1672 @@
+
+=( Index : TEKlib / Io module reference manual )=
+
+-------------------------------------------------------------------------------
+
+TEKlib provides a filesystem namespace for any number of mountpoints
+(''devices'') and logical roots (''assigns''). ''Handlers'' are modules
+implementing specific roots in the filesystem; they can be mounted
+explicitely or initialize themselves on demand. On most platforms the
+filesystem is initially populated with a 'default handler' that occupies the
+root node, thus abstracting from a host's native filesystem. See the
+[[#Introduction]] section for details.
+
+===( Open and close )===
+
+	TOpenFile()         || Open file
+	TCloseFile()        || Close file
+
+===( Unbuffered I/O )===
+
+	TRead()             || Read from file
+	TWrite()            || Write to file
+	TSeek()             || Set the position for reading and writing
+
+===( File I/O, buffered )===
+
+	TFlush()            || Flush file buffers
+	TFRead()            || Read from file
+	TFWrite()           || Write to file
+	TFPutC()            || Put character to file
+	TFGetC()            || Read character from file
+	TFUngetC()			|| Put back character to file
+	TFGetS()			|| Read string from file
+	TFPutS()			|| Write string to file
+	TFEoF()             || Test End-Of-File condition
+
+===( Locks )===
+
+	TLockFile()         || Lock a file or directory
+	TUnlockFile()       || Release a lock
+	TExamine()          || Examine lock or file
+	TExNext()           || Examine next in a directory
+	TDupLock()          || Duplicate a lock
+	TChangeDir()        || Change current directory to lock
+	TParentDir()        || Get lock on parent of a lock
+	TOpenFromLock()     || Turn an open lock into a file
+
+===( Filesystem operations )===
+
+	TRename()           || Rename an object
+	TDeleteFile()       || Delete a disk object
+	TMakeDir()          || Make a directory
+	TSetFileDate()      || Set datestamp of a filesystem object
+
+===( Namespace operations )===
+
+	TMount()            || Mount/unmount a device
+	TMakeName()         || Make a path/filename
+	TAssignLock()       || Create a logical assign to lock
+	TAssignLate()       || Create a logical assign to name
+	TNameOf()           || Return name of lock or file
+	TAddPart()          || Add a path component to a path
+
+===( Misc )===
+
+	TInputFH()			|| Get the task's standard input handle
+	TOutputFH()			|| Get the task's standard output handle
+	TErrorFH()			|| Get the task's standard error handle
+	TGetIOErr()         || Get last I/O error code in current context
+	TSetIOErr()         || Set I/O error in current context
+	TFault()            || Return text representation of an error
+
+===( Asynchronous I/O )===
+
+	TObtainPacket()     || Allocate an I/O message
+	TReleasePacket()    || Free an I/O message
+
+
+==( Introduction )==
+
+
+=== Device names ===
+
+		:
+
+The colon stands for the root of the "default" filesystem.
+
+Typically this is the device from which TEKlib was started, e.g. the
+filesystem root in the host operating system. If the host operating
+system has multiple roots then all drives will show up in this list.
+Under Windows, for example, the contents of {{:}} is a listing of
+single-letter entries like {{A}}, {{C}}, {{D}}.
+
+Names preceding the colon address devices explicitely:
+
+		work:
+
+This would address a device named {{work}}.
+
+		stdio:out
+
+This would address a file named {{out}} on a device named {{stdio}}.
+
+Named devices can have different origins:
+
+	* The device is mounted using TMount(), and by that means the
+	name is bound to an instance of an I/O handler.
+
+	* The name is a logical assign. Logical assigns can be obtained
+	with functions like TAssignLock() or TAssignLate().
+
+	* The device is mounted automatically on the first attempt to
+	access it by name.
+
+Handlers can place logical assigns in the I/O namespace during
+initialization. The default handler will supply the following
+late-binding assigns (more may follow in the future):
+
+		progdir:
+
+This is the directory in which the application resides in the host
+filesystem. E.g. this would point to {{:home/paul/tek}} if Paul
+started {{~/tek/coolapp}} on his Unix account (regardless of his
+current directory).
+
+		sys:
+
+TEKlib's system directory in the host filesystem. Under BSD, for
+example, this would point to {{:usr/local/tek}}, on the Amiga
+platform this would be {{:TEKLIB}} and under a German-localised
+installation of Windows {{:C/Programme/Gemeinsame Dateien/tek}}.
+
+=== Path components ===
+
+Path components are separated by slashes. A freestanding slash refers to
+the parent directory. This is different from some other filesystems and
+can lead to confusion; while {{foo/bar}} and {{foo//bar}} are treated
+equally in Unix, this is not true for TEKlib, where {{foo//bar}} would
+have the same effect as {{bar}}.
+
+		/
+
+This would access the parent directory, like {{..}} in Windows or Unix.
+
+		//foo
+
+This would access the directory {{foo}} in the parent of the parent
+directory, like e.g. {{..\..\foo}} in Windows.
+
+		progdir:/
+
+This would address the parent relative to the directory in which
+the application resides.
+
+The Io module has a support function for the composition of
+path names, TAddPart(). It takes care of these rules.
+
+The current directory can be addressed with an {{""}} (empty
+string). The empty string is equivalent to {{.}} on many other
+operating systems.
+
+=== Name conversion ===
+
+{{.}} and {{..}} are ambiguous for the default handler on many operating
+systems and should be avoided. When directory contents are
+scanned, {{.}} and {{..}} will not show up in the application unless
+they refer to regular files or directories on the given host.
+
+Future implementations of TEKlib's default filesystem handler
+may implement more rigid checking and reject more filenames and
+special characters.
+
+=== Case sensitivity ===
+
+Current implementations of the TEKlib default handler in no way
+try to abstract from (or enforce) case-sensitivity (or
+insensitivity) in their underlying host filesystem. Prepare your
+application to deal with case-sensitive names, and be prepared
+for (but do not depend on) multiple occurances of the same name
+with different uppercase/lowercase combinations.
+
+
+=={ TLockFile }==
+
+NAME::
+	TLockFile - Lock a file or directory
+
+SYNOPSIS::
+		lock = TIOLockFile(TIOBase, name,   mode, tags)
+		TAPTR              TAPTR    TSTRPTR TINT  TTAGITEM*
+
+		lock = TLockFile(name,   mode, tags)
+		TAPTR            TSTRPTR TINT  TTAGITEM*
+
+FUNCTION::
+	Locate a named file or directory, lock out other accessors,
+	and return a handle that allows for examination of the object.
+
+	The mode determines the type of access locking:
+
+	TFLOCK_READ
+		Attempts a shared lock. Multiple shared
+		locks on a file or directory can succeed.
+
+	TFLOCK_WRITE
+		Attempts an exclusive lock. Only one
+		exclusive lock can be held on an object
+		at a time.
+
+	When the object is not found or cannot be locked then the
+	return value is TNULL; a secondary error code can be
+	obtained using TGetIOErr().
+
+INPUTS::
+	- {{name}} - Name of the file or directory
+	- {{mode}} - Access mode
+	- {{tags}} - Pointer to an array of tag items
+
+TAGS::
+	None defined yet
+
+RESULTS::
+	- {{lock}} - Lock handle, or TNULL if failed
+
+NOTES::
+	* Exclusive locks to directories are not guaranteed to work
+	universally. Some platform-specific handlers may choose to
+	grant only shared locks on directories.
+	* As of this writing, not all filesystem handlers actually
+	implement all locking modes. The POSIX filesystem handler,
+	for example, does not currently use fcntl or a similar
+	mechanism to lock out other accessors.
+
+SEE ALSO::
+	TUnlockFile(), TExamine(), TOpenFile(), TOpenFromLock(),
+	TMakeDir()
+
+=={ TUnlockFile }==
+
+NAME::
+	TUnlockFile - Release a lock
+
+SYNOPSIS::
+		TIOUnlockFile(TIOBase, lock)
+		              TAPTR    TAPTR
+
+		TUnlockFile(lock)
+		            TAPTR
+
+FUNCTION::
+	Unlock and free a handle obtained with TLockFile(), TDupLock(),
+	TParentDir() or TMakeDir(). Each lock claimed somewhere
+	must be unlocked once (and only once).
+
+INPUTS::
+	- {{lock}} - Lock to release
+
+SEE ALSO::
+	TLockFile(), TDupLock(), TParentDir()
+
+=={ TOpenFile }==
+
+NAME::
+	TOpenFile - Open file
+
+SYNOPSIS::
+		file = TIOOpenFile(TIOBase, name,   mode, tags)
+		TAPTR              TAPTR    TSTRPTR TUINT TTAGITEM*
+
+		file = TOpenFile(name,   mode, tags)
+		TAPTR            TSTRPTR TUINT TTAGITEM*
+
+FUNCTION::
+	The named file is opened and a file handle returned. Name can
+	be a device name such as "foo:", an absolute path such as
+	"foo:bar", or a path relative to the current directory, like
+	"foo/bar".
+
+	The mode argument determines the access and arbitration type
+	for the file:
+
+	TFMODE_READONLY
+		An existing file is opened for read access
+		only; no attempts are made to lock out other
+		accessors.
+
+	TFMODE_OLDFILE
+		An existing file is opened for read/write
+		access; no attempts are made to lock out
+		other accessors.
+
+	TFMODE_NEWFILE
+		This opens a new file for read/write access.
+		The file will be locked exclusively, i.e.
+		no other accessors are allowed at the same
+		time. If a file of that name existed, it is
+		truncated to a length of zero bytes.
+
+	TFMODE_READWRITE
+		Opens a new or existing file for read/write
+		access, locked in shared mode, i.e. other
+		accessors are allowed to read from the file
+		at the same time.
+
+	When the file cannot be opened then this function returns TNULL,
+	and a secondary error code is available by calling TGetIOErr().
+
+INPUTS::
+	- {{name}} - Name of the file to open
+	- {{mode}} - Access and arbitration mode
+	- {{tags}} - Pointer to an array of tag items
+
+TAGS::
+	None defined currently
+
+RESULTS::
+	- {{file}} - File handle, or TNULL if failed
+
+NOTES::
+	* TFMODE_READONLY should be the preferred mode if you need no
+	write access or locking. Note, for example, that it is common
+	behavior under Windows that files copied from a CD-Rom are
+	write-protected.
+
+	* As of this writing, not all filesystem handlers actually
+	implement all locking modes. The POSIX filesystem handler,
+	for example, does not currently use fcntl or a similar
+	mechanism to lock out other accessors.
+
+SEE ALSO::
+	TCloseFile(), TLockFile(), TOpenFromLock()
+
+=={ TCloseFile }==
+
+NAME::
+	TCloseFile - Close a file
+
+SYNOPSIS::
+		success = TIOCloseFile(TIOBase, file)
+		TBOOL                  TAPTR    TAPTR
+
+		success = TCloseFile(file)
+		TBOOL                TAPTR
+
+FUNCTION::
+	Close a file that was opened with TOpenFile().
+
+	The return value indicates whether outstanding write operations,
+	buffers flushes and the like were successful. If the close
+	operation failed, the file handle has been deallocated anyway
+	and may not be used any longer.
+
+	All file handles that have been opened explicitely must be
+	closed explicitely, once and only once.
+
+INPUTS::
+	- {{file}} - Filehandle from TOpenFile() or TOpenFromLock()
+
+SEE ALSO::
+	TOpenFile(), TOpenFromLock()
+
+=={ TRead }==
+
+NAME::
+	TRead - Read from a file
+
+SYNOPSIS::
+		rdlen = TIORead(TIOBase, file, buffer, buflen)
+		TINT            TAPTR    TAPTR TAPTR   TINT
+
+		rdlen = TRead(file, buffer, buflen)
+		TINT          TAPTR TAPTR   TINT
+
+FUNCTION::
+	This function reads a block of data from an open file
+	into the buffer specified. The buflen argument is the size
+	of the buffer, i.e. the maximum number of bytes that can
+	be read in this operation.
+
+	The return value, if greater than zero, is the number of
+	bytes that have been read successfully. An End-Of-File
+	condition is indicated by a return value of zero. An error
+	is indicated with a return value of -1, in which case
+	additonal error diagnostics can be obtained with the
+	TGetIOErr() function.
+
+INPUTS::
+	- {{file}} - File handle
+	- {{buffer}} - Buffer to read into
+	- {{len}} - Maximum number of bytes to read
+
+RESULTS::
+	- {{rdlen}} - Number of bytes read, or -1 if an error occured
+
+NOTES::
+	* This function implements no buffering. The I/O request
+	will be directly forwarded to the underlying handler. Small
+	reads are performed very inefficiently with this function.
+
+	* For switching from buffered I/O calls back to unbuffered
+	functions like this, you must call TFlush().
+
+SEE ALSO::
+	TWrite(), TFWrite(), TOpenFile(), TFGetC()
+
+=={ TWrite }==
+
+NAME::
+	TWrite - Write to a file
+
+SYNOPSIS::
+		wrlen = TIOWrite(TIOBase, file, buffer, buflen)
+		TINT             TAPTR    TAPTR TAPTR   TINT
+
+		wrlen = TWrite(file, buffer, buflen)
+		TINT           TAPTR TAPTR   TINT
+
+FUNCTION::
+	This function writes a block of data from the buffer specified
+	to an open file handle. The buflen argument is the size of the
+	buffer, i.e. the maximum number of bytes that will be written
+	in this operation.
+
+	The return value, if greater than zero, is the number of
+	bytes that have been written successfully. An error is
+	indicated with a return value of -1, in which case additonal
+	error diagnostics can be obtained with the TGetIOErr() function.
+
+INPUTS::
+	- {{file}} - File handle
+	- {{buffer}} - Buffer to write
+	- {{len}} - Number of bytes to write
+
+RESULTS::
+	- {{rdlen}} - Number of bytes written, or -1 if an error occured
+
+NOTES::
+	* This function implements no buffering. The I/O request
+	will be directly forwarded to the underlying handler. Small
+	writes are performed very inefficiently with this function.
+
+	* For switching from buffered I/O calls back to unbuffered
+	functions like this, you must call TFlush().
+
+SEE ALSO::
+	TWrite(), TFWrite(), TOpenFile(), TFGetC()
+
+=={ TFlush }==
+
+NAME::
+	TFlush - Flush file buffers
+
+SYNOPSIS::
+		success = TIOFlush(TIOBase, file)
+		TBOOL              TAPTR    TAPTR
+
+		success = TFlush(file)
+		TBOOL            TAPTR
+
+FUNCTION::
+	Flush buffers from a file handle and readjust the internal
+	read/write cursor. Calling this function is mandatory if you
+	want to switch from buffered I/O functions like TFPutC()
+	back to unbuffered functions like TWrite().
+
+	The return value will be TFALSE to indicate that an error
+	occured while writing out buffers or while seeking to the
+	last read position.
+
+INPUTS::
+	- {{file}} - File handle to flush
+
+RESULTS::
+	- {{success}} - TTRUE if flushing succeded, TFALSE on error.
+
+	In the case of an error, more detailed information is
+	available via TGetIOErr().
+
+NOTES::
+	Buffers are automatically flushed when a filehandle is
+	closed.
+
+SEE ALSO::
+	TFPutC(), TFGetC(), TFWrite(), TFWrite(), TRead(), TWrite()
+
+=={ TSeek }==
+
+NAME::
+	TSeek - Set the position for reading and writing
+
+SYNOPSIS::
+		filepos = TIOSeek(TIOBase, file, offset, offs_hi, mode)
+		TUINT             TAPTR    TAPTR TINT    TINT*    TINT
+
+		filepos = TSeek(file, offset, offs_hi, mode)
+		TUINT           TAPTR TINT    TINT*    TINT
+
+FUNCTION::
+	This function moves the read/write cursor in a file to a new
+	position and returns the resulting position measured in bytes
+	from the beginning of the file.
+
+	The offset specifies the number of bytes for moving the cursor,
+	either relative to the current position or to an absolute
+	position from either the beginning or the end of the file,
+	according to the mode argument:
+
+	TFPOS_CURRENT
+		Offset is the number of bytes to move the
+		cursor towards the end of the file, relative
+		to the current position. Seek 0 from current
+		to find out where you are.
+
+	TFPOS_BEGIN
+		Offset is the absolute number of bytes from the
+		beginning of the file.
+
+	TFPOS_END
+		Offset is the absolute number of bytes from the
+		end of the file.
+
+	When the offs_hi argument is TNULL then this function can operate
+	only on files not larger than 2^32-2 bytes. Errors are indicated
+	with a return value of {{0xffffffff}}. Use TGetIOErr() in this case
+	to get extended error diagnostics.
+
+	When offs_hi is specified then it is a pointer to a 64 bit offset's
+	high-order 32 bits. If the function fails then the return value is
+	{{0xffffffff}}, and TGetIOErr() returns a secondary error code other
+	than {{TIOERR_SUCCESS}}. The integer being pointed to also receives
+	the high-order 32 bits of the resulting file position.
+
+INPUTS::
+	- {{file}} - File handle
+	- {{offset}} - Number of bytes to seek
+	- {{offs_hi}} - Pointer to offset's high-order 32 bits, or TNULL
+	- {{mode}} - Seek mode
+
+RESULTS::
+	- {{filepos}} - Lower 32 bits of new absolute position, or {{0xffffffff}}.
+
+	An error is indicated with a return value of {{0xffffffff}}. If the
+	offs_hi argument was specified then you ''must'' call TGetIOErr() to
+	distinguish an error from a valid file position.
+
+SEE ALSO::
+	TRead(), TWrite()
+
+=={ TFPutC }==
+
+NAME::
+	TFPutC - Write a character, buffered
+
+SYNOPSIS::
+		char = TIOFPutC(TIOBase, file, char)
+		TINT            TAPTR    TAPTR TINT
+
+		char = TFPutC(file, char)
+		TINT          TAPTR TINT
+
+FUNCTION::
+	Write a single character to an open file, buffered.
+
+INPUTS::
+	- {{file}} - File to write to
+	- {{char}} - Character to write
+
+RESULTS::
+	- {{char}} - the character written, or TEOF if an error occured
+
+NOTES::
+	After using this function, call TFlush() before switching
+	back to unbuffered I/O functions.
+
+SEE ALSO::
+	TFlush(), TFGetC(), TRead(), TOpenFile()
+
+=={ TFGetC }==
+
+NAME::
+	TFGetC - Read a character, buffered
+
+SYNOPSIS::
+		char = TIOFGetC(TIOBase, file)
+		TINT            TAPTR    TAPTR
+
+		char = TFGetC(file)
+		TINT          TAPTR
+
+FUNCTION::
+	Read the next character from a file. This call is buffered.
+
+INPUTS::
+	- {{file}} - File to read from
+
+RESULTS::
+	- {{char}} - next character, or TEOF if the end of the file was reached.
+
+NOTES::
+	After using this function, call TFlush() before switching
+	back to unbuffered I/O functions.
+
+SEE ALSO::
+	TFlush(), TFPutC(), TFUngetC(), TRead(), TOpenFile()
+
+=={ TFEoF }==
+
+NAME::
+	TFEoF - Determine End-Of-File condition, buffered
+
+SYNOPSIS::
+		status = TIOFEoF(TIOBase, file)
+		TBOOL            TAPTR    TAPTR
+
+		status = TFEoF(file)
+		TBOOL          TAPTR
+
+FUNCTION::
+	Check if a file has reached an End-Of-File condition. This
+	function will basically call TFGetC() in order to test for
+	more characters being available, and push the character back
+	into the buffer.
+
+INPUTS::
+	- {{file}} - File handle to check
+
+RESULTS::
+	- {{success}} - TTRUE if End-Of-File reached, else TFALSE
+
+NOTES::
+	After using this function, call TFlush() before switching
+	back to unbuffered I/O functions.
+
+SEE ALSO::
+	TFGetC(), TFlush()
+
+=={ TFRead }==
+
+NAME::
+	TFRead - Read from a file, buffered
+
+SYNOPSIS::
+		rdlen = TIOFRead(TIOBase, file, buffer, buflen)
+		TINT             TAPTR    TAPTR TAPTR   TINT
+
+		rdlen = TFRead(file, buffer, buflen)
+		TINT           TAPTR TAPTR   TINT
+
+FUNCTION::
+	This function reads a block of data from an open file into
+	the specified buffer. The buflen argument is the size of the
+	buffer, i.e. the maximum number of bytes that may be read
+	during this operation.
+
+	The return value, if greater than zero, is the number of
+	bytes that have been read successfully. An End-Of-File
+	condition is indicated with a return value of zero. An error
+	is indicated with a return value of -1, in which case
+	additional error information can be obtained with a call
+	to TGetIOErr().
+
+	Unlike TRead() this function operates on the file in buffered
+	mode.
+
+INPUTS::
+	- {{file}} - File handle
+	- {{buffer}} - Buffer to read into
+	- {{buflen}} - Number of bytes to read
+
+RESULTS::
+	- {{rdlen}} - Number of bytes read, or -1 if an error occured
+
+NOTES::
+	After using a buffered function, call TFlush() before switching
+	back to unbuffered I/O functions like TRead().
+
+SEE ALSO::
+	TFWrite(), TRead(), TOpenFile(), TFGetC()
+
+=={ TFWrite }==
+
+NAME::
+	TFWrite - Write to a file, buffered
+
+SYNOPSIS::
+		wrlen = TIOFWrite(TIOBase, file, buffer, buflen)
+		TINT              TAPTR    TAPTR TAPTR   TINT
+
+		wrlen = TFWrite(file, buffer, buflen)
+		TINT            TAPTR TAPTR   TINT
+
+FUNCTION::
+	This function writes a block of data from the specified buffer
+	to an open file handle. The buflen argument is the size of the
+	buffer, i.e. the maximum number of bytes that can be written
+	during this operation.
+
+	The return value, if greater than zero, is the number of
+	bytes that have been written successfully. An error is
+	indicated with a return value of -1, in which case additonal
+	error informations can be obtained with a call to TGetIOErr().
+
+	Unlike TWrite() this function operates on the file in buffered mode.
+
+INPUTS::
+	- {{file}} - File handle
+	- {{buffer}} - Buffer to write
+	- {{buflen}} - Number of bytes to write
+
+RESULTS::
+ - {{rdlen}} - Number of bytes actually written, or -1 if an error occured
+
+NOTES::
+	After using a buffered function, call TFlush() before switching
+	back to unbuffered I/O functions like TRead().
+
+SEE ALSO::
+	TFWrite(), TWrite(), TOpenFile(), TFGetC()
+
+=={ TExamine }==
+
+NAME::
+	TExamine - Examine a lock or filehandle
+
+SYNOPSIS::
+		numattr = TIOExamine(TIOBase, object, tags)
+		TINT                 TAPTR    TAPTR   TTAGITEM*
+
+		numattr = TExamine(object, tags)
+		TINT               TAPTR   TTAGITEM*
+
+FUNCTION::
+	Examine a lock or an open filehandle and query attributes via
+	a list of tagitems. The return value will be the number of
+	attributes that could be retrieved. Note that you may have to
+	check the return value, because not all filesystem handlers
+	must implement all possible attributes. A general error is
+	indicated with a return value of -1, in which case you can
+	use TGetIOErr() for getting more detailed information.
+
+	Use TExNext() for scanning the contents of a directory you have
+	a lock on.
+
+INPUTS::
+	- {{object}} - Lock or file handle to examine
+	- {{tags}} - Pointer to a list of tag items
+
+TAGS::
+	TFATTR_Name, (TSTRPTR *)
+		Query the object's name. Tag data must be the address of a
+		string variable, which will receive a pointer to the name.
+		Warning: This pointer will become invalid as soon as you
+		call TExNext() the next time or TUnlockFile(). You MUST
+		make a copy of the string if you wish to continue to work
+		with the name after that.
+
+	TFATTR_Type, (TINT *)
+		Query the object type. Tag data must be the address of an
+		integer, which will receive a type code for the object:
+
+		TFTYPE_File
+			Regular file
+
+		TFTYPE_Directory
+			Regular directory
+
+		TFTYPE_Volume
+			Entry is a physical, removable, or a logical drive in
+			the host filesystem.
+
+		TFTYPE_Unknown
+			Object type is unknown
+
+		More types may follow in the future, so you are advised to
+		treat file, directory and volume as flags; e.g. every volume
+		is also a directory, and if you are only interested in the
+		directory information, use (type & TFTYPE_Directory). Note:
+		Better leave entries of the type TFTYPE_Unknown alone as they
+		do not currently fit into TEKlib's namespace semantics.
+
+	TFATTR_Size, (TINT *)
+		Query the object's size in bytes. Tag data must be the address
+		of an integer, which will receive the size of the object
+		in bytes. Note that the size of directory entries will
+		always be zero.
+
+	TFATTR_Date, (TDATE *)
+		Query the object's last modification date.  Tag data must be
+		the address of a TDATE structure, which will receive a TEKlib
+		datestamp for the object in question.
+
+	TFATTR_DateBox, (struct TDateBox *)
+		Query the object's last modification date. Tag data must be
+		the address of a TDateBox structure, which will receive a
+		datestamp for the object in question. The TDateBox
+		structure is defined in tek/mod/time.h.
+
+RESULTS::
+	- {{numattr}} - Number of attributes queried, or -1 on error
+
+SEE ALSO::
+	TExNext(), TLockFile(), TUnlockFile(), TOpenFile()
+
+=={ TExNext }==
+
+NAME::
+	TExNext - Examine next in a directory
+
+SYNOPSIS::
+		numattr = TIOExNext(TIOBase, lock, tags)
+		TINT                TAPTR    TAPTR TTAGITEM*
+
+		numattr = TExNext(lock, tags)
+		TINT              TAPTR TTAGITEM*
+
+FUNCTION::
+	Examine the next entry in a locked directory, and query
+	attributes via a list of tag items. The return value will
+	be the number of attributes that could be retrieved
+	successfully, or -1 when all entries in the directory have
+	been examined. Use TGetIOErr() to distinguish the end of
+	a directory from a general I/O error.
+
+INPUTS::
+	- {{lock}} - Lock handle to examine
+	- {{tags}} - Pointer to a list of tag items
+
+TAGS::
+	See TExamine() for the possible tags.
+
+RESULTS::
+	numattr - Number of attributes queried, or -1 on error.
+
+SEE ALSO::
+	TExamine(), TLockFile()
+
+=={ TChangeDir }==
+
+NAME::
+	TChangeDir - Change current directory to lock
+
+SYNOPSIS::
+		oldlock = TIOChangeDir(TIOBase, lock)
+		TAPTR                  TAPTR    TAPTR
+
+		oldlock = TChangeDir(lock)
+		TAPTR                TAPTR
+
+FUNCTION::
+	Change the current task's current directory to the lock
+	specified. If successful, the lock on the previous current
+	directory will be returned to the caller. If the current task
+	has no current directory, or if an error occured, the return
+	will be TNULL. In the latter case, use TGetIOErr() to get more
+	details about the problem.
+
+INPUTS::
+	- {{lock}} - Lock handle to change the current directory to
+
+RESULTS::
+	oldlock - Lock of the previous current directory, or TNULL
+
+	The result will be TNULL if the current task had no current
+	directory or when an error occured.
+
+NOTES::
+	* Note that the caller becomes responsible for the lock
+	returned by this function. Just like any other lock, it
+	must be released somewhere.
+
+	* Each task in TEKlib has a currentdir of its own. Initially, it
+	is inherited from its parent when a new task is created.
+
+SEE ALSO::
+	TLockFile(), TParentDir(), TMakeDir()
+
+=={ TParentDir }==
+
+NAME::
+	TParentDir - Get lock on parent of a lock
+
+SYNOPSIS::
+		parentlock = TIOParentDir(TIOBase, lock)
+		TAPTR                     TAPTR    TAPTR
+
+		parentlock = TParentDir(lock)
+		TAPTR                   TAPTR
+
+FUNCTION::
+	Create a new lock on the parent directory of the lock
+	specified.
+
+INPUTS::
+	- {{lock}} - Lock handle to get parent from
+
+RESULTS::
+	- {{parentlock}} - Lock to the parent directory of the lock
+
+SEE ALSO::
+	TLockFile(), TUnlockFile(), TChangeDir(), TMakeDir()
+
+=={ TNameOf }==
+
+NAME::
+	TNameOf - Get the name of an object
+
+SYNOPSIS::
+		len = TIONameOf(TIOBase, object, buf,    buflen)
+		TINT            TAPTR    TAPTR   TSTRPTR TINT
+
+		len = TNameOf(object, buf,    buflen)
+		TINT          TAPTR   TSTRPTR TINT
+
+FUNCTION::
+	Get the fully qualified path and name of the object specified.
+	Object can be an open file handle or a lock. Buf and buflen
+	determine the destination buffer for the name string to be
+	written to. Note that the length of the destination buffer
+	is assumed to include an extra byte for the strings's trailing
+	zero. If buf and buflen are zero, only the length of the string
+	is calculated. In case of an error, the return value is -1.
+
+INPUTS::
+	- {{object}} - A lock or a file handle
+	- {{buf}} - Destination string buffer, or TNULL
+	- {{buflen}} - Length of the destination buffer, or 0
+
+RESULTS::
+	- {{len}} - Length of the name string, or -1 in case of an error
+
+SEE ALSO::
+	TLockFile(), TOpenFile(), TAddPart()
+
+=={ TDupLock }==
+
+NAME::
+	TDupLock - Duplicate a lock
+
+SYNOPSIS::
+		newlock = TIODupLock(TIOBase, lock)
+		TAPTR                TAPTR    TAPTR
+
+		newlock = TDupLock(lock)
+		TAPTR              TAPTR
+
+FUNCTION::
+	This function creates a duplicate of a shared lock, and
+	returns another lock to the same object.
+
+INPUTS::
+	- {{lock}} - Lock handle to duplicate
+
+RESULTS::
+	- {{newlock}} - A duplicate of the lock, or TNULL on error.
+
+	Use TGetIOErr() to get more detailed information in case
+	of failure.
+
+SEE ALSO::
+	TLockFile(), TChangeDir(), TUnlockFile()
+
+=={ TOpenFromLock }==
+
+NAME::
+	TOpenFromLock - Turn a lock into an open file
+
+SYNOPSIS::
+		file = TIOOpenFromLock(TIOBase, lock)
+		TAPTR                  TAPTR    TAPTR
+
+		file = TOpenFromLock(lock)
+		TAPTR                TAPTR
+
+FUNCTION::
+	This function turns a lock to a file into an open file
+	handle. The lock will be absorbed by the newly created
+	filehandle, and is no longer usable. If this function
+	fails, the lock is still valid. In case of failure, use
+	TGetIOErr() for error diagnostics.
+
+INPUTS::
+	- {{lock}} - Lock handle to turn into a file
+
+RESULTS::
+	- {{file}} - Newly opened file handle
+
+SEE ALSO::
+	TLockFile(), TOpenFile()
+
+=={ TAddPart }==
+
+NAME::
+	TAddPart - Add a path component to a path
+
+SYNOPSIS::
+		len = TIOAddPart(TIOBase, path,   part,   buf,    buflen)
+		TINT             TAPTR    TSTRPTR TSTRPTR TSTRPTR TINT
+
+		len = TAddPart(path,   part,   buf,    buflen)
+		TINT           TSTRPTR TSTRPTR TSTRPTR TINT
+
+FUNCTION::
+	Taking into account all possible path delimiters, add a part
+	to a path, and render the resulting string to the destination
+	specified throughout buf and buflen. If buf is TNULL and buflen
+	zero, only the length will be calculated. Either way, the
+	actual or expected length of the resulting string will be
+	returned, or -1 if an error occured. Note that the length of
+	the destination buffer is expected to include an extra byte
+	for the string's trailing zero.
+
+INPUTS::
+	- {{path}} - First path component
+	- {{part}} - Second path component
+	- {{buf}} - Destination buffer, or TNULL
+	- {{buflen}} - Length of destination buffer, or zero
+
+RESULTS::
+	- {{len}} - Length of the resulting string, or -1 if an error occured
+
+SEE ALSO::
+	TNameOf()
+
+=={ TRename }==
+
+NAME::
+	TRename - Rename a file or directory.
+
+SYNOPSIS::
+		success = TIORename(TIOBase, oldname, newname)
+		TINT                TAPTR    TSTRPTR  TSTRPTR
+
+		success = TRename(oldname, newname)
+		TINT              TSTRPTR  TSTRPTR
+
+FUNCTION::
+	This function tries to rename the file or directory specified
+	throughout oldname to newname. If an object of the new name
+	already exists then an error is returned. Both oldname and
+	newname can contain path parts, in which case the object will
+	be moved across directories. Attempts to rename an object across
+	different filesystems will fail, and the result will be TFALSE.
+
+INPUTS::
+	- {{oldname}} - Old name of an object
+	- {{newname}} - New name for the object
+
+RESULTS::
+	- {{success}} - boolean
+
+SEE ALSO::
+	TMakeDir(), TDeleteFile()
+
+=={ TMakeDir }==
+
+NAME::
+	TMakeDir - Create a new directory
+
+SYNOPSIS::
+		lock = TIOMakeDir(TIOBase, name,   tags)
+		TAPTR             TAPTR    TSTRPTR TTAGITEM*
+
+		lock = TMakeDir(name,   tags)
+		TAPTR           TSTRPTR TTAGITEM*
+
+FUNCTION::
+	Attempt to create a new directory of the given name. If
+	successful, a shared lock to the newly created directory
+	will be returned. Otherwise, the return value will be
+	TNULL, and a secondary error code is available by calling
+	TGetIOErr().
+
+INPUTS::
+	- {{name}} - Name of the directory to create
+	- {{tags}} - Pointer to an array of tagitems
+
+RESULTS::
+	- {{lock}} - Shared lock to newly created directory, or TNULL
+
+SEE ALSO::
+	TLockFile(), TUnlockFile(), TRename(), TDeleteFile()
+
+=={ TDeleteFile }==
+
+NAME::
+	TDeleteFile - Delete an object
+
+SYNOPSIS::
+		success = TIODeleteFile(TIOBase, name)
+		TBOOL                   TAPTR    TSTRPTR
+
+		success = TDeleteFile(name)
+		TBOOL                 TSTRPTR
+
+FUNCTION::
+	This function deletes the object of the specified name.
+	If the addressed object is a directory, it must be empty
+	for this function to succeed.
+
+INPUTS::
+	- {{name}} - Name of the object to delete
+
+RESULTS::
+	- {{success}} - Boolean
+
+SEE ALSO::
+	TRename(), TMakeDir()
+
+=={ TSetIOErr }==
+
+NAME::
+	TSetIOErr - Set I/O error code
+
+SYNOPSIS::
+		olderror = TIOSetIOErr(TIOBase, newerror)
+		TINT                   TAPTR    TINT
+
+		olderror = TSetIOErr(newerror)
+		TINT                 TINT
+
+FUNCTION::
+	This function sets the I/O error code in the caller's task
+	context to the value specified as newerror. The previous
+	error code is returned to the caller.
+
+INPUTS::
+	- {{newerror}} - New error code in the current task
+
+RESULTS::
+	- {{olderror}} - Last error code in the current task
+
+SEE ALSO::
+	TGetIOErr(), TFault()
+
+=={ TGetIOErr }==
+
+NAME::
+	TGetIOErr - Get last I/O error code
+
+SYNOPSIS::
+		error = TIOGetIOErr(TIOBase)
+		TINT                TAPTR
+
+		error = TGetIOErr()
+		TINT
+
+FUNCTION::
+	Most I/O functions set a secondary error condition in the
+	caller's task context in case of a problem. Use this function
+	to query it. Error codes are defined in tek/mod/io.h, and can
+	be translated to plain English using TFault().
+
+	Most functions reset the task's current error condition to
+	zero on success, but this may not be true for all functions.
+	To be sure, call TGetIOErr() only when a function's primary
+	return value indicates a problem, or use TSetIOErr() to
+	set it beforehand.
+
+RESULTS::
+	- {{error}} - Secondary error code set by the last I/O function
+
+SEE ALSO::
+	TSetIOErr(), TFault()
+
+=={ TFault }==
+
+NAME::
+	TFault - Return text representation of an error
+
+SYNOPSIS::
+		len = TIOFault(TIOBase, code, buf,    buflen, tags)
+		TINT           TAPTR    TINT  TSTRPTR TINT    TTAGITEM*
+
+		len = TFault(code, buf,    buflen, tags)
+		TINT         TINT  TSTRPTR TINT    TTAGITEM*
+
+FUNCTION::
+	This function writes a text representation of an error code
+	into a buffer specfified throughout buf and buflen. If the
+	buffer arguments are TNULL respective zero, only the length
+	of the string will be calculated and returned to the caller.
+	Note that buflen is expected to include an extra byte for
+	the string's trailing zero.
+
+	By convention, error messages should be no longer than
+	79+1 characters (and preferrably much shorter).
+
+INPUTS::
+	- {{code}} - Error code
+	- {{buf}} - Destination buffer, or TNULL
+	- {{buflen}} - Length of the buffer, or zero
+	- {{tags}} - reserved for future extensions
+
+RESULTS::
+	- {{len}} - Length of the error string, or -1 in case of an error
+
+SEE ALSO::
+	TGetIOErr(), TSetIOErr()
+
+=={ TAssignLate }==
+
+NAME::
+	TAssignLate - Add a late-binding assign
+
+SYNOPSIS::
+		success = TIOAssignLate(TIOBase, devname, pathname)
+		TBOOL                   TAPTR    TSTRPTR  TSTRPTR
+
+		success = TAssignLate(devname, pathname)
+		TBOOL                 TSTRPTR  TSTRPTR
+
+FUNCTION::
+	This function assigns a logical device name to the specified
+	path. The device name must be without trailing colon. The
+	assignment is late-binding, i.e. the assign is stored
+	symbolically, and resolved upon the first access to its name.
+
+INPUTS::
+	- {{devname}} - Name of the logical device, without colon
+	- {{pathname}} - A fully qulified TEKlib path
+
+RESULTS::
+	- {{success}} - Boolean
+
+NOTES::
+	It is currently not possible to remove a late-binding assign
+	from the namespace. If you want to be able to remove an assign,
+	use TAssignLock() instead.
+
+SEE ALSO::
+	TAssignLock(), TGetIOErr()
+
+=={ TAssignLock }==
+
+NAME::
+	TAssignLock - Add an assignment to the namespace
+
+SYNOPSIS::
+		success = TIOAssignLock(TIOBase, devname, lock)
+		TBOOL                   TAPTR    TSTRPTR  TAPTR
+
+		success = TAssignLock(devname, lock)
+		TBOOL                 TSTRPTR  TAPTR
+
+FUNCTION::
+	This function assigns a logical device name to the specified
+	lock. The device name must be without trailing colon. Passing
+	TNULL for the lock cancels outstanding assigns to that name.
+
+	Note that if this function succeeds, the lock will be absorbed
+	by the I/O module's internal device list, and is no longer
+	valid. If you need to keep a copy of the lock, pass a duplicate
+	created with TDupLock().
+
+INPUTS::
+	- {{devname}} - Name of the logical device, without colon
+	- {{lock}} - A lock to be associated
+
+RESULTS::
+	- {{success}} - Boolean
+
+SEE ALSO::
+	TAssignLate(), TGetIOErr()
+
+=={ TObtainPacket }==
+
+NAME::
+	TObtainPacket - Obtain an I/O handler packet
+
+SYNOPSIS::
+		iomsg = TIOObtainPacket(TIOBase, name,   namepart)
+		TIOMSG*                 TAPTR    TSTRPTR TSTRPTR*
+
+		iomsg = TObtainPacket(name,   namepart)
+		TIOMSG*               TSTRPTR TSTRPTR*
+
+FUNCTION::
+	Resolve the specified name and obtain an I/O handler message (or
+	''packet'') from the corresponding handler. A pointer to the
+	handler-independent part of the name will be returned in the
+	variable being pointed to by namepart.
+
+	"foo:bar" would try to obtain the I/O message from the handler
+	responsible for "foo", and return a pointer to "bar" via the
+	variable being pointed to by namepart.
+
+	"foo/bar" would try to compose the full name from the current
+	task's current directory. If present, the resulting I/O message
+	will be obtained from the handler on which the current directory
+	resides, and the name part would possibly result in something
+	like "home/paul/foo/bar".
+
+	If no lock on a current directory is present in the current task
+	context then a lock on an application's current directory will be
+	attempted from the default I/O handler.
+
+	The I/O message can be used by implementors of direct handler
+	communications, such as for asynchronous I/O (overlapping
+	reads and writes), etc. After filling in fields appropriately,
+	the packet can be sent to its handler with exec:TPutIO().
+
+	See also tek/mod/ioext.h for the I/O message structure and
+	action types.
+
+INPUTS::
+	- {{name}} - Path/file name
+	- {{namepart}} - Pointer to a string variable
+
+	The string variable receives a pointer to the handler-independent
+	part of the name.
+
+RESULTS::
+	- {{iomsg}} - An I/O message ready for usage, or TNULL
+
+	TNULL will be returned if no handler can resolve the requested
+	name.
+
+SEE ALSO::
+	TReleasePacket(), exec:TPutIO()
+
+=={ TReleasePacket }==
+
+NAME::
+	TReleasePacket - Release an I/O message
+
+SYNOPSIS::
+		TIOReleasePacket(TIOBase, iomsg)
+		                 TAPTR    TIOMSG*
+
+		TReleasePacket(iomsg)
+		               TIOMSG*
+
+FUNCTION::
+	Free an I/O message allocated with TObtainPacket(). When the
+	last outstanding I/O message is returned to its handler, the
+	handler will usually close down and free its resources. All
+	messages obtained for direct communication with handlers must
+	be freed using this function.
+
+INPUTS::
+	- {{iomsg}} - I/O message allocated with TObtainPacket()
+
+SEE ALSO::
+	TObtainPacket()
+
+=={ TMakeName }==
+
+NAME::
+	TMakeName - Make a path/file name
+
+SYNOPSIS::
+		len = TIOMakeName(TIOBase, name,   dest,   dlen, mode, tags)
+		TINT              TAPTR    TSTRPTR TSTRPTR TINT  TINT  TTAGITEM*
+
+		len = TMakeName(name,   dest,   dlen, mode, tags)
+		TINT            TSTRPTR TSTRPTR TINT  TINT  TTAGITEM*
+
+FUNCTION::
+	This function tries to convert the specified name to a
+	fully-qualified, absolute path/file name, and renders the
+	result to the destination buffer. The length specified with dlen
+	is assumed to include an extra byte for the string's trailing
+	zero byte.
+
+	If dest is TNULL and dlen zero, only the length of the resulting
+	string will be calculated and returned to the caller. In case
+	of failure, the return value is -1.
+
+	The mode argument determines the type of conversion.
+	Currently defined:
+
+	TPPF_HOST2TEK
+		Tries to convert a path or component in host-style
+		naming conventions to a fully-qualified path/name
+		in TEKlib's naming conventions. In this mode, the
+		name resolution request will be sent to the handler
+		responsible for the current task's current directory.
+
+	TPPF_TEK2HOST
+		Tries to convert a path or component in TEKlib-style
+		naming conventions to a fully-qualified path/name
+		in the host's naming conventions. If an absolute path
+		was specified, the name resolution request will be sent
+		to the respective handler. If a relative name was given,
+		the request will be sent to the handler responsible for
+		the current task's current directory.
+
+	An error is returned if the addressed handler does not support
+	the name resolution action.
+
+INPUTS::
+	- {{name}} - Path/file or component name to be converted
+	- {{dest}} - Destination buffer, or TNULL
+	- {{dlen}} - Length of destination buffer, or 0
+	- {{mode}} - Conversion mode
+	- {{tags}} - Pointer to an array of tag items
+
+TAGS::
+	None currently defined.
+
+RESULTS::
+	- {{len}} - Length of the resulting string, or -1 in case of an error
+
+	In case of an error, use TGetIOErr() for getting extended error
+	information.
+
+SEE ALSO::
+	TNameOf(), TAddPart()
+
+=={ TMount }==
+
+NAME::
+	TMount - Mount a named device
+
+SYNOPSIS::
+		success = TIOMount(TIOBase, devname, action, tags)
+		TBOOL              TAPTR    TSTRPTR  TINT    TTAGITEM*
+
+		success = TMount(devname, action, tags)
+		TBOOL            TSTRPTR  TINT    TTAGITEM*
+
+FUNCTION::
+	This function attempts to mount or unmount the device name
+	specified. Actions currently defined:
+
+	TIOMNT_ADD
+		If successful, an instance of a device or
+		filesystem handler is loaded, initialized,
+		and bound to the name. Fails if the name
+		is already in use.
+
+	TIOMNT_REMOVE
+		Tries to unmount the given name. Fails if no
+		device of the given name is mounted.
+
+INPUTS::
+	- {{devname}} - Name of the device, without trailing {{:}}
+	- {{action}} - Action code
+	- {{tags}} - Pointer to an array of tag items
+
+TAGS::
+	The tags argument usually contains startup arguments and will
+	be passed to the handler's instance open function. These tags
+	will be interpreted by TMount():
+
+	TIOMount_Handler, (TSTRPTR)
+		Name of the addressed handler.
+		Default: The same as devname
+
+	TIOMount_HndVersion, (TUINT16)
+		Minimum version of the handler to be loaded.
+		Default: 0 (any version will suffice)
+
+	All other tags will be forwarded directly to the handler's
+	instance open function. Tags with a predefined meaning include
+
+	TIOMount_Device, (TSTRPTR)
+		Name of an Exec lowlevel device
+
+	TIOMount_InitString, (TSTRPTR)
+		Startup control arguments
+
+RESULTS::
+	- {{success}} - Boolean
+
+	If this function fails, use TGetIOErr() for getting extended
+	error information.
+
+SEE ALSO::
+	TAssignLock(), TAssignLate(), TGetIOErr()
+
+=={ TFUngetC }==
+
+NAME::
+	TFUngetC - Put back one character to a buffered file
+
+SYNOPSIS::
+		pushedchar = TIOFUngetC(TIOBase, file, character)
+		TINT                    TAPTR    TAPTR TINT
+
+		pushedchat = TIOFUngetC(file, character)
+		TINT                    TAPTR TINT
+
+FUNCTION::
+	Push back one character to a buffered file, where it will be available
+	for subsequent reads. Only one pushback is guaranteed to succeed.
+	Passing -1 for the character will cause the last character read to be
+	pushed back. If the last character read was TEOF, the next character
+	read will be TEOF.
+
+	The return value will be the character that was pushed back, or -1
+	(TEOF) if an error occured, or when the last character read was TEOF.
+
+INPUTS::
+	- {{file}} - Filehandle
+	- {{character}} - Chracter to push back, or -1
+
+RESULTS::
+	- {{pushedchar}} - Character pushed back, or -1 if it cannot be pushed back
+
+SEE ALSO::
+	TFGetC(), TFlush(), TFPutC(), TRead(), TOpenFile()
+
+=={ TFGetS }==
+
+NAME::
+	TFGetS - Read a line from a file, buffered
+
+SYNOPSIS::
+		line = TIOFGetS(TIOBase, file, buffer, len)
+		TSTRPTR         TAPTR    TAPTR TSTRPTR TINT
+
+		line = TFGetS(file, buffer, len)
+		TSTRPTR       TAPTR TSTRPTR TINT
+
+FUNCTION::
+	Read a single line from the specified file, stopping at either TEOF
+	or a newline character. Up to len minus one characters are written
+	from the input to the specified buffer. If a newline is read, it is
+	stored in the buffer. In either case, the resulting string in the
+	buffer will be terminated with a null byte. The return value will be
+	set to buffer if successful, or TNULL if an error occured.
+
+INPUTS::
+	- {{file}} - Filehandle
+	- {{buffer}} - Pointer to a buffer
+	- {{len}} - Size of the buffer [bytes]
+
+RESULTS::
+	- {{line}} - will be set to buffer, or TNULL in case of an error
+
+SEE ALSO::
+	TFPutS(), TFGetC(), TFPutC(), TRead(), TOpenFile()
+
+=={ TFPutS }==
+
+NAME::
+	TFPutS - Write a string to a file, buffered
+
+SYNOPSIS::
+		error = TIOFPutS(TIOBase, file, string)
+		TINT             TAPTR    TAPTR TSTRPTR
+
+		error = TFPutS(file, string)
+		TINT           TAPTR TSTRPTR
+
+FUNCTION::
+	Write a null-terminated string to a file in a buffered operation;
+	neither a newline nor a null byte is appended to the data written
+	to the filehandle.
+
+INPUTS::
+	- {{file}} - Filehandle
+	- {{string}} - Pointer to a null-terminated string
+
+RESULTS::
+	- {{error}} - number of bytes written if successful, TEOF on error
+
+SEE ALSO::
+	TFPutS(), TFGetC(), TFPutC(), TRead(), TOpenFile()
+
+=={ TInputFH }==
+
+NAME::
+	TInputFH - Get a task's standard input file handle
+
+SYNOPSIS::
+		inputfh = TIOInputFH(TIOBase)
+		TAPTR                TAPTR
+
+		inputfh = TInputFH()
+		TAPTR              void
+
+FUNCTION::
+	Get current task's standard input file handle. If the task
+	in which the caller is running has no standard input handle,
+	it is attempted to create one by opening a device named
+	"stdio:in".
+
+	Note that under no circumstance the caller may close the
+	resulting filehandle, as it is internally maintained with the
+	task and getting closed when the task exits.
+
+RESULTS::
+	- {{inputfh}} - current task's input file handle
+
+SEE ALSO::
+	TOutputFH(), TErrorFH()
+
+=={ TOutputFH }==
+
+NAME::
+	TOutputFH - Get a task's standard output file handle
+
+SYNOPSIS::
+		outputfh = TIOOutputFH(TIOBase)
+		TAPTR                  TAPTR
+
+		outputfh = TOutputFH()
+		TAPTR                void
+
+FUNCTION::
+	Get current task's standard output file handle. If the task
+	in which the caller is running has no standard output handle,
+	it is attempted to create one by opening a device named
+	"stdio:out".
+
+	Note that under no circumstance the caller may close the
+	resulting filehandle, as it is internally maintained with the
+	task and getting closed when the task exits.
+
+RESULTS::
+	- {{outputfh}} - current task's output file handle
+
+SEE ALSO::
+	TInputFH(), TErrorFH()
+
+=={ TErrorFH }==
+
+NAME::
+	TErrorFH - Get a task's standard error file handle
+
+SYNOPSIS::
+		errorfh = TIOErrorFH(TIOBase)
+		TAPTR                TAPTR
+
+		errorfh = TErrorFH()
+		TAPTR              void
+
+FUNCTION::
+	Get current task's standard error file handle. If the task
+	in which the caller is running has no standard error handle,
+	it is attempted to create one by opening a device named
+	"stdio:err".
+
+	Note that under no circumstance the caller may close the
+	resulting filehandle, as it is internally maintained with the
+	task and getting closed when the task exits.
+
+RESULTS::
+	- {{errorfh}} - current task's error file handle
+
+SEE ALSO::
+	TInputFH(), TOutputFH()
+
+=={ TSetFileDate }==
+
+NAME::
+	TSetFileDate - Set date of a filesystem object
+
+SYNOPSIS::
+		success = TIOSetFileDate(TIOBase, name,   date,  tags)
+		TBOOL                    TAPTR    TSTRPTR TDATE* TTAGITEM*
+
+		success = TSetFileDate(name,   date,  tags)
+		TBOOL                  TSTRPTR TDATE* TTAGITEM*
+
+FUNCTION::
+	This functions sets the date of the specified filesystem
+	object. The return value will be TTRUE if the operation
+	succeeded, otherwise TFALSE. Additional error diagnostics
+	can be obtained with TGetIOErr().
+
+INPUTS::
+	- {{name}} - Name of the object to modify
+
+RESULTS::
+	- {{success}} - Boolean
+
+SEE ALSO::
+	TExamine(), time:TMakeDate()
+

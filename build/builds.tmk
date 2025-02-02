@@ -1,7 +1,7 @@
 
 [!--------------------------------------------------------------------
 
-	Makefile templates for the different build types: 
+	Makefile templates for the different build types:
 	tools, modules, libs, meta, and some combinations of these.
 
 ---------------------------------------------------------------------]
@@ -11,10 +11,7 @@
 	#
 	[embed body="teklib"/]
 	[embed body="paths"/]
-	#
-	[embed body="guitooltargets"/]
-	#
-	[embed body="guitoolbuild"/]
+	[embed body="misctargets"/]
 	#
 	[embed body="tooltargets"/]
 	#
@@ -22,12 +19,10 @@
 	#
 	[embed body="masterbuild"/]
 
-	modules:
-		\t$(VOID)
-	libs:
-		\t$(VOID)
-	install:
-		\t$(VOID)
+	modules: PHONY
+	libs: PHONY
+	sources: PHONY
+	install: PHONY
 	do_install: install
 
 [/body]
@@ -37,6 +32,7 @@
 	#
 	[embed body="teklib"/]
 	[embed body="paths"/]
+	[embed body="misctargets"/]
 	#
 	[embed body="modtargets"/]
 	#
@@ -44,26 +40,44 @@
 	#
 	[embed body="masterbuild"/]
 
-	tools:
-		\t$(VOID)
-	libs:
-		\t$(VOID)
+	sources: PHONY
+	tools: PHONY
+	libs: PHONY
 
 [/body]
 
-[body name="makefile_modules_and_tools"]
+[body name="makefile_modules_sources"]
 	[embed body="config"/]
 	#
 	[embed body="teklib"/]
 	[embed body="paths"/]
+	[embed body="misctargets"/]
 	#
 	[embed body="modtargets"/]
 	#
 	[embed body="modbuild"/]
 	#
-	[embed body="guitooltargets"/]
+	[embed body="sourcetargets"/]
 	#
-	[embed body="guitoolbuild"/]
+	[embed body="sourcebuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	tools: PHONY
+	libs: PHONY
+
+[/body]
+
+[body name="makefile_modules_tools"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	[embed body="misctargets"/]
+	#
+	[embed body="modtargets"/]
+	#
+	[embed body="modbuild"/]
 	#
 	[embed body="tooltargets"/]
 	#
@@ -71,8 +85,34 @@
 	#
 	[embed body="masterbuild"/]
 
-	libs:
-		\t$(VOID)
+	sources: PHONY
+	libs: PHONY
+
+[/body]
+
+[body name="makefile_modules_tools_sources"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	[embed body="misctargets"/]
+	#
+	[embed body="modtargets"/]
+	#
+	[embed body="modbuild"/]
+	#
+	[embed body="tooltargets"/]
+	#
+	[embed body="toolbuild"/]
+	#
+	[embed body="sourcetargets"/]
+	#
+	[embed body="sourcebuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	sources: PHONY
+	libs: PHONY
 
 [/body]
 
@@ -81,6 +121,7 @@
 	#
 	[embed body="teklib"/]
 	[embed body="paths"/]
+	[embed body="misctargets"/]
 	#
 	[embed body="libtargets"/]
 	#
@@ -88,29 +129,48 @@
 	#
 	[embed body="masterbuild"/]
 
+	sources: PHONY
 	modules: libs
-		\t$(VOID)
 	tools: libs
-		\t$(VOID)
-	install: libs
-		\t$(VOID)
+	install: PHONY
 	do_install: install
 
 [/body]
 
-[body name="makefile_libs_and_tools"]
+[body name="makefile_libs_sources"]
 	[embed body="config"/]
 	#
 	[embed body="teklib"/]
 	[embed body="paths"/]
+	[embed body="misctargets"/]
 	#
 	[embed body="libtargets"/]
 	#
 	[embed body="libbuild"/]
 	#
-	[embed body="guitooltargets"/]
+	[embed body="sourcetargets"/]
 	#
-	[embed body="guitoolbuild"/]
+	[embed body="sourcebuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	modules: libs
+	tools: libs
+	install: PHONY
+	do_install: install
+
+[/body]
+
+[body name="makefile_libs_tools"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	[embed body="misctargets"/]
+	#
+	[embed body="libtargets"/]
+	#
+	[embed body="libbuild"/]
 	#
 	[embed body="tooltargets"/]
 	#
@@ -118,10 +178,36 @@
 	#
 	[embed body="masterbuild"/]
 
-	modules:
-		\t$(VOID)
-	install: libs
-		\t$(VOID)
+	sources: PHONY
+	modules: PHONY
+	install: PHONY
+	do_install: install
+
+[/body]
+
+[body name="makefile_libs_modules_tools"]
+	[embed body="config"/]
+	#
+	[embed body="teklib"/]
+	[embed body="paths"/]
+	[embed body="misctargets"/]
+	#
+	[embed body="libtargets"/]
+	#
+	[embed body="libbuild"/]
+	#
+	[embed body="tooltargets"/]
+	#
+	[embed body="toolbuild"/]
+	#
+	[embed body="modtargets"/]
+	#
+	[embed body="modbuild"/]
+	#
+	[embed body="masterbuild"/]
+
+	sources: PHONY
+
 	do_install: install
 
 [/body]

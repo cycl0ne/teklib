@@ -1,0 +1,97 @@
+
+[include name="build:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+	LIBDIR = $(TEKLIB)lib/$(HOST)
+[/body]
+
+[body name="libtargets"]
+
+	[embed body="libs"]
+		tekdebug
+		tekcmain
+		tekc
+		tek
+		tekstring
+	[/embed]
+
+	[embed body="liblink"]
+		tekcmain
+		$(OBJDIR)/main.lo \
+			$(OBJDIR)/init.lo \
+			$(OBJDIR)/teklib.lo \
+			$(OBJDIR)/host.lo
+	[/embed]
+	[embed body="liblink"]
+		tekc
+		$(OBJDIR)/init.lo $(OBJDIR)/teklib.lo $(OBJDIR)/host.lo
+	[/embed]
+	[embed body="liblink"]
+		tek
+		$(OBJDIR)/teklib.lo
+	[/embed]
+
+	[embed body="liblink"]
+		tekdebug
+		$(OBJDIR)/debug.lo
+	[/embed]
+
+	[embed body="libdep"]
+		$(OBJDIR)/init.lo
+		init.c
+	[/embed]
+	[embed body="libdep"]
+		$(OBJDIR)/teklib.lo
+		teklib.c
+	[/embed]
+	[embed body="libdep"]
+		$(OBJDIR)/debug.lo
+		debug.c
+	[/embed]
+	[embed body="libdep"]
+		$(OBJDIR)/main.lo
+		$(PLATFORM)/main.c
+	[/embed]
+	[embed body="libdep"]
+		$(OBJDIR)/host.lo
+		$(PLATFORM)/host.c
+	[/embed]
+
+	[embed body="liblink"]
+		tekstring
+		$(OBJDIR)/string.lo
+	[/embed]
+	[embed body="libdep"]
+		$(OBJDIR)/string.lo
+		string.c
+	[/embed]
+
+[/body]
+
+[body name="sourcetargets"]
+	[embed body="sources"]
+		tek.c
+		tekc.c
+		tekdebug.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/tek.c
+		teklib.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/tekc.c
+		teklib.c init.c $(PLATFORM)/host.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/tekdebug.c
+		debug.c
+	[/embed]
+[/body]
+
+[include name="build:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_libs_sources
+[/render]

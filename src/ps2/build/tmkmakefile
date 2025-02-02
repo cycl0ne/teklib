@@ -1,0 +1,86 @@
+[!--------------------------------------------------------------------
+                         build configuration
+---------------------------------------------------------------------]
+
+[include name="build:config.tmk"/]
+
+[body name="teklib"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[!-- modules to be built --]
+	[embed body="mods"]		ps2common						[/embed]
+
+	[embed body="modlink"]	ps2common
+							$(OBJDIR)/ps2_mod.mo	\
+								$(OBJDIR)/ps2_dma.mo	\
+								$(OBJDIR)/ps2_gs-setup.mo \
+								$(OBJDIR)/ps2_gs-util.mo \
+								$(OBJDIR)/ps2_gs-image.mo \
+								$(OBJDIR)/ps2_gs-draw.mo \
+								$(OBJDIR)/ps2_gs-txalloc.mo	\
+								$(OBJDIR)/ps2_debug.mo		[/embed]
+
+	[embed body="moddep"]	$(OBJDIR)/ps2_mod.mo
+							ps2_mod.c
+							ps2_mod.h						[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ps2_dma.mo
+							common/ps2_dma.c
+							ps2_mod.h						[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ps2_gs-setup.mo
+							common/ps2_gs-setup.c
+							ps2_mod.h						[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ps2_gs-util.mo
+							common/ps2_gs-util.c
+							ps2_mod.h						[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ps2_gs-image.mo
+							common/ps2_gs-image.c
+							ps2_mod.h						[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ps2_gs-draw.mo
+							common/ps2_gs-draw.c
+							ps2_mod.h						[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ps2_gs-txalloc.mo
+							common/ps2_gs-txalloc.c
+							ps2_mod.h						[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ps2_debug.mo
+							common/ps2_debug.c
+							ps2_mod.h						[/embed]
+
+
+[/body]
+
+[body name="tooltargets"]
+
+	[!-- all executables must be listed under "TOOLS" --]
+	[!--
+	[embed body="tools"]	rplasma							[/embed]
+	--]
+
+	[!-- dependencies. first argument: object, second: source, third: includes --]
+	[embed body="tooldep"]	$(OBJDIR)/rplasma.to
+							tests/rplasma.c					[/embed]
+	[embed body="vsmdep"]	$(OBJDIR)/render.to
+							tests/render.vsm				[/embed]
+	[embed body="tooldep"]	$(OBJDIR)/imgload.to
+							tests/imgload.c
+							tests/imgload.h					[/embed]
+
+	[!-- link tools. first argument: target name, second: objects --]
+	[embed body="toollink"]	rplasma
+							$(OBJDIR)/rplasma.to \
+							$(OBJDIR)/render.to  \
+							$(OBJDIR)/imgload.to			[/embed]
+
+[/body]
+
+[!--------------------------------------------------------------------
+                                render
+---------------------------------------------------------------------]
+
+[include name="build:builds.tmk"/]
+[render to="tmk_"]
+	makefile_modules_tools
+[/render]

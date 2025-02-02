@@ -2,7 +2,7 @@
 #define _TEK_MOD_PS2_MEMORY_H
 
 /*
-**	$Id: memory.h,v 1.4 2005/09/18 11:27:22 tmueller Exp $
+**	$Id: memory.h,v 1.7 2008/03/14 15:33:46 fschulze Exp $
 **	teklib/tek/mod/ps2/memory.h - memory mapped registers
 **
 **	Written by Franciska Schulze <fschulze at neoscientists.org>
@@ -12,14 +12,15 @@
 #include <tek/type.h>
 
 #define ALIGN16			__attribute__((aligned(16)))
+#define ALIGN64			__attribute__((aligned(64)))
 #define PACKED			__attribute__((packed))
 
 /*****************************************************************************/
-/* 
+/*
 **	Segments
 */
 
-#define	PHYSICAL(p)		((TAPTR) (((TUINT)(p)) & 0x1fffff))
+#define	PHYSICAL(p)		((TAPTR) (((TUINT)(p)) & 0x1ffffff))
 #define CACHED(p)		((TAPTR) (((TUINT)(p)) & ~0x20000000))
 #define UNCACHED(p)		((TAPTR) (((TUINT)(p)) | 0x20000000))
 #define VU0MEM(qw)		((TAPTR) (0x11004000 + (qw) * 16))
@@ -28,17 +29,17 @@
 #define VU1MICROMEM(qw)	((TAPTR) (0x11008000 + (qw) * 16))
 
 /*****************************************************************************/
-/* 
+/*
 **	GS
 */
 
 #define GS_PMODE		0x12000000	/* various PCRTC modes 	*/
 #define GS_SMODE1		0x12000010	/* related to Sync */
 #define GS_SMODE2		0x12000020	/* related to Sync */
-#define GS_SRFSH		0x12000020	/* DRAM refresh */
-#define GS_SYNCH1		0x12000030	/* related to Sync */
-#define GS_SYNCH2		0x12000040	/* related to Sync */
-#define GS_SYNCV		0x12000040	/* related to Sync/start */
+#define GS_SRFSH		0x12000030	/* DRAM refresh */
+#define GS_SYNCH1		0x12000040	/* related to Sync */
+#define GS_SYNCH2		0x12000050	/* related to Sync */
+#define GS_SYNCV		0x12000060	/* related to Sync/start */
 #define GS_DISPFB1		0x12000070	/* related to display buffer of Rectangular Area 1 */
 #define GS_DISPLAY1		0x12000080	/* Rectangular Area 1 display position etc. */
 #define GS_DISPFB2		0x12000090	/* related to display buffer of Rectangular Area 2 */
@@ -53,7 +54,7 @@
 #define GS_SIGLBLID		0x12001080	/* SIGNALID/LABELID */
 
 /*****************************************************************************/
-/* 
+/*
 **	TIMER
 */
 
@@ -62,7 +63,7 @@
 #define T0_COMP			0x10000020
 
 /*****************************************************************************/
-/* 
+/*
 **	VIF
 */
 
@@ -92,7 +93,7 @@
 #define VIF1_C3			0x10003d70
 
 /*****************************************************************************/
-/* 
+/*
 **	IRQ
 */
 
@@ -100,7 +101,7 @@
 #define I_MASK			0x1000f010
 
 /*****************************************************************************/
-/* 
+/*
 **	GIF
 */
 
@@ -113,7 +114,7 @@
 
 
 /*****************************************************************************/
-/* 
+/*
 **	DMA
 */
 
@@ -196,19 +197,28 @@
 /*
 **	Revision History
 **	$Log: memory.h,v $
+**	Revision 1.7  2008/03/14 15:33:46  fschulze
+**	register addresses corrected
+**
+**	Revision 1.6  2007/07/25 13:22:45  fschulze
+**	added ALIGN64 macro
+**
+**	Revision 1.5  2006/08/18 11:21:24  fschulze
+**	fixed PHYSICAL macro
+**
 **	Revision 1.4  2005/09/18 11:27:22  tmueller
 **	added authors
-**	
+**
 **
 **	Revision 1.3  2005/05/30 00:44:23  fschulze
 **	added some registers, improved comments
-**	
+**
 **	Revision 1.2  2005/05/08 14:21:13  fschulze
 **	added vu macros
-**	
+**
 **	Revision 1.1  2005/04/24 17:31:38  fschulze
 **	added
-**	
+**
 */
 
 #endif	/* _TEK_MOD_PS2_MEMORY_H */

@@ -1,69 +1,51 @@
-
-#ifndef _TEK_LIB_H
-#define _TEK_LIB_H
+#ifndef _TEK_TEKLIB_H
+#define _TEK_TEKLIB_H
 
 /*
-**	$Id: teklib.h,v 1.5 2005/09/13 02:44:06 tmueller Exp $
-**	teklib/tek/teklib.h - Link library functions for bootstrapping
-**	and for operating on elementary, public data structures
+**	teklib/tek/teklib.h - teklib link library functions
 **
 **	Written by Timm S. Mueller <tmueller at neoscientists.org>
 **	See copyright notice in teklib/COPYRIGHT
 */
 
-/*****************************************************************************/
-
 #include <tek/exec.h>
-#include <tek/mod/time.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef TCALLBACK TBOOL (*TTAGFOREACHFUNC)(TAPTR data, TTAGITEM *item);
-
-extern TLIBAPI TAPTR TEKCreate(TTAGITEM *tags);
-extern TLIBAPI TVOID TDestroy(TAPTR handle);
-extern TLIBAPI TVOID TDestroyList(TLIST *list);
-extern TLIBAPI TAPTR TNewInstance(TAPTR mod, TUINT possize, TUINT negsize);
-extern TLIBAPI TVOID TFreeInstance(TAPTR mod);
-extern TLIBAPI TVOID TInitVectors(TAPTR mod, const TAPTR *vectors, TUINT numv);
-extern TLIBAPI TTAG TGetTag(TTAGITEM *taglist, TUINT tag, TTAG defvalue);
-extern TLIBAPI TVOID TInitList(TLIST *list);
-extern TLIBAPI TVOID TAddHead(TLIST *list, TNODE *node);
-extern TLIBAPI TVOID TAddTail(TLIST *list, TNODE *node);
-extern TLIBAPI TNODE *TRemHead(TLIST *list);
-extern TLIBAPI TNODE *TRemTail(TLIST *list);
-extern TLIBAPI TVOID TRemove(TNODE *node);
-extern TLIBAPI TVOID TNodeUp(TNODE *node);
-extern TLIBAPI TVOID TInsert(TLIST *list, TNODE *node, TNODE *prednode);
-extern TLIBAPI TBOOL TForEachTag(TTAGITEM *taglist, TTAGFOREACHFUNC func,
-	TAPTR data);
-extern TLIBAPI struct THandle *TFindHandle(struct TList *list, TSTRPTR s2);
+TLIBAPI struct TTask *TEKCreate(struct TTagItem *tags);
+TLIBAPI void TAddHead(struct TList *list, struct TNode *node);
+TLIBAPI void TAddTail(struct TList *list, struct TNode *node);
+TLIBAPI void TRemove(struct TNode *node);
+TLIBAPI struct TNode *TRemHead(struct TList *list);
+TLIBAPI struct TNode *TRemTail(struct TList *list);
+TLIBAPI void TDestroy(struct THandle *handle);
+TLIBAPI void TInitList(struct TList *list);
+TLIBAPI void TInsert(struct TList *list, struct TNode *node, struct TNode *prednode);
+TLIBAPI void TNodeUp(struct TNode *node);
+TLIBAPI TTAG TGetTag(TTAGITEM *taglist, TUINT tag, TTAG defvalue);
+TLIBAPI void TDestroyList(struct TList *list);
+TLIBAPI struct TModule *TNewInstance(struct TModule *mod, TSIZE possize, TSIZE negsize);
+TLIBAPI void TFreeInstance(struct TModule *mod);
+TLIBAPI void TInitVectors(struct TModule *mod, const TMFPTR *vectors, TUINT numv);
+TLIBAPI struct THandle *TFindHandle(struct TList *list, TSTRPTR name);
+TLIBAPI TBOOL TForEachTag(struct TTagItem *taglist, struct THook *hook);
+TLIBAPI void TInitHook(struct THook *hook, THOOKFUNC func, TAPTR data);
+TLIBAPI TTAG TCallHookPkt(struct THook *hook, TAPTR obj, TTAG msg);
+TLIBAPI void TAddTime(TTIME *a, TTIME *b);
+TLIBAPI void TSubTime(TTIME *a, TTIME *b);
+TLIBAPI TINT TCmpTime(TTIME *a, TTIME *b);
+TLIBAPI void TAddDate(TDATE *d, TINT ndays, TTIME *tm);
+TLIBAPI void TSubDate(TDATE *d, TINT ndays, TTIME *tm);
+TLIBAPI TINT TDiffDate(TDATE *d1, TDATE *d2, TTIME *tm);
+TLIBAPI TBOOL TCreateTime(TTIME *t, TINT d, TINT s, TINT us);
+TLIBAPI TBOOL TExtractTime(TTIME *t, TINT *d, TINT *s, TINT *us);
+TLIBAPI void TInitInterface(struct TInterface *iface, struct TModule *mod, TSTRPTR name, TUINT16 version);
+TLIBAPI TAPTR TGetNextEntry(struct THandle *handle);
 
 #ifdef __cplusplus
 }
 #endif
 
-/*****************************************************************************/
-
-/*
-**	Revision History
-**	$Log: teklib.h,v $
-**	Revision 1.5  2005/09/13 02:44:06  tmueller
-**	updated copyright reference
-**	
-**	Revision 1.4  2005/05/27 19:45:04  tmueller
-**	added author to header
-**	
-**	Revision 1.3  2004/02/07 04:58:15  tmueller
-**	Time support functions (add, sub, cmp) removed from the link library
-**	
-**	Revision 1.2  2003/12/12 03:46:20  tmueller
-**	Return values do no longer try to emulate the crippled behavior of macros
-**	
-**	Revision 1.1.1.1  2003/12/11 07:17:42  tmueller
-**	Krypton import
-*/
-
-#endif
+#endif /* _TEK_TEKLIB */

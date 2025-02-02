@@ -1,9 +1,8 @@
-
 #ifndef _TEK_MOD_ASTRO_H
 #define _TEK_MOD_ASTRO_H
 
 /*
-**	$Id: astro.h,v 1.9 2005/09/13 02:45:09 tmueller Exp $
+**	$Id: astro.h,v 1.1.1.1 2006/08/20 22:15:26 tmueller Exp $
 **	teklib/tek/mod/astro.h - Astro module definitions
 **
 **	Written by Frank Pagels <copper at coplabs.org>
@@ -12,6 +11,28 @@
 */
 
 #include <tek/mod/time.h>
+#include <tek/mod/util.h>
+
+/*****************************************************************************/
+/*
+**	Forward declarations
+*/
+
+/* Astro module base structure: */
+struct TAstroBase;
+
+/*****************************************************************************/
+/*
+**	Weekday definitions
+*/
+
+#define TDT_SUNDAY		0
+#define TDT_MONDAY		1
+#define TDT_TUESDAY		2
+#define TDT_WEDNESDAY	3
+#define TDT_THURSDAY	4
+#define TDT_FRIDAY		5
+#define TDT_SATURDAY	6
 
 /*****************************************************************************/
 /*
@@ -54,7 +75,7 @@
 
 
 /*****************************************************************************/
-/* 
+/*
 **	Constants
 */
 
@@ -72,7 +93,7 @@
 #define TDT_ERROR		1
 
 /*****************************************************************************/
-/* 
+/*
 **	Location
 */
 
@@ -84,7 +105,7 @@ struct TDTLocation
 };
 
 /*****************************************************************************/
-/* 
+/*
 **	Moon Phases
 */
 
@@ -117,7 +138,7 @@ struct TDTEclipse
 #define TDT_EQUATOR			2
 
 /*****************************************************************************/
-/* 
+/*
 **	Selected locations
 */
 
@@ -156,38 +177,5 @@ struct TDTEclipse
 #define TLC_BRASILIA	32
 #define TLC_BUDAPEST	33
 #define TLC_SCHWERIN	34
-
-/*****************************************************************************/
-/*
-**	Revision History
-**	$Log: astro.h,v $
-**	Revision 1.9  2005/09/13 02:45:09  tmueller
-**	updated copyright reference
-**	
-**	Revision 1.8  2004/05/24 17:36:43  fpagels
-**	add Tag TDT_Moonpangle
-**	
-**	Revision 1.7  2004/05/08 07:56:50  fpagels
-**	add some structs and defines for Eclipse calculation
-**	
-**	Revision 1.6  2004/05/03 10:18:58  fpagels
-**	add moonphases
-**	
-**	Revision 1.5  2004/05/01 20:57:21  fpagels
-**	add Totensonntag, Begin End Daylight save time
-**	
-**	Revision 1.4  2004/05/01 14:49:53  fpagels
-**	add TAG for illumination of the moon
-**	
-**	Revision 1.3  2004/04/25 08:57:55  fpagels
-**	add Laetare- and Trinity Sunday
-**	
-**	Revision 1.2  2004/04/25 07:30:54  fpagels
-**	add flex holidays
-**	
-**	Revision 1.1.1.1  2003/12/11 07:17:50  tmueller
-**	Krypton import
-**	
-*/
 
 #endif

@@ -40,7 +40,7 @@ struct TPS2IOPacket
 **	$Log: ps2io.h,v $
 **	Revision 1.3  2005/09/18 11:27:22  tmueller
 **	added authors
-**	
+**
 **	Revision 1.2  2005/07/30 14:39:17  tmueller
 **	added #include io.h
 **	

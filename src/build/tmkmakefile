@@ -1,0 +1,59 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="metatargets"]
+	[embed body="meta"]
+		teklib
+	[/embed]
+	[embed body="meta"]
+		exec
+	[/embed]
+	[embed body="meta"]
+		hal
+	[/embed]
+	[embed body="meta"]
+		io
+	[/embed]
+	[embed body="meta"]
+		util
+	[/embed]
+	[embed body="meta"]
+		lua
+	[/embed]
+	[embed body="meta"]
+		visual
+	[/embed]
+	[embed body="meta"]
+		date
+	[/embed]
+	[switch]
+		[case_no_descend config="posix"]
+			[embed body="meta"]
+				display_x11
+			[/embed]
+			[embed body="meta"]
+				display_rawfb
+			[/embed]
+			[!--
+				
+				[embed body="meta"]
+					display_directfb
+				[/embed]
+			--]
+		[/case_no_descend]
+		[case_no_descend config="winnt"]
+			[embed body="meta"]
+				display_windows
+			[/embed]
+		[/case_no_descend]
+		[case_no_descend config="ps2"]
+			[embed body="meta"]
+				ps2
+			[/embed]
+		[/case_no_descend]
+	[/switch]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"] makefile_meta [/render]

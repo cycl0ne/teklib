@@ -2,7 +2,7 @@
 #define _TEK_INLINE_IO_H
 
 /*
-**	$Id: io.h,v 1.5.2.1 2005/12/04 22:30:14 tmueller Exp $
+**	$Id: io.h $
 **	teklib/tek/inline/io.h - io inline calls
 **
 **	See copyright notice in teklib/COPYRIGHT
@@ -11,64 +11,64 @@
 #include <tek/proto/io.h>
 
 #define TLockFile(name,mode,tags) \
-	(*(((TMODCALL TAPTR(**)(TAPTR,TSTRPTR,TUINT,TTAGITEM *))(TIOBase))[-9]))(TIOBase,name,mode,tags)
+	(*(((TMODCALL TFILE *(**)(TAPTR,TSTRPTR,TUINT,TTAGITEM *))(TIOBase))[-9]))(TIOBase,name,mode,tags)
 
 #define TUnlockFile(lock) \
-	(*(((TMODCALL TVOID(**)(TAPTR,TAPTR))(TIOBase))[-10]))(TIOBase,lock)
+	(*(((TMODCALL void(**)(TAPTR,TFILE *))(TIOBase))[-10]))(TIOBase,lock)
 
 #define TOpenFile(name,mode,tags) \
-	(*(((TMODCALL TAPTR(**)(TAPTR,TSTRPTR,TUINT,TTAGITEM *))(TIOBase))[-11]))(TIOBase,name,mode,tags)
+	(*(((TMODCALL TFILE *(**)(TAPTR,TSTRPTR,TUINT,TTAGITEM *))(TIOBase))[-11]))(TIOBase,name,mode,tags)
 
-#define TCloseFile(fh) \
-	(*(((TMODCALL TBOOL(**)(TAPTR,TAPTR))(TIOBase))[-12]))(TIOBase,fh)
+#define TCloseFile(a) \
+	(*(((TMODCALL TBOOL(**)(TAPTR,TFILE *))(TIOBase))[-12]))(TIOBase,a)
 
-#define TRead(fh,buf,len) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TAPTR,TINT))(TIOBase))[-13]))(TIOBase,fh,buf,len)
+#define TRead(a,buf,len) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TAPTR,TINT))(TIOBase))[-13]))(TIOBase,a,buf,len)
 
-#define TWrite(fh,buf,len) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TAPTR,TINT))(TIOBase))[-14]))(TIOBase,fh,buf,len)
+#define TWrite(a,buf,len) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TAPTR,TINT))(TIOBase))[-14]))(TIOBase,a,buf,len)
 
-#define TFlush(fh) \
-	(*(((TMODCALL TBOOL(**)(TAPTR,TAPTR))(TIOBase))[-15]))(TIOBase,fh)
+#define TFlush(a) \
+	(*(((TMODCALL TBOOL(**)(TAPTR,TFILE *))(TIOBase))[-15]))(TIOBase,a)
 
-#define TSeek(fh,offs,offshi,mode) \
-	(*(((TMODCALL TUINT(**)(TAPTR,TAPTR,TINT,TINT *,TINT))(TIOBase))[-16]))(TIOBase,fh,offs,offshi,mode)
+#define TSeek(a,offs,offshi,mode) \
+	(*(((TMODCALL TUINT(**)(TAPTR,TFILE *,TINT,TINT *,TINT))(TIOBase))[-16]))(TIOBase,a,offs,offshi,mode)
 
-#define TFPutC(fh,c) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TINT))(TIOBase))[-17]))(TIOBase,fh,c)
+#define TFPutC(a,c) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TINT))(TIOBase))[-17]))(TIOBase,a,c)
 
-#define TFGetC(fh) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR))(TIOBase))[-18]))(TIOBase,fh)
+#define TFGetC(a) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *))(TIOBase))[-18]))(TIOBase,a)
 
-#define TFEoF(fh) \
-	(*(((TMODCALL TBOOL(**)(TAPTR,TAPTR))(TIOBase))[-19]))(TIOBase,fh)
+#define TFEoF(a) \
+	(*(((TMODCALL TBOOL(**)(TAPTR,TFILE *))(TIOBase))[-19]))(TIOBase,a)
 
-#define TFRead(fh,buf,len) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TAPTR,TINT))(TIOBase))[-20]))(TIOBase,fh,buf,len)
+#define TFRead(a,buf,len) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TAPTR,TINT))(TIOBase))[-20]))(TIOBase,a,buf,len)
 
-#define TFWrite(fh,buf,len) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TAPTR,TINT))(TIOBase))[-21]))(TIOBase,fh,buf,len)
+#define TFWrite(a,buf,len) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TAPTR,TINT))(TIOBase))[-21]))(TIOBase,a,buf,len)
 
-#define TExamine(lock,tags) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TTAGITEM *))(TIOBase))[-22]))(TIOBase,lock,tags)
+#define TExamine(a,tags) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TTAGITEM *))(TIOBase))[-22]))(TIOBase,a,tags)
 
-#define TExNext(lock,tags) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TTAGITEM *))(TIOBase))[-23]))(TIOBase,lock,tags)
+#define TExNext(a,tags) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TTAGITEM *))(TIOBase))[-23]))(TIOBase,a,tags)
 
-#define TChangeDir(lock) \
-	(*(((TMODCALL TAPTR(**)(TAPTR,TAPTR))(TIOBase))[-24]))(TIOBase,lock)
+#define TChangeDir(a) \
+	(*(((TMODCALL TFILE *(**)(TAPTR,TFILE *))(TIOBase))[-24]))(TIOBase,a)
 
-#define TParentDir(lock) \
-	(*(((TMODCALL TAPTR(**)(TAPTR,TAPTR))(TIOBase))[-25]))(TIOBase,lock)
+#define TParentDir(a) \
+	(*(((TMODCALL TFILE *(**)(TAPTR,TFILE *))(TIOBase))[-25]))(TIOBase,a)
 
-#define TNameOf(lock,buf,len) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TSTRPTR,TINT))(TIOBase))[-26]))(TIOBase,lock,buf,len)
+#define TNameOf(a,buf,len) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TSTRPTR,TINT))(TIOBase))[-26]))(TIOBase,a,buf,len)
 
-#define TDupLock(lock) \
-	(*(((TMODCALL TAPTR(**)(TAPTR,TAPTR))(TIOBase))[-27]))(TIOBase,lock)
+#define TDupLock(a) \
+	(*(((TMODCALL TFILE *(**)(TAPTR,TFILE *))(TIOBase))[-27]))(TIOBase,a)
 
-#define TOpenFromLock(lock) \
-	(*(((TMODCALL TAPTR(**)(TAPTR,TAPTR))(TIOBase))[-28]))(TIOBase,lock)
+#define TOpenFromLock(a) \
+	(*(((TMODCALL TFILE *(**)(TAPTR,TFILE *))(TIOBase))[-28]))(TIOBase,a)
 
 #define TAddPart(p1,p2,buf,len) \
 	(*(((TMODCALL TINT(**)(TAPTR,TSTRPTR,TSTRPTR,TSTRPTR,TINT))(TIOBase))[-29]))(TIOBase,p1,p2,buf,len)
@@ -77,7 +77,7 @@
 	(*(((TMODCALL TBOOL(**)(TAPTR,TSTRPTR,TSTRPTR))(TIOBase))[-30]))(TIOBase,name,path)
 
 #define TAssignLock(name,lock) \
-	(*(((TMODCALL TBOOL(**)(TAPTR,TSTRPTR,TAPTR))(TIOBase))[-31]))(TIOBase,name,lock)
+	(*(((TMODCALL TBOOL(**)(TAPTR,TSTRPTR,TFILE *))(TIOBase))[-31]))(TIOBase,name,lock)
 
 #define TRename(name,newname) \
 	(*(((TMODCALL TBOOL(**)(TAPTR,TSTRPTR,TSTRPTR))(TIOBase))[-32]))(TIOBase,name,newname)
@@ -98,25 +98,25 @@
 	(*(((TMODCALL TAPTR(**)(TAPTR,TSTRPTR,TSTRPTR *))(TIOBase))[-37]))(TIOBase,path,namepart)
 
 #define TReleasePacket(packet) \
-	(*(((TMODCALL TVOID(**)(TAPTR,TAPTR))(TIOBase))[-38]))(TIOBase,packet)
+	(*(((TMODCALL void(**)(TAPTR,TAPTR))(TIOBase))[-38]))(TIOBase,packet)
 
 #define TFault(err,buf,len,tags) \
 	(*(((TMODCALL TINT(**)(TAPTR,TINT,TSTRPTR,TINT,TTAGITEM *))(TIOBase))[-39]))(TIOBase,err,buf,len,tags)
 
-#define TWaitChar(fh,timeout) \
-	(*(((TMODCALL TBOOL(**)(TAPTR,TAPTR,TINT))(TIOBase))[-40]))(TIOBase,fh,timeout)
+#define TWaitChar(a,timeout) \
+	(*(((TMODCALL TBOOL(**)(TAPTR,TFILE *,TINT))(TIOBase))[-40]))(TIOBase,a,timeout)
 
-#define TIsInteractive(fh) \
-	(*(((TMODCALL TBOOL(**)(TAPTR,TAPTR))(TIOBase))[-41]))(TIOBase,fh)
+#define TIsInteractive(a) \
+	(*(((TMODCALL TBOOL(**)(TAPTR,TFILE *))(TIOBase))[-41]))(TIOBase,a)
 
 #define TOutputFH() \
-	(*(((TMODCALL TAPTR(**)(TAPTR))(TIOBase))[-42]))(TIOBase)
+	(*(((TMODCALL TFILE *(**)(TAPTR))(TIOBase))[-42]))(TIOBase)
 
 #define TInputFH() \
-	(*(((TMODCALL TAPTR(**)(TAPTR))(TIOBase))[-43]))(TIOBase)
+	(*(((TMODCALL TFILE *(**)(TAPTR))(TIOBase))[-43]))(TIOBase)
 
 #define TErrorFH() \
-	(*(((TMODCALL TAPTR(**)(TAPTR))(TIOBase))[-44]))(TIOBase)
+	(*(((TMODCALL TFILE *(**)(TAPTR))(TIOBase))[-44]))(TIOBase)
 
 #define TMakeName(name,dest,dlen,mode,tags) \
 	(*(((TMODCALL TINT(**)(TAPTR,TSTRPTR,TSTRPTR,TINT,TINT,TTAGITEM *))(TIOBase))[-45]))(TIOBase,name,dest,dlen,mode,tags)
@@ -124,16 +124,16 @@
 #define TMount(name,action,tags) \
 	(*(((TMODCALL TBOOL(**)(TAPTR,TSTRPTR,TINT,TTAGITEM *))(TIOBase))[-46]))(TIOBase,name,action,tags)
 
-#define TFUngetC(fh,c) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TINT))(TIOBase))[-47]))(TIOBase,fh,c)
+#define TFUngetC(a,c) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TINT))(TIOBase))[-47]))(TIOBase,a,c)
 
-#define TFPutS(fh,s) \
-	(*(((TMODCALL TINT(**)(TAPTR,TAPTR,TSTRPTR))(TIOBase))[-48]))(TIOBase,fh,s)
+#define TFPutS(a,s) \
+	(*(((TMODCALL TINT(**)(TAPTR,TFILE *,TSTRPTR))(TIOBase))[-48]))(TIOBase,a,s)
 
-#define TFGetS(fh,buf,len) \
-	(*(((TMODCALL TSTRPTR(**)(TAPTR,TAPTR,TSTRPTR,TINT))(TIOBase))[-49]))(TIOBase,fh,buf,len)
+#define TFGetS(a,buf,len) \
+	(*(((TMODCALL TSTRPTR(**)(TAPTR,TFILE *,TSTRPTR,TINT))(TIOBase))[-49]))(TIOBase,a,buf,len)
 
-#define TSetFileDate(name,date) \
-	(*(((TMODCALL TBOOL(**)(TAPTR,TSTRPTR,TDATE *))(TIOBase))[-50]))(TIOBase,name,date)
+#define TSetFileDate(name,date,tags) \
+	(*(((TMODCALL TBOOL(**)(TAPTR,TSTRPTR,TDATE *,TTAGITEM *))(TIOBase))[-50]))(TIOBase,name,date,tags)
 
 #endif /* _TEK_INLINE_IO_H */

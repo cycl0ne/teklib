@@ -66,7 +66,7 @@ __asm__ __volatile__(	\
 **	$Log: vif.h,v $
 **	Revision 1.1  2005/09/18 12:33:39  tmueller
 **	added
-**	
+**
 **
 */
 

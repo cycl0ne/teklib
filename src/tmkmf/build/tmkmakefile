@@ -1,0 +1,59 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="tooltargets"]
+
+	[embed body="tools"]
+		tmkmf
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/parse.to
+		parse.c
+		parse.h
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/parse_tmkmf.to
+		parse_tmkmf.c
+		parse_tmkmf.h
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/tmkmf.to
+		tmkmf.c
+		parse_tmkmf.h global.h
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/navigate.to
+		navigate.c
+		parse_tmkmf.h global.h
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/global.to
+		global.c
+		global.h
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/strings.to
+		strings.c
+		global.h
+	[/embed]
+
+	[embed body="toollink"]
+		tmkmf
+		$(OBJDIR)/parse.to \
+			$(OBJDIR)/tmkmf.to \
+			$(OBJDIR)/parse_tmkmf.to \
+			$(OBJDIR)/navigate.to \
+			$(OBJDIR)/global.to \
+			$(OBJDIR)/strings.to
+	[/embed]
+
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+[render to="tmk_"] makefile_tools [/render]

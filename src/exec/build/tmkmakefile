@@ -1,0 +1,159 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		exec
+	[/embed]
+
+	[switch]
+		[case config="posix_linux_gcc_release"]
+			[embed body="modlink"]
+				exec
+				$(OBJDIR)/exec_all.mo
+			[/embed]
+		[/case]
+		[default]
+			[embed body="modlink"]
+				exec
+				$(OBJDIR)/exec_mod.mo \
+					$(OBJDIR)/exec_api.mo \
+					$(OBJDIR)/exec_memory.mo \
+					$(OBJDIR)/exec_doexec.mo \
+					$(OBJDIR)/exec_time.mo
+			[/embed]
+		[/default]
+	[/switch]
+
+	[embed body="moddep"]
+		$(OBJDIR)/exec_mod.mo
+		exec_mod.c
+		exec_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/exec_memory.mo
+		exec_memory.c
+		exec_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/exec_api.mo
+		exec_api.c
+		exec_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/exec_doexec.mo
+		exec_doexec.c
+		exec_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/exec_time.mo
+		exec_time.c
+		exec_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/exec_all.mo
+		exec_all.c
+		exec_mod.h
+	[/embed]
+
+[/body]
+
+
+[body name="tooltargets"]
+
+	[embed body="tools"]
+		atomterror
+		memtest
+		tasktree
+		aligntest
+		timedwait
+		interval
+		interface
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/atomterror.to
+		tests/atomterror.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/memtest.to
+		tests/memtest.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/tasktree.to
+		tests/tasktree.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/aligntest.to
+		tests/aligntest.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/timedwait.to
+		tests/timedwait.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/interval.to
+		tests/interval.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/interface.to
+		tests/interface.c
+	[/embed]
+
+	[embed body="toollink"]
+		atomterror
+		$(OBJDIR)/atomterror.to
+	[/embed]
+	[embed body="toollink"]
+		memtest
+		$(OBJDIR)/memtest.to
+	[/embed]
+	[embed body="toollink"]
+		tasktree
+		$(OBJDIR)/tasktree.to
+	[/embed]
+	[embed body="toollink"]
+		aligntest
+		$(OBJDIR)/aligntest.to
+	[/embed]
+	[embed body="toollink"]
+		timedwait
+		$(OBJDIR)/timedwait.to
+	[/embed]
+	[embed body="toollink"]
+		interval
+		$(OBJDIR)/interval.to
+	[/embed]
+	[embed body="toollink"]
+		interface
+		$(OBJDIR)/interface.to
+	[/embed]
+
+[/body]
+
+[body name="sourcetargets"]
+	[embed body="sources"]
+		exec_mod.c
+		exec_mod.h
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/exec_mod.c
+		exec_mod.c exec_api.c exec_memory.c exec_doexec.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/exec_mod.h
+		exec_mod.h
+	[/embed]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules_tools_sources
+[/render]

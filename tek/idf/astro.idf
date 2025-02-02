@@ -1,6 +1,6 @@
 
 ;
-;	$Id: astro.idf,v 1.5 2005/09/13 02:44:41 tmueller Exp $
+;	$Id: astro.idf,v 1.1.1.1 2006/08/20 22:15:29 tmueller Exp $
 ;	teklib/tek/idf/astro.idf - Astro interface description
 ;
 ;	See copyright notice in teklib/COPYRIGHT
@@ -12,8 +12,8 @@
 
 .prefix TAstro				; name prefix heading non-inline functions
 .iprefix T					; name prefix heading inline functions
-
-.defv TVOID					; aliases for void
+;.this struct TAstroBase *astro	; first/implicit argument, default "TAPTR base"
+.defv void					; aliases for void
 .defp TAPTR					; pointer types
 .defi TINT, TUINT, TBOOL	; 32bit integer types
 .deff TFLOAT				; float types
@@ -23,14 +23,17 @@
 .inline	on					; activate generation of inlines
 
 .offset 9
-TVOID GetEaster(TINT year, TINT *day, TINT *month)
+void GetEaster(TINT year, TINT *day, TINT *month)
 TINT GetFacts(TTAGITEM *tags1, TTAGITEM *tags2)
-TVOID GetSunPos(TDOUBLE T, TDOUBLE *ra, TDOUBLE *dec, TDOUBLE *di)
-TVOID GetObjectRiseSet(TDOUBLE t, TDOUBLE ra, TDOUBLE dec, TFLOAT l, TFLOAT b, TINT p, TFLOAT *rt, TFLOAT *st)
-TVOID ConvertToHMS(TFLOAT t, TINT *h, TINT *m, TINT *s)
-TVOID GetMoonPos(TDOUBLE T, TDOUBLE *ra, TDOUBLE *dec, TDOUBLE *di)
-TVOID GetFlexEvents(TINT y, TTAGITEM *tags)
-TVOID GetMoonPhases(struct TDateBox *db, struct TDTMoonPhase *ph)
-TVOID NextEclipse(struct TDateBox *db, struct TDTEclipse *ec, TINT mode)
+void GetSunPos(TDOUBLE T, TDOUBLE *ra, TDOUBLE *dec, TDOUBLE *di)
+void GetObjectRiseSet(TDOUBLE t, TDOUBLE ra, TDOUBLE dec, TFLOAT l, TFLOAT b, TINT p, TFLOAT *rt, TFLOAT *st)
+void ConvertToHMS(TFLOAT t, TINT *h, TINT *m, TINT *s)
+void GetMoonPos(TDOUBLE T, TDOUBLE *ra, TDOUBLE *dec, TDOUBLE *di)
+void GetFlexEvents(TINT y, TTAGITEM *tags)
+void GetMoonPhases(struct TDateBox *db, struct TDTMoonPhase *ph)
+void NextEclipse(struct TDateBox *db, struct TDTEclipse *ec, TINT mode)
+void MakeDate(TDATE *date, TINT d, TINT m, TINT y, TTIME *tm)
+TDOUBLE DateToJulian(TDATE *td)
+void JulianToDMY(TDOUBLE jd, TINT *pd, TINT *pm, TINT *py)
 
 .end

@@ -3,7 +3,7 @@
 #define _TEK_MOD_PS2_GS_H
 
 /*
-**  $Id: gs.h,v 1.1 2005/09/18 12:33:39 tmueller Exp $
+**  $Id: gs.h,v 1.4 2007/05/19 14:00:53 fschulze Exp $
 **	teklib/tek/mod/ps/gs.h - GS defines and macros
 **
 **	Written by Franciska Schulze <fschulze at neoscientists.org>
@@ -25,11 +25,16 @@
 #define GS_CTX2				0x2
 
 /* GS output mode	*/
+
+#define GS_VMODE_NTSC		0x02
+#define GS_VMODE_PAL		0x03
+#define GS_VMODE_DTV480P	0x50
+
 #define	GS_INTERLACE		1
 #define	GS_NO_INTERLACE		0
 
+#define GS_FIELD			0
 #define GS_FRAME			1
-#define GS_FIELD			2
 
 /* GS pixel storage formats */
 #define	GS_PSMCT32			0x00
@@ -67,15 +72,6 @@
 #define GS_LMZBUF			0x1
 #define GS_LMFBUF			0x2
 
-typedef enum 
-{
-	PAL_256_256_32=0,
-	PAL_320_256_32,
-	PAL_384_256_32,
-	PAL_512_256_32,
-	PAL_640_256_32
-} GSvmode;
-
 struct LMAlloc
 {
 	TUINT8 lma_AllocPages[LMA_NUMPAGES];
@@ -103,7 +99,7 @@ struct TXAlloc
 
 typedef struct
 {
-	GSvmode gss_vmode;
+	TINT gss_vmode;
 	TINT gss_inter;					/* interlace/ nointerlace 	*/
 	TINT gss_ffmd;					/* field/frame				*/	
 	TINT gss_ctx;					/* contexts used			*/
@@ -153,6 +149,7 @@ typedef struct
 	GScontext gsi_ctx2;
 	GSscreen gsi_screen;
 	GStexenv gsi_texenv;
+	TUINT64 gsi_regs[72];
 } GSinfo;
 
 
@@ -265,9 +262,8 @@ typedef struct
 
 #define	G_GETINTER()	TPS2Base->ps2_GSInfo->gsi_screen.gss_inter
 
-#define GS_SET_CSR(signal,finish,hsint,vsint,edwint,flush,reset,nfield,field,fifo,rev,id) \
-	(*(volatile TUINT64 *)(GS_CSR) = 	\
-	((TUINT64)(signal)	<< 0)	| 		\
+#define GS_SETREG_CSR(signal,finish,hsint,vsint,edwint,flush,reset,nfield,field,fifo,rev,id) \
+	((TUINT64)(signal)			| 		\
 	((TUINT64)(finish)	<< 1)	| 		\
 	((TUINT64)(hsint)	<< 2)	| 		\
 	((TUINT64)(vsint)	<< 3)	| 		\
@@ -283,9 +279,8 @@ typedef struct
 #define GS_RESET() \
 	(*(volatile TUINT64 *)(GS_CSR) = ((TUINT64)(1) << 9))
 
-#define GS_SET_PMODE(en1,en2,mmod,amod,slbg,alp) \
-	(*(volatile TUINT64 *)(GS_PMODE) = 	\
-	((TUINT64)(en1)	<< 0) 	| 			\
+#define GS_SETREG_PMODE(en1,en2,mmod,amod,slbg,alp) \
+	((TUINT64)(en1)		 	| 			\
 	((TUINT64)(en2)	<< 1) 	| 			\
 	((TUINT64)(001)	<< 2) 	| 			\
 	((TUINT64)(mmod)<< 5) 	| 			\
@@ -293,130 +288,124 @@ typedef struct
 	((TUINT64)(slbg)<< 7) 	| 			\
 	((TUINT64)(alp) << 8))
 
-#define GS_SET_SMODE2(int,ffmd,dpms) 	\
-	(*(volatile TUINT64 *)(GS_SMODE2) = \
-	((TUINT64)(int)	<< 0)	| 			\
-	((TUINT64)(ffmd)<< 1)	|			\
-	((TUINT64)(dpms)<< 2))
+#define GS_SETREG_SMODE2(int,ffmd,dpms) \
+	((TUINT64)(int)			| 			\
+	((TUINT64)(ffmd) << 1)	|			\
+	((TUINT64)(dpms) << 2))
 
-#define GS_SET_DISPFB1(fbp,fbw,psm,dbx,dby) \
-	(*(volatile TUINT64 *)(GS_DISPFB1) = \
-	((TUINT64)(fbp)	<< 0)	| 			\
+#define GS_SETREG_DISPFB1(fbp,fbw,psm,dbx,dby) \
+	((TUINT64)(fbp)			| 			\
 	((TUINT64)(fbw)	<< 9)	| 			\
 	((TUINT64)(psm)	<< 15)	| 			\
 	((TUINT64)(dbx)	<< 32)	| 			\
 	((TUINT64)(dby)	<< 43))
 
-#define GS_SET_DISPLAY1(dx,dy,magh,magv,dw,dh) \
-	(*(volatile TUINT64 *)(GS_DISPLAY1)= \
-	((TUINT64)(dx)	<< 0)	| 			\
+#define GS_SETREG_DISPLAY1(dx,dy,magh,magv,dw,dh) \
+	((TUINT64)(dx)			| 			\
 	((TUINT64)(dy)	<< 12)	| 			\
 	((TUINT64)(magh)<< 23)	| 			\
 	((TUINT64)(magv)<< 27)	| 			\
 	((TUINT64)(dw)	<< 32)	| 			\
 	((TUINT64)(dh)	<< 44))
 
-#define GS_SET_DISPFB2(fbp,fbw,psm,dbx,dby) \
-	(*(volatile TUINT64 *)(GS_DISPFB2) = \
-	((TUINT64)(fbp)	<< 0)	|	 		\
+#define GS_SETREG_DISPFB2(fbp,fbw,psm,dbx,dby) \
+	((TUINT64)(fbp)			|	 		\
 	((TUINT64)(fbw)	<< 9)	| 			\
 	((TUINT64)(psm)	<< 15)	| 			\
 	((TUINT64)(dbx)	<< 32)	| 			\
 	((TUINT64)(dby)	<< 43))
 
-#define GS_SET_DISPLAY2(dx,dy,magh,magv,dw,dh) \
-	(*(volatile TUINT64 *)(GS_DISPLAY2)= \
-	((TUINT64)(dx)	<< 0)	| 			\
+#define GS_SETREG_DISPLAY2(dx,dy,magh,magv,dw,dh) \
+	((TUINT64)(dx)			| 			\
 	((TUINT64)(dy)	<< 12)	| 			\
 	((TUINT64)(magh)<< 23)	| 			\
 	((TUINT64)(magv)<< 27)	| 			\
 	((TUINT64)(dw)	<< 32)	| 			\
 	((TUINT64)(dh)	<< 44))
 
-#define GS_SET_BGCOLOR(r,g,b) 			\
-	(*(volatile TUINT64 *)(GS_BGCOLOR)= \
-	((TUINT64)(r)	<< 0)	| 			\
+#define GS_SETREG_BGCOLOR(r,g,b) 		\
+	((TUINT64)(r)			| 			\
 	((TUINT64)(g)	<< 8)	| 			\
 	((TUINT64)(b)	<< 16))
 
 /* privileged registers	numbers	*/
-#define	GS_PRIV_PMODE		0x00
-#define	GS_PRIV_SMODE1		0x01
-#define	GS_PRIV_SMODE2		0x02
-#define	GS_PRIV_SRFSH		0x03
-#define	GS_PRIV_SYNCH1		0x04
-#define	GS_PRIV_SYNCH2		0x05
-#define	GS_PRIV_SYNCV		0x06
-#define	GS_PRIV_DISPFB1		0x07
-#define	GS_PRIV_DISPLAY1	0x08
-#define	GS_PRIV_DISPFB2		0x09
-#define	GS_PRIV_DISPLAY2	0x0a
-#define	GS_PRIV_EXTBUF		0x0b
-#define	GS_PRIV_EXTDATA		0x0c
-#define	GS_PRIV_EXTWRITE	0x0d
-#define	GS_PRIV_BGCOLOR		0x0e
-#define	GS_PRIV_CSR			0x40
-#define	GS_PRIV_IMR			0x41
-#define	GS_PRIV_BUSDIR		0x44
-#define	GS_PRIV_SIGLBLID	0x48
-#define	GS_PRIV_SYSCNT		0x4f
+#define	GS_PRIV_PMODE		0x0100
+#define	GS_PRIV_SMODE1		0x0201
+#define	GS_PRIV_SMODE2		0x0302
+#define	GS_PRIV_SRFSH		0x0403
+#define	GS_PRIV_SYNCH1		0x0504
+#define	GS_PRIV_SYNCH2		0x0605
+#define	GS_PRIV_SYNCV		0x0706
+#define	GS_PRIV_DISPFB1		0x0807
+#define	GS_PRIV_DISPLAY1	0x0908
+#define	GS_PRIV_DISPFB2		0x0a09
+#define	GS_PRIV_DISPLAY2	0x0b0a
+#define	GS_PRIV_EXTBUF		0x0c0b
+#define	GS_PRIV_EXTDATA		0x0d0c
+#define	GS_PRIV_EXTWRITE	0x0e0d
+#define	GS_PRIV_BGCOLOR		0x0f0e
+#define	GS_PRIV_CSR			0x0040
+#define	GS_PRIV_IMR			0x1041
+#define	GS_PRIV_BUSDIR		0x1144
+#define	GS_PRIV_SIGLBLID	0x0048
+#define	GS_PRIV_SYSCNT		0x124f
 
 /* general purpose registers numbers */
 
-#define GS_PRIM				0x00
-#define GS_RGBAQ			0x01
-#define GS_ST				0x02
-#define GS_UV				0x03
-#define GS_XYZF2			0x04
-#define GS_XYZ2				0x05
-#define GS_TEX0_1			0x06
-#define GS_TEX0_2			0x07
-#define GS_CLAMP_1			0x08
-#define GS_CLAMP_2			0x09
-#define GS_FOG				0x0a
-#define GS_XYZF3			0x0c
-#define GS_XYZ3				0x0d
-#define GS_TEX1_1			0x14
-#define GS_TEX1_2			0x15
-#define GS_TEX2_1			0x16
-#define GS_TEX2_2			0x17
-#define GS_XYOFFSET_1		0x18
-#define GS_XYOFFSET_2		0x19
-#define GS_PRMODECONT		0x1a
-#define GS_PRMODE			0x1b
-#define GS_TEXCLUT			0x1c
-#define GS_SCANMSK			0x22
-#define GS_MIPTBP1_1		0x34
-#define GS_MIPTBP1_2		0x35
-#define GS_MIPTBP2_1		0x36
-#define GS_MIPTBP2_2		0x37
-#define GS_TEXA				0x3b
-#define GS_FOGCOL			0x3d
-#define GS_TEXFLUSH			0x3f
-#define GS_SCISSOR_1		0x40
-#define GS_SCISSOR_2		0x41
-#define GS_ALPHA_1			0x42
-#define GS_ALPHA_2			0x43
-#define GS_DIMX				0x44
-#define GS_DTHE				0x45
-#define GS_COLCLAMP			0x46
-#define GS_TEST_1			0x47
-#define GS_TEST_2			0x48
-#define GS_PABE				0x49
-#define GS_FBA_1			0x4a
-#define GS_FBA_2			0x4b
-#define GS_FRAME_1			0x4c
-#define GS_FRAME_2			0x4d
-#define GS_ZBUF_1			0x4e
-#define GS_ZBUF_2			0x4f
-#define GS_BITBLTBUF		0x50
-#define GS_TRXPOS			0x51
-#define GS_TRXREG			0x52
-#define GS_TRXDIR			0x53
-#define GS_HWREG			0x54
-#define GS_SIGNAL			0x60
-#define GS_FINISH			0x61
-#define GS_LABEL			0x62
+#define GS_PRIM				0x1300
+#define GS_RGBAQ			0x1401
+#define GS_ST				0x1502
+#define GS_UV				0x1603
+#define GS_XYZF2			0x1704
+#define GS_XYZ2				0x1805
+#define GS_TEX0_1			0x1906
+#define GS_TEX0_2			0x1a07
+#define GS_CLAMP_1			0x1b08
+#define GS_CLAMP_2			0x1c09
+#define GS_FOG				0x1d0a
+#define GS_XYZF3			0x1e0c
+#define GS_XYZ3				0x1f0d
+#define GS_TEX1_1			0x2014
+#define GS_TEX1_2			0x2115
+#define GS_TEX2_1			0x2216
+#define GS_TEX2_2			0x2317
+#define GS_XYOFFSET_1		0x2418
+#define GS_XYOFFSET_2		0x2519
+#define GS_PRMODECONT		0x261a
+#define GS_PRMODE			0x271b
+#define GS_TEXCLUT			0x281c
+#define GS_SCANMSK			0x2922
+#define GS_MIPTBP1_1		0x2a34
+#define GS_MIPTBP1_2		0x2b35
+#define GS_MIPTBP2_1		0x2c36
+#define GS_MIPTBP2_2		0x2d37
+#define GS_TEXA				0x2e3b
+#define GS_FOGCOL			0x2f3d
+#define GS_TEXFLUSH			0x303f
+#define GS_SCISSOR_1		0x3140
+#define GS_SCISSOR_2		0x3241
+#define GS_ALPHA_1			0x3342
+#define GS_ALPHA_2			0x3443
+#define GS_DIMX				0x3544
+#define GS_DTHE				0x3645
+#define GS_COLCLAMP			0x3746
+#define GS_TEST_1			0x3847
+#define GS_TEST_2			0x3948
+#define GS_PABE				0x3a49
+#define GS_FBA_1			0x3b4a
+#define GS_FBA_2			0x3c4b
+#define GS_FRAME_1			0x3d4c
+#define GS_FRAME_2			0x3e4d
+#define GS_ZBUF_1			0x3f4e
+#define GS_ZBUF_2			0x404f
+#define GS_BITBLTBUF		0x4150
+#define GS_TRXPOS			0x4251
+#define GS_TRXREG			0x4352
+#define GS_TRXDIR			0x4453
+#define GS_HWREG			0x4554
+#define GS_SIGNAL			0x4660
+#define GS_FINISH			0x4761
+#define GS_LABEL			0x4862
 
 /* GS setreg macros 	*/
 
@@ -675,6 +664,18 @@ __asm__ __volatile__(					\
 /*
 **	Revision History
 **	$Log: gs.h,v $
+**	Revision 1.4  2007/05/19 14:00:53  fschulze
+**	removed GSvmode, added mode defines
+**
+**	Revision 1.3  2006/03/06 22:01:50  fschulze
+**	fixed GS_FIELD define
+**
+**	Revision 1.2  2006/02/24 15:48:08  fschulze
+**	added gsi_regs[] to GSinfo structure; GS_SET_ macros renamed to
+**	GS_SETREG_, these macros are now returning the register value,
+**	instead of writing to the memory mapped adress; register ids
+**	can now be used to refer to gsi_regs
+**	
 **	Revision 1.1  2005/09/18 12:33:39  tmueller
 **	added
 **	

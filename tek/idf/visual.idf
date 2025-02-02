@@ -1,6 +1,6 @@
 
 ;
-;	$Id: visual.idf,v 1.5 2005/09/13 02:44:41 tmueller Exp $
+;	$Id: visual.idf,v 1.1.1.1 2006/08/20 22:15:30 tmueller Exp $
 ;	teklib/tek/idf/visual.idf - Visual interface description
 ;
 ;	See copyright notice in teklib/COPYRIGHT
@@ -12,31 +12,48 @@
 
 .prefix TVisual				; name prefix heading non-inline functions
 
-.defv TVOID					; aliases for void
+.defv void					; aliases for void
 .defp TAPTR, TVPEN, TSTRPTR	; pointer types
 .defi TINT, TUINT, TBOOL	; 32bit integer types
 .defd TDOUBLE				; double types
 
-
 .offset 9
+TAPTR Open(TTAGITEM *tags)
+TAPTR Close(TAPTR inst)
+TAPTR Attach(TTAGITEM *tags)
+TAPTR OpenFont(TTAGITEM *tags)
+void CloseFont(TAPTR font)
+TINT GetFontAttrs(TAPTR font, TTAGITEM *tags)
+TINT TextSize(TAPTR font, TSTRPTR text)
+TAPTR QueryFonts(TTAGITEM *tags)
+TTAGITEM *GetNextFont(TAPTR fqhandle)
+
 TAPTR GetPort()
-TVPEN AllocPen(TUINT rgb)
-TVOID FRect(TINT x, TINT y, TINT w, TINT h, TVPEN pen)
-TVOID Clear(TVPEN pen)
-TVOID DrawRGB(TINT x, TINT y, TUINT *buf, TINT w, TINT h, TINT totw)
-TVOID Flush()
-TVOID FreePen(TVPEN pen)
-TVOID Rect(TINT x, TINT y, TINT w, TINT h, TVPEN pen)
-TVOID Line(TINT x1, TINT y1, TINT x2, TINT y2, TVPEN pen)
-TVOID LineArray(TINT16 *array, TINT num, TVPEN pen)
-TVOID Plot(TINT x, TINT y, TVPEN pen)
-TVOID Scroll(TINT x, TINT y, TINT w, TINT h, TINT dx, TINT dy)
-TVOID Text(TINT x, TINT y, TSTRPTR text, TINT len, TVPEN bg, TVPEN fg)
-TVOID FlushArea(TINT x, TINT y, TINT w, TINT h)
 TUINT SetInput(TUINT clearflags, TUINT setflags)
 TUINT GetAttrs(TTAGITEM *tags)
-TAPTR Attach(TTAGITEM *tags)
-TVOID FPoly(TINT16 *array, TINT num, TVPEN pen)
+TUINT SetAttrs(TTAGITEM *tags)
+TVPEN AllocPen(TUINT rgb)
+void FreePen(TVPEN pen)
+void SetFont(TAPTR font)
+void Clear(TVPEN pen)
+void Rect(TINT x, TINT y, TINT w, TINT h, TVPEN pen)
+void FRect(TINT x, TINT y, TINT w, TINT h, TVPEN pen)
+void Line(TINT x1, TINT y1, TINT x2, TINT y2, TVPEN pen)
+void Plot(TINT x, TINT y, TVPEN pen)
+void Text(TINT x, TINT y, TSTRPTR text, TINT len, TVPEN fg)
+
+void DrawStrip(TINT *array, TINT num, TTAGITEM *tags)
+void DrawTags(TTAGITEM *tags)
+void DrawFan(TINT *array, TINT num, TTAGITEM *tags)
+void CopyArea(TINT x, TINT y, TINT w, TINT h, TINT dx, TINT dy, TTAGITEM *tags)
+void DrawBuffer(TINT x, TINT y, TAPTR buf, TINT w, TINT h, TINT totw, TTAGITEM *tags)
+
+void SetClipRect(TINT x, TINT y, TINT w, TINT h, TTAGITEM *tags)
+void UnsetClipRect()
+
+TAPTR OpenDisplay(TTAGITEM *tags)
+void CloseDisplay(TAPTR display)
+TAPTR QueryDisplays(TTAGITEM *tags)
+TTAGITEM *GetNextDisplay(TAPTR handle)
 
 .end
-

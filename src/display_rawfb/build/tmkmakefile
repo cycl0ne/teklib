@@ -1,0 +1,63 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		display_rawfb
+	[/embed]
+
+	EXTRAMODLIBS = -lfreetype
+	EXTRADEFS = -I/usr/include/freetype2/
+
+	[embed body="modlink"]
+		display_rawfb
+		$(OBJDIR)/display_fb_mod.mo \
+		$(OBJDIR)/display_fb_font.mo \
+		$(OBJDIR)/display_fb_api.mo \
+		$(OBJDIR)/display_fb_draw.mo \
+		$(OBJDIR)/display_fb_region.mo \
+		$(OBJDIR)/display_fb_utf8.mo \
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_fb_mod.mo
+		display_fb_mod.c
+		display_fb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_fb_font.mo
+		display_fb_font.c
+		display_fb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_fb_api.mo
+		display_fb_api.c
+		display_fb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_fb_draw.mo
+		display_fb_draw.c
+		display_fb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_fb_region.mo
+		display_fb_region.c
+		display_fb_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_fb_utf8.mo
+		display_fb_utf8.c
+		display_fb_mod.h
+	[/embed]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules
+[/render]

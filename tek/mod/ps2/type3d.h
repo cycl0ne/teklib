@@ -42,7 +42,7 @@ typedef struct _tmatrix
 **	$Log: type3d.h,v $
 **	Revision 1.1  2005/09/18 12:33:39  tmueller
 **	added
-**	
+**
 **	Revision 1.1.1.1  2005/04/17 16:09:46  tmueller
 **	initial
 **	

@@ -2,7 +2,7 @@
 #define _TEK_INLINE_PS2_H
 
 /*
-**	$Id: ps2.h,v 1.3 2005/10/07 12:22:06 fschulze Exp $
+**	$Id: ps2.h,v 1.6 2007/05/19 14:04:32 fschulze Exp $
 **	teklib/tek/inline/ps2.h - ps2 inline calls
 **
 **	Written by Franciska Schulze <fschulze at neoscientists.org>
@@ -36,7 +36,7 @@ extern struct TPS2ModBase *TPS2Base;
 #define g_freeImage(img)					TPS2GSFreeImage(TPS2Base,img)
 #define g_initScreen(mode,inter,ffmd)		TPS2GSInitScreen(TPS2Base,mode,inter,ffmd)
 #define g_initDisplay(ctx,dx,dy,magh,magv,w,h,d,xc,yc)	TPS2GSInitDisplay(TPS2Base,ctx,dx,dy,magh,magv,w,h,d,xc,yc)
-#define g_initContext(ctx,fbp0,fbp1,psm)	TPS2GSInitContext(TPS2Base,ctx,fbp0,fbp1,psm)
+#define g_initFramebuffer(ctx,fbp0,fbp1,psm)	TPS2GSInitFramebuffer(TPS2Base,ctx,fbp0,fbp1,psm)
 #define g_enableContext(ctx,onoff)			TPS2GSEnableContext(TPS2Base,ctx,onoff)
 #define g_initZBuf(ctx,zbp,zpsm,dfunc,dclear)	TPS2GSInitZBuf(TPS2Base,ctx,zbp,zpsm,dfunc,dclear)
 #define g_initTexEnv(tbp,tw,th)				TPS2GSInitTexEnv(TPS2Base,tbp,tw,th)
@@ -54,6 +54,18 @@ extern struct TPS2ModBase *TPS2Base;
 #define g_syncPath(mode)					TPS2GSSyncPath(TPS2Base,mode)
 #define g_getImage(img)						TPS2GSGetImage(TPS2Base,img)
 #define g_setActiveFb(ctx,fbp)				TPS2GSSetActiveFb(TPS2Base,ctx,fbp)
-
+#define g_getReg(reg)						TPS2GSGetReg(TPS2Base,reg)
+#define GS_SET_CSR(signal,finish,hsint,vsint,edwint,flush,reset,nfield,field,fifo,rev,id)	\
+											TPS2GSSetCsr(TPS2Base,signal,finish,hsint,vsint,edwint,flush,reset,nfield, \
+															field,fifo,rev,id)
+#define GS_SET_PMODE(en1,en2,mmod,amod,slbg,alp)	TPS2GSSetPmode(TPS2Base,en1,en2,mmod,amod,slbg,alp)
+#define GS_SET_SMODE2(inter,ffmd,dpms)		TPS2GSSetSmode2(TPS2Base,inter,ffmd,dpms)
+#define GS_SET_DISPFB1(fbp,fbw,psm,dbx,dby)	TPS2GSSetDispfb1(TPS2Base,fbp,fbw,psm,dbx,dby)
+#define GS_SET_DISPLAY1(dx,dy,magh,magv,dw,dh)	TPS2GSSetDisplay1(TPS2Base,dx,dy,magh,magv,dw,dh)
+#define GS_SET_DISPFB2(fbp,fbw,psm,dbx,dby)	TPS2GSSetDispfb2(TPS2Base,fbp,fbw,psm,dbx,dby)
+#define GS_SET_DISPLAY2(dx,dy,magh,magv,dw,dh)	TPS2GSSetDisplay2(TPS2Base,dx,dy,magh,magv,dw,dh)
+#define GS_SET_BGCOLOR(r,g,b)				TPS2GSSetBgcolor(TPS2Base,r,g,b)
+#define g_setRegCb(reg,data,cbfunc,cbdata)	TPS2GSSetRegCb(TPS2Base,reg,data,cbfunc,cbdata)
+#define g_setVisibleFb(ctx,fbp)				TPS2GSSetVisibleFb(TPS2Base,ctx,fbp)
 
 #endif /* _TEK_INLINE_PS2_H */

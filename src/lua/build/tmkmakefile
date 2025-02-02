@@ -1,0 +1,245 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+	LIBDIR = $(TEKLIB)lib/$(HOST)
+[/body]
+
+[body name="libtargets"]
+
+	[embed body="libs"]
+		luautil
+	[/embed]
+
+	[embed body="liblink"]
+		luautil
+		$(OBJDIR)/luautil.lo
+	[/embed]
+
+	[embed body="libdep"]
+		$(OBJDIR)/luautil.lo
+		luautil.c
+	[/embed]
+
+[/body]
+
+[body name="modtargets"]
+
+	LUASRCDIR = luasrc
+
+	[if config="posix_linux"]
+		EXTRADEFS = -DTEKLIB_LUA_STDLIBS
+	[/if]
+
+	[embed body="mods"]
+		lua5
+		[!-- lua5_mod_tek --]
+	[/embed]
+
+	[switch]
+		[case config="posix_linux_gcc_release"]
+			[embed body="modlink"]
+				lua5
+				$(OBJDIR)/lua_all.mo
+			[/embed]
+		[/case]
+		[default]
+			[embed body="modlink"]
+				lua5
+				$(OBJDIR)/lua_mod.mo \
+					$(OBJDIR)/lapi.mo $(OBJDIR)/lcode.mo $(OBJDIR)/ldebug.mo \
+					$(OBJDIR)/ldo.mo $(OBJDIR)/ldump.mo $(OBJDIR)/lfunc.mo $(OBJDIR)/lgc.mo \
+					$(OBJDIR)/llex.mo $(OBJDIR)/lmem.mo $(OBJDIR)/lobject.mo $(OBJDIR)/lopcodes.mo \
+					$(OBJDIR)/lparser.mo $(OBJDIR)/lstate.mo $(OBJDIR)/lstring.mo $(OBJDIR)/ltable.mo \
+					$(OBJDIR)/ltm.mo $(OBJDIR)/lundump.mo $(OBJDIR)/lvm.mo $(OBJDIR)/lzio.mo \
+					$(OBJDIR)/lib_mathlib.mo $(OBJDIR)/lib_strlib.mo $(OBJDIR)/lib_baselib.mo \
+					$(OBJDIR)/lib_tablib.mo $(OBJDIR)/lib_auxlib.mo $(OBJDIR)/lib_loadlib.mo \
+					$(OBJDIR)/lib_oslib.mo $(OBJDIR)/lib_iolib.mo $(OBJDIR)/lib_dblib.mo \
+					$(OBJDIR)/lib_teklib.mo
+			[/embed]
+		[/default]
+	[/switch]
+
+	[embed body="modlink"]
+		lua5_mod_tek
+		$(OBJDIR)/lua_tek_mod.mo [!-- $(OBJDIR)/lua_tek_vis.mo --]
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/lua_tek_mod.mo
+		modules/tek/lua_tek_mod.c
+		modules/tek/lua_tek_mod.h
+	[/embed]
+[!--
+	[embed body="moddep"]
+		$(OBJDIR)/lua_tek_vis.mo
+		modules/tek/lua_tek_vis.c
+		modules/tek/lua_tek_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/lua_tek_io.mo
+		modules/tek/lua_tek_io.c
+		modules/tek/lua_tek_mod.h
+	[/embed]
+--]
+	[embed body="moddep"]
+		$(OBJDIR)/lua_all.mo
+		lua_all.c
+		lua_mod.c \
+			$(LUASRCDIR)/lapi.c
+			$(LUASRCDIR)/lcode.c
+			$(LUASRCDIR)/ldebug.c
+			$(LUASRCDIR)/ldo.c
+			$(LUASRCDIR)/ldump.c
+			$(LUASRCDIR)/lfunc.c
+			$(LUASRCDIR)/lgc.c
+			$(LUASRCDIR)/llex.c
+			$(LUASRCDIR)/lmem.c
+			$(LUASRCDIR)/lobject.c
+			$(LUASRCDIR)/lopcodes.c
+			$(LUASRCDIR)/lparser.c
+			$(LUASRCDIR)/lstate.c
+			$(LUASRCDIR)/lstring.c
+			$(LUASRCDIR)/ltable.c
+			$(LUASRCDIR)/ltm.c
+			$(LUASRCDIR)/lundump.c
+			$(LUASRCDIR)/lvm.c
+			$(LUASRCDIR)/lzio.c
+			$(LUASRCDIR)/lauxlib.c
+			$(LUASRCDIR)/lbaselib.c
+			$(LUASRCDIR)/ldblib.c
+			$(LUASRCDIR)/liolib.c
+			$(LUASRCDIR)/lmathlib.c
+			$(LUASRCDIR)/loslib.c
+			$(LUASRCDIR)/lstrlib.c
+			$(LUASRCDIR)/ltablib.c
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/lua_mod.mo
+		lua_mod.c
+	[/embed]
+
+	[embed body="moddep"]	$(OBJDIR)/lapi.mo
+							$(LUASRCDIR)/lapi.c			[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lcode.mo
+							$(LUASRCDIR)/lcode.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ldebug.mo
+							$(LUASRCDIR)/ldebug.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ldo.mo
+							$(LUASRCDIR)/ldo.c			[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ldump.mo
+							$(LUASRCDIR)/ldump.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lfunc.mo
+							$(LUASRCDIR)/lfunc.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lgc.mo
+							$(LUASRCDIR)/lgc.c			[/embed]
+	[embed body="moddep"]	$(OBJDIR)/llex.mo
+							$(LUASRCDIR)/llex.c			[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lmem.mo
+							$(LUASRCDIR)/lmem.c			[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lobject.mo
+							$(LUASRCDIR)/lobject.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lopcodes.mo
+							$(LUASRCDIR)/lopcodes.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lparser.mo
+							$(LUASRCDIR)/lparser.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lstate.mo
+							$(LUASRCDIR)/lstate.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lstring.mo
+							$(LUASRCDIR)/lstring.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ltable.mo
+							$(LUASRCDIR)/ltable.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ltests.mo
+							$(LUASRCDIR)/ltests.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/ltm.mo
+							$(LUASRCDIR)/ltm.c			[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lundump.mo
+							$(LUASRCDIR)/lundump.c		[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lvm.mo
+							$(LUASRCDIR)/lvm.c			[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lzio.mo
+							$(LUASRCDIR)/lzio.c			[/embed]
+
+	[embed body="moddep"]	$(OBJDIR)/lib_auxlib.mo
+							$(LUASRCDIR)/lauxlib.c	[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lib_baselib.mo
+							$(LUASRCDIR)/lbaselib.c	[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lib_tablib.mo
+							$(LUASRCDIR)/ltablib.c	[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lib_dblib.mo
+							$(LUASRCDIR)/ldblib.c	[/embed]
+
+	[embed body="moddep"]	$(OBJDIR)/lib_mathlib.mo
+							$(LUASRCDIR)/lmathlib.c	[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lib_strlib.mo
+							$(LUASRCDIR)/lstrlib.c	[/embed]
+
+	[embed body="moddep"]	$(OBJDIR)/lib_iolib.mo
+							$(LUASRCDIR)/liolib.c	[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lib_oslib.mo
+							$(LUASRCDIR)/loslib.c	[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lib_debuglib.mo
+							$(LUASRCDIR)/ldblib.c	[/embed]
+	[embed body="moddep"]	$(OBJDIR)/lib_loadlib.mo
+							$(LUASRCDIR)/loadlib.c	[/embed]
+
+	[embed body="moddep"]	$(OBJDIR)/lib_teklib.mo
+							lua_teklib.c			[/embed]
+
+[/body]
+
+[body name="tooltargets"]
+
+	EXTRATOOLLIBS = -lluautil
+
+	[embed body="tools"]
+		lua
+		luaext
+		[!-- luathreadtest --]
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/lua.to
+		tests/lua.c
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/luaext.to
+		tests/luaext.c
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/luautil.to
+		tests/luautil.c
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/luathreadtest.to
+		tests/luathreadtest.c
+	[/embed]
+
+	[embed body="toollink"]
+		lua
+		$(OBJDIR)/lua.to
+	[/embed]
+
+	[embed body="toollink"]
+		luaext
+		$(OBJDIR)/luaext.to
+	[/embed]
+
+	[embed body="toollink"]
+		luathreadtest
+		$(OBJDIR)/luathreadtest.to
+	[/embed]
+
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_libs_modules_tools
+[/render]

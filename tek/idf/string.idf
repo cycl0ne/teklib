@@ -1,0 +1,180 @@
+
+.name string
+.class linklib
+.author Timm S. Mueller <tmueller at neoscientists.org>
+.copyright See copyright notice in teklib/COPYRIGHT
+.defp TAPTR, TSTRPTR, THOOKFUNC
+.defv void
+.deft TTAG, TSIZE
+.defi TINT, TUINT, TBOOL
+.defs TUINT16
+
+;------------------------------------------------------------------------------
+;
+;	tek/idf/string.idf - TEKlib string library
+;	Written by Timm S. Mueller <tmueller at schulze-mueller.de>
+;	See copyright notice in COPYRIGHT
+;
+;	FUNCTIONS::
+;	- string:TStrCaseCmp() - Compare strings, case-insensitive
+;	- string:TStrCat() - Append string
+;	- string:TStrChr() - Find character in a string
+;	- string:TStrCmp() - Compare strings
+;	- string:TStrCpy() - Copy string
+;	- string:TStrLen() - Return length of a string
+;	- string:TStrNCaseCmp() - Compare strings, case-insensitive, length-limited
+;	- string:TStrNCat() - Append string, length-limited
+;	- string:TStrNCmp() - Compare strings, length-limited
+;	- string:TStrNCpy() - Copy string, length-limited
+;	- string:TStrRChr() - Find character in a string from the end
+;	- string:TStrStr() - Find substring in a string
+;	- string:TStrToI() - Convert string to integer
+;
+;------------------------------------------------------------------------------
+
+;------------------------------------------------------------------------------
+;
+;	TStrLen():
+;			len = TStrLen(string)
+;			TSIZE         TSTRPTR
+;
+;------------------------------------------------------------------------------
+TSIZE TStrLen(TSTRPTR s)
+
+;------------------------------------------------------------------------------
+;
+;	TStrCpy():
+;			dest = TStrCpy(dest,   source)
+;			TSTRPTR        TSTRPTR TSTRPTR
+;
+;------------------------------------------------------------------------------
+TSTRPTR TStrCpy(TSTRPTR d, TSTRPTR s)
+
+;------------------------------------------------------------------------------
+;
+;	TStrNCpy():
+;			dest = TStrNCpy(dest,   source, maxlen)
+;			TSTRPTR         TSTRPTR TSTRPTR TSIZE
+;
+;	NOTES::
+;		* If the length of {{source}} is less than {{maxlen}}, this
+;		function does not pad the remainder of dest with null bytes.
+;		This is in contrast to the strncpy() standard library function.
+;
+;------------------------------------------------------------------------------
+TSTRPTR TStrNCpy(TSTRPTR d, TSTRPTR s, TSIZE maxlen)
+
+;------------------------------------------------------------------------------
+;
+;	TStrCat():
+;			dest = TStrCat(dest,   source)
+;			TSTRPTR        TSTRPTR TSTRPTR
+;
+;------------------------------------------------------------------------------
+TSTRPTR TStrCat(TSTRPTR d, TSTRPTR s)
+
+;------------------------------------------------------------------------------
+;
+;	TStrNCat():
+;			dest = TStrNCat(dest,   source, maxlen)
+;			TSTRPTR         TSTRPTR TSTRPTR TSIZE
+;
+;------------------------------------------------------------------------------
+TSTRPTR TStrNCat(TSTRPTR d, TSTRPTR s, TSIZE maxlen)
+
+;------------------------------------------------------------------------------
+;
+;	TStrCmp():
+;			res = TStrCmp(first,  second)
+;			TINT          TSTRPTR TSTRPTR
+;
+;	NOTES::
+;		* Either or both strings may be {{TNULL}}. A {{TNULL}} string is
+;		'less than' a non-{{TNULL}} string.
+;
+;------------------------------------------------------------------------------
+TINT TStrCmp(TSTRPTR s, TSTRPTR s2)
+
+;------------------------------------------------------------------------------
+;
+;	TStrNCmp():
+;			res = TStrNCmp(first,  second, maxlen)
+;			TINT           TSTRPTR TSTRPTR TSIZE
+;
+;	NOTES::
+;		See annotations for string:TStrCmp()
+;
+;------------------------------------------------------------------------------
+TINT TStrNCmp(TSTRPTR s, TSTRPTR s2, TSIZE maxlen)
+
+;------------------------------------------------------------------------------
+;
+;	TStrCaseCmp():
+;			res = TStrCaseCmp(first,  second)
+;			TINT              TSTRPTR TSTRPTR
+;
+;	NOTES::
+;		See annotations for string:TStrCmp()
+;
+;------------------------------------------------------------------------------
+TINT TStrCaseCmp(TSTRPTR s1, TSTRPTR s2)
+
+;------------------------------------------------------------------------------
+;
+;	TStrNCaseCmp():
+;			res = TStrNCaseCmp(first,  second, maxlen)
+;			TINT               TSTRPTR TSTRPTR TSIZE
+;
+;	NOTES::
+;		See annotations for string:TStrCmp()
+;
+;------------------------------------------------------------------------------
+TINT TStrNCaseCmp(TSTRPTR s1, TSTRPTR s2, TSIZE maxlen)
+
+;------------------------------------------------------------------------------
+;
+;	TStrStr():
+;			found = TStrStr(haystack, needle)
+;			TSTRPTR         TSTRPTR   TSTRPTR
+;
+;------------------------------------------------------------------------------
+TSTRPTR TStrStr(TSTRPTR a, TSTRPTR b)
+
+;------------------------------------------------------------------------------
+;
+;	TStrChr():
+;			found = TStrChr(string, character)
+;			TSTRPTR         TSTRPTR TINT
+;
+;------------------------------------------------------------------------------
+TSTRPTR TStrChr(TSTRPTR s, TINT c)
+
+;------------------------------------------------------------------------------
+;
+;	TStrRChr():
+;			found = TStrRChr(string, character)
+;			TSTRPTR          TSTRPTR TINT
+;
+;------------------------------------------------------------------------------
+TSTRPTR TStrRChr(TSTRPTR s, TINT c)
+
+;------------------------------------------------------------------------------
+;
+;	TStrToI():
+;			numchars = TStrToI(string, valp)
+;			TINT               TSTRPTR TINT*
+;
+;	FUNCTION::
+;	This function converts a string to a 32bit signed integer.
+;
+;	RESULTS::
+;		- {{numchars}} - Number of characters converted, or:
+;			* {{-1}} - Conversion error, invalid characters
+;			* {{-2}} - Overflow or underflow occured
+;
+;	INPUTS::
+;		- {{string}} - Pointer to a string to be converted
+;		- {{valp}} - Pointer to a value to be filled in by this function
+;
+;------------------------------------------------------------------------------
+TINT TStrToI(TSTRPTR s, TINT *valp)

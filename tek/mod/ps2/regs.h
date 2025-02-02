@@ -149,7 +149,7 @@
 **	$Log: regs.h,v $
 **	Revision 1.2  2005/09/18 11:27:22  tmueller
 **	added authors
-**	
+**
 **	Revision 1.1  2005/03/13 20:01:39  fschulze
 **	added
 **

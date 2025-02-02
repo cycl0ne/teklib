@@ -1,0 +1,75 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		astro
+	[/embed]
+
+	[embed body="modlink"]
+		astro
+		$(OBJDIR)/astro_mod.mo
+	[/embed]
+
+	[embed body="moddep"]
+		$(OBJDIR)/astro_mod.mo
+		astro_mod.c
+	[/embed]
+
+[/body]
+
+[body name="tooltargets"]
+
+	[embed body="tools"]
+		datetest
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/datetest.to
+		tests/datetest.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/timedwait.to
+		tests/timedwait.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/interval.to
+		tests/interval.c
+	[/embed]
+
+	[embed body="toollink"]
+		datetest
+		$(OBJDIR)/datetest.to
+	[/embed]
+	[embed body="toollink"]
+		timedwait
+		$(OBJDIR)/timedwait.to
+	[/embed]
+	[embed body="toollink"]
+		interval
+		$(OBJDIR)/interval.to
+	[/embed]
+
+[/body]
+
+[body name="sourcetargets"]
+	[embed body="sources"]
+		time_mod.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/time_mod.c
+		time_mod.c
+	[/embed]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules_tools_sources
+[/render]

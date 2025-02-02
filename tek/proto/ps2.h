@@ -1,4 +1,3 @@
-
 #ifndef _TEK_PROTO_PS2_H
 #define _TEK_PROTO_PS2_H
 
@@ -10,9 +9,9 @@
 */
 
 #include <tek/mod/ps2.h>
-#include <tek/ansicall/ps2.h>
+#include <tek/stdcall/ps2.h>
 
 extern TMODENTRY TUINT
-tek_init_ps2common(TAPTR, struct TModule *, TUINT16, TTAGITEM *);
+tek_init_ps2common(struct TTask *, struct TModule *, TUINT16, TTAGITEM *);
 
 #endif /* _TEK_PROTO_PS2_H */

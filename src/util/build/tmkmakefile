@@ -1,0 +1,120 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		util
+	[/embed]
+
+	[switch]
+		[case config="posix_linux_gcc_release"]
+			[embed body="modlink"]
+				util
+				$(OBJDIR)/util_all.mo
+			[/embed]
+		[/case]
+		[default]
+			[embed body="modlink"]
+				util
+				$(OBJDIR)/util_mod.mo \
+					$(OBJDIR)/util_args.mo \
+					$(OBJDIR)/util_string.mo \
+					$(OBJDIR)/util_searchsort.mo \
+					$(OBJDIR)/util_hash.mo \
+					$(OBJDIR)/util_time.mo
+			[/embed]
+		[/default]
+	[/switch]
+
+	[embed body="moddep"]
+		$(OBJDIR)/util_mod.mo
+		util_mod.c
+		util_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/util_args.mo
+		util_args.c
+		util_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/util_string.mo
+		util_string.c
+		util_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/util_searchsort.mo
+		util_searchsort.c
+		util_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/util_hash.mo
+		util_hash.c
+		util_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/util_time.mo
+		util_time.c
+		util_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/util_all.mo
+		util_all.c
+		util_mod.h
+	[/embed]
+
+[/body]
+
+[body name="tooltargets"]
+
+	[embed body="tools"]
+		modscan
+		sorttest
+		hashtest
+		timetest
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/modscan.to
+		tests/modscan.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/sorttest.to
+		tests/sorttest.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/hashtest.to
+		tests/hashtest.c
+	[/embed]
+	[embed body="tooldep"]
+		$(OBJDIR)/timetest.to
+		tests/timetest.c
+	[/embed]
+	[embed body="toollink"]
+		modscan
+		$(OBJDIR)/modscan.to
+	[/embed]
+	[embed body="toollink"]
+		sorttest
+		$(OBJDIR)/sorttest.to
+	[/embed]
+	[embed body="toollink"]
+		hashtest
+		$(OBJDIR)/hashtest.to
+	[/embed]
+	[embed body="toollink"]
+		timetest
+		$(OBJDIR)/timetest.to
+	[/embed]
+
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules_tools
+[/render]

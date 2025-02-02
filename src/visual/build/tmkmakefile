@@ -1,0 +1,109 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		visual
+	[/embed]
+
+	[embed body="modlink"]
+		visual
+		$(OBJDIR)/visual_mod.mo	\
+			$(OBJDIR)/visual_api.mo
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/visual_mod.mo
+		visual_mod.c
+		visual_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/visual_api.mo
+		visual_api.c
+		visual_mod.h
+	[/embed]
+
+[/body]
+
+[body name="tooltargets"]
+
+	[embed body="tools"]
+		attach
+		bashing
+		fonts
+		display
+		clipping
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/bashing.to
+		tests/bashing.c
+	[/embed]
+	[embed body="toollink"]
+		bashing
+		$(OBJDIR)/bashing.to
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/fonts.to
+		tests/fonts.c
+	[/embed]
+	[embed body="toollink"]
+		fonts
+		$(OBJDIR)/fonts.to
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/display.to
+		tests/display.c
+	[/embed]
+	[embed body="toollink"]
+		display
+		$(OBJDIR)/display.to
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/clipping.to
+		tests/clipping.c
+	[/embed]
+	[embed body="toollink"]
+		clipping
+		$(OBJDIR)/clipping.to
+	[/embed]
+
+	[embed body="tooldep"]
+		$(OBJDIR)/attach.to
+		tests/attach.c
+	[/embed]
+	[embed body="toollink"]
+		attach
+		$(OBJDIR)/attach.to
+	[/embed]
+
+[/body]
+
+[body name="sourcetargets"]
+	[embed body="sources"]
+		visual_mod.c
+		visual_mod.h
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/visual_mod.c
+		visual_mod.c visual_api.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/visual_mod.h
+		visual_mod.h
+	[/embed]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules_tools_sources
+[/render]

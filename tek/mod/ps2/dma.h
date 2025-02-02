@@ -71,7 +71,7 @@
 **	$Log: dma.h,v $
 **	Revision 1.1  2005/09/18 12:33:39  tmueller
 **	added
-**	
+**
 **
 */
 

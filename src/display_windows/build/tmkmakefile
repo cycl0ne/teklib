@@ -1,0 +1,48 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		display_windows
+	[/embed]
+
+	[embed body="modlink"]
+		display_windows
+		$(OBJDIR)/display_win_mod.mo \
+		$(OBJDIR)/display_win_api.mo \
+		$(OBJDIR)/display_win_font.mo \
+		$(OBJDIR)/display_win_utf8.mo
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_win_mod.mo
+		display_win_mod.c
+		display_win_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_win_api.mo
+		display_win_api.c
+		display_win_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_win_font.mo
+		display_win_font.c
+		display_win_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_win_utf8.mo
+		display_win_utf8.c
+		display_win_mod.h
+	[/embed]
+[/body]
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules
+[/render]

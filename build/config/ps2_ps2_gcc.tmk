@@ -1,0 +1,274 @@
+
+[!-------------------------------------------------------------------------
+
+	$Id: config_ps2.tmk,v 1.10 2006/12/30 04:22:07 tmueller Exp $
+	build/ps2_ps2_gcc.tmk - tmkmf configuration file for Playstation 2
+
+--------------------------------------------------------------------------]
+
+[body name="help"]
+	help:
+		\t@echo "==================================================================="
+		\t@echo "=="
+		\t@echo "== ps2_gcc supported builds"
+		\t@echo "== --------------------------"
+		\t@echo "== all ............... build linklibs, modules, executables"
+		\t@echo "== libs .............. build linklibs"
+		\t@echo "== modules ........... build shared modules"
+		\t@echo "== tools ............. build executables"
+		\t@echo "== install ........... install modules"
+		\t@echo "== clean ............. clean"
+		\t@echo "== make .............. regenerate makefiles"
+		\t@echo "== help .............. this help"
+		\t@echo "=="
+		\t@echo "==================================================================="
+[/body]
+
+[body name="config"]
+
+	#
+	#\tTEKlib ps2_ps2_gcc makefile
+	#\tAutomatically generated with tmkmf TEKlib Makefile generator
+	#
+
+	PLATFORM	= ps2
+	HOST        = ps2
+
+	PARENT      = ../
+	DEF			= -DTEKLIB -DTSYS_PS2 $(EXTRADEFS)
+	WARN		= -Wall -Wno-unused-parameter
+
+	MKDIR       = mkdir -p
+	RM          = rm
+	RMDIR       = rm -R
+	CAT         = cat
+	ECHO        = echo
+
+	PREFIX	= ee-
+	AS 		= $(PREFIX)as
+	CC		= $(PREFIX)gcc
+	LD		= $(PREFIX)gcc
+	DVPASM	= $(PREFIX)dvp-as
+	AR      = $(PREFIX)ar r
+	RANLIB  = $(PREFIX)ranlib
+	STRIP   = $(PREFIX)strip
+
+	CFLAGS 	= -G0 -mips3 -mcpu=r5900 -D_EE -ffreestanding -fno-builtin \
+				-mlong64 -mhard-float -mno-abicalls -EL
+
+	LIBPREFIX    = lib
+	LIBSUFFIX    = a
+	MODSUFFIX    = so
+
+	[switch]
+		[case config="_gcc_release"]
+			OPT 	= -O2
+		[/case]
+		[case config="_gcc_debug"]
+			OPT 	= -O1
+			DEBUG	= -DTDEBUG=5 -g
+		[/case]
+		[default]
+			OPT 	= -O2
+			DEBUG	= -DTDEBUG=10 -g
+		[/default]
+	[/switch]
+
+	#
+
+	[embed body="help"/]
+
+	#
+
+	INCL		 = -I$(TEKLIB) -I. -I./include -I$(PS2DEV)/newlib/include -I$(PS2LIB)/common/include -I$(PS2LIB)/ee/include
+	OBJDIR       = build/obj_$(HOST)
+	TEKSYSDIR    = /usr/local/tek/
+	MODINSTDIR   = $(TEKSYSDIR)mod
+
+	LIBDIR       = $(TEKLIB)/lib/$(HOST)
+	BINDIR       = $(TEKLIB)/bin/$(HOST)
+	MODDIR       = $(BINDIR)/mod
+	SRCDIR       = $(TEKLIB)/lib/$(HOST)/src
+
+[/body]
+
+[body name="teklib"]
+[/body]
+
+[body name="paths"]
+[/body]
+
+[body name="misctargets"]
+	$(BINDIR):
+		\t-$(MKDIR) $(BINDIR)
+	$(MODDIR):
+		\t-$(MKDIR) $(MODDIR)
+	$(LIBDIR):
+		\t-$(MKDIR) $(LIBDIR)
+	$(OBJDIR):
+		\t-$(MKDIR) $(OBJDIR)
+	$(SRCDIR):
+		\t-$(MKDIR) $(LIBDIR) $(SRCDIR)
+	PHONY:
+[/body]
+
+[!---------- libbuild ------------]
+
+[body name="libs"]
+	LIBS = \\
+		$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+
+	$(LIBDIR)/crt0.o: $(TEKLIB)/src/teklib/ps2/crt0.S
+		\t@echo "--- (CC) $@"
+		\t$(CC) $(LIBCFLAGS) $(TEKLIB)/src/teklib/ps2/crt0.S -c -o $(LIBDIR)/crt0.o
+
+[/body]
+
+[body name="libbuild"]
+	LIBCFLAGS	= $(CFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+	libs: $(OBJDIR) $(LIBDIR) $(LIBS) $(LIBDIR)/crt0.o
+[/body]
+
+[body name="libdep"]
+	%1: %2 %3
+		\t@echo "--- (CC) %2"
+		\t$(CC) $(LIBCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="liblink"]
+	$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+		\t@echo "--- (AR) %1.$(LIBSUFFIX)"
+		\t$(AR) $@ %2
+		\t$(RANLIB) $@
+[/body]
+
+
+[!---------- modbuild ------------]
+
+[body name="mods"]
+	MODS = \\
+		$(MODDIR)/%n.$(MODSUFFIX)
+	LIBMODS = \\
+		$(LIBDIR)/$(LIBPREFIX)%n.$(LIBSUFFIX)
+[/body]
+
+[body name="modbuild"]
+	MODCFLAGS	= $(CFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG)
+	MODLIBS		= -L$(TEKLIB)/lib/$(HOST) -ltek -ltekstring -ltekdebug $(EXTRAMODLIBS)
+		#-lm
+	modules: $(OBJDIR) $(BINDIR) $(MODDIR) $(LIBDIR) $(LIBMODS)
+	install:
+		\t@echo "--- (IN) $(MODS)"
+	do_install: install
+[/body]
+
+[body name="moddep"]
+	%1: %2 %3
+		\t@echo "--- (CC) %2"
+		\t$(CC) $(MODCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="modlink"]
+	$(LIBDIR)/$(LIBPREFIX)%1.$(LIBSUFFIX): %2
+		\t@echo "--- (AR) $(LIBPREFIX)%1.$(LIBSUFFIX)"
+		\t$(AR) $@ %2
+		\t$(RANLIB) $@
+[/body]
+
+
+[!---------- toolbuild ------------]
+
+[body name="tools"]
+	TOOLS = \\
+		$(BINDIR)/%n
+
+	$(LIBDIR)/entries.o: $(TEKLIB)/src/teklib/ps2/entries.c
+		\t@echo "--- (CC) $@"
+		\t$(CC) $(TOOLCFLAGS) $^ -c -o $@
+
+[/body]
+
+[body name="toolbuild"]
+
+	TOOLCFLAGS	= $(CFLAGS) $(WARN) $(OPT) $(INCL) $(DEF) $(DEBUG) $(EXTRATOOLINCL)
+
+	TOOLLIBS    = -L$(PS2DEV)/newlib/lib -L$(PS2DEV)/neolib/lib -L$(TEKLIB)lib/$(PLATFORM) \
+		-ltekcmain -ltekstring -ltekdebug -lexec -lhal -ltime -lutil -lio -liohnd_ps2io -lhash \
+		-lps2common -liohnd_stdio -lkernel -lc -lm $(EXTRATOOLLIBS)
+
+	TOOLLIBS    += -L$(PS2LIB)/ee/lib -T$(PS2LIB)/ee/startup/linkfile -nostartfiles
+
+	tools: $(BINDIR) $(OBJDIR) $(LIBDIR)/entries.o libs $(TOOLS)
+
+[/body]
+
+[body name="tooldep"]
+	%1: %2 %3
+		\t@echo "--- (CC) %2"
+		\t$(CC) $(TOOLCFLAGS) %2 -c -o $@
+[/body]
+
+[body name="vsmdep"]
+	%1: %2 %3
+		\t@echo "--- (AS) %2"
+		\t$(DVPASM) $(INCL) %2 -o $@
+[/body]
+
+
+[body name="toollink"]
+	$(BINDIR)/%1: %2 $(LIBDIR)/crt0.o
+		\t@echo "--- (LD) %1"
+		\t$(CC) $(TOOLCFLAGS) $(LIBDIR)/crt0.o $(LIBDIR)/entries.o %2 -o $@ $(TOOLLIBS)
+	[if config="_release"]
+		\t$(STRIP) --strip-unneeded --remove-section .comment $(BINDIR)/%1
+	[/if]
+[/body]
+
+[!---------- sourcebuild ------------]
+
+[body name="sources"]
+	SOURCES = \\
+		$(SRCDIR)/%n
+[/body]
+
+[body name="sourcebuild"]
+	sources: $(SRCDIR) $(SOURCES)
+[/body]
+
+[body name="sourcedep"]
+	%1: %2
+		\t@echo "--- (CP) %2 => %1"
+		\t$(ECHO) "/*" > %1
+		\t$(ECHO) "**\tAUTOMATICALLY GENERATED - DO NOT EDIT BY HAND." >> %1
+		\t$(ECHO) "**\tSee http://www.teklib.org/ for details - to regenerate," >> %1
+		\t$(ECHO) "**\tissue  make sources  in TEKlib's root directory." >> %1
+		\t$(ECHO) "*/" >> %1
+		\t$(CAT) %2 >> %1
+[/body]
+
+[!---------- metabuild ------------]
+
+[body name="metabuild"]
+	[embed body="help"/]
+	all: libs modules tools
+	install: do_install
+	modules tools do_install clean libs sources:
+[/body]
+
+[body name="meta"]
+	\tcd %1 && $(MAKE) -s -f build/tmk_%0 $@
+[/body]
+
+[!---------- masterbuild ------------]
+
+[body name="masterbuild"]
+
+	all: libs modules tools
+
+	clean:
+		\tfind $(OBJDIR)/ -type f | xargs rm -f
+		\trm -f $(MODS) $(TOOLS) $(LIBS) $(SOURCES) $(LIBMODS)
+	make:
+		\t$(TEKLIB)/bin/linux/tmkmf -c posix_linux -r -q
+
+[/body]

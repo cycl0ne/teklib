@@ -1,0 +1,90 @@
+
+[include name="BUILD:config.tmk"/]
+
+[body name="paths"]
+	TEKLIB = $(PARENT)$(PARENT)
+	BINDIR = $(TEKLIB)bin/$(HOST)
+[/body]
+
+[body name="modtargets"]
+
+	[embed body="mods"]
+		display_x11
+	[/embed]
+
+	EXTRAMODLIBS = -L/usr/X11R6/lib -lX11 -lXext
+	EXTRADEFS = -D_XOPEN_SOURCE -DENABLE_XFT -I/usr/X11R6/include/ -I/usr/include/freetype2/ -I/usr/X11R6/include/freetype2/
+
+	[switch]
+		[case config="posix_linux_gcc_release"]
+			[embed body="modlink"]
+				display_x11
+				$(OBJDIR)/display_x11_all.mo
+			[/embed]
+		[/case]
+		[default]
+			[embed body="modlink"]
+				display_x11
+				$(OBJDIR)/display_x11_mod.mo \
+					$(OBJDIR)/display_x11_inst.mo \
+					$(OBJDIR)/display_x11_font.mo \
+					$(OBJDIR)/display_x11_api.mo \
+					$(OBJDIR)/display_x11_utf8.mo
+			[/embed]
+		[/default]
+	[/switch]
+
+	[embed body="moddep"]
+		$(OBJDIR)/display_x11_mod.mo
+		display_x11_mod.c
+		display_x11_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_x11_inst.mo
+		display_x11_inst.c
+		display_x11_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_x11_font.mo
+		display_x11_font.c
+		display_x11_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_x11_api.mo
+		display_x11_api.c
+		display_x11_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_x11_utf8.mo
+		display_x11_utf8.c
+		display_x11_mod.h
+	[/embed]
+	[embed body="moddep"]
+		$(OBJDIR)/display_x11_all.mo
+		display_x11_all.c
+		display_x11_mod.h
+	[/embed]
+
+[/body]
+
+[body name="sourcetargets"]
+	[embed body="sources"]
+		display_x11_mod.c
+		display_x11_mod.h
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/display_x11_mod.c
+		display_x11_mod.c display_x11_inst.c display_x11_api.c display_x11_font.c display_x11_utf8.c
+	[/embed]
+	[embed body="sourcedep"]
+		$(SRCDIR)/display_x11_mod.h
+		display_x11_mod.h
+	[/embed]
+[/body]
+
+
+[include name="BUILD:builds.tmk"/]
+
+[render to="tmk_"]
+	makefile_modules_sources
+[/render]

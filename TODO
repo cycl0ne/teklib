@@ -1,0 +1,9 @@
+
+== TODO ==
+
+ * TCreateTask(): use Hooks instead of function pointers
+ * update documentation
+ * Windows build: MinGW, VC6
+ * wire header/document generation into build procedure
+ * reliable tags/versions for side-projects
+ * revisit date format, 64bit time structures

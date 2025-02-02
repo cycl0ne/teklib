@@ -1,21 +1,29 @@
-
 #ifndef _TEK_MOD_LUA_H
 #define _TEK_MOD_LUA_H
 
 /*
-**	tek/mod/lua.h
+**	$Id: lua.h,v 1.1.1.1 2006/08/20 22:15:25 tmueller Exp $
+**	teklib/tek/mod/lua.h - Lua module definitions
+**	See copyright notice in teklib/mods/lua/lua/COPYRIGHT
+**	See copyright notice in teklib/COPYRIGHT
 */
 
 #include <tek/exec.h>
 #include <stdarg.h>
 #include <stddef.h>
 
-typedef struct lua_State lua_State;
 
-/*****************************************************************************/
+/* additional qualifier for C function arguments */
+#define LUACFUNC TCALLBACK
+
+
+/* mark for precompiled code (`<esc>Lua') */
+#define	LUA_SIGNATURE	"\033Lua"
+
 
 /* option for multiple returns in `lua_pcall' and `lua_call' */
 #define LUA_MULTRET	(-1)
+
 
 /*
 ** pseudo-indices
@@ -25,35 +33,32 @@ typedef struct lua_State lua_State;
 #define LUA_GLOBALSINDEX	(-10002)
 #define lua_upvalueindex(i)	(LUA_GLOBALSINDEX-(i))
 
-/* return codes for `lua_pcall', `lua_resume', and `lua_status' */
+
+/* thread status; 0 is OK */
 #define LUA_YIELD	1
 #define LUA_ERRRUN	2
 #define LUA_ERRSYNTAX	3
 #define LUA_ERRMEM	4
 #define LUA_ERRERR	5
 
-/* additional Lua C function qualifiers */
-#ifndef LUACFUNC
-#define LUACFUNC TCALLBACK
-#endif
 
-/* Lua C function type */
+typedef struct lua_State lua_State;
+
 typedef LUACFUNC TINT (*lua_CFunction) (lua_State *L);
 
 
 /*
 ** functions that read/write blocks when loading/dumping Lua chunks
 */
-typedef LUACFUNC const char * (*lua_Chunkreader) (lua_State *L, void *ud, TSIZE *sz);
+typedef LUACFUNC const char * (*lua_Reader) (lua_State *L, void *ud, size_t *sz);
 
-typedef LUACFUNC TINT (*lua_Chunkwriter) (lua_State *L, const void * p,
-                                TSIZE sz, TAPTR ud);
+typedef LUACFUNC int (*lua_Writer) (lua_State *L, const void* p, size_t sz, void* ud);
 
 
 /*
 ** prototype for memory-allocation functions
 */
-typedef LUACFUNC TAPTR (*lua_Alloc) (TAPTR ud, TAPTR ptr, TSIZE osize, TSIZE nsize);
+typedef LUACFUNC void * (*lua_Alloc) (TAPTR ud, TAPTR ptr, TSIZE osize, TSIZE nsize);
 
 
 /*
@@ -72,58 +77,80 @@ typedef LUACFUNC TAPTR (*lua_Alloc) (TAPTR ud, TAPTR ptr, TSIZE osize, TSIZE nsi
 #define LUA_TTHREAD	8
 
 
-/* first index for arrays */
-#define LUA_FIRSTINDEX		1
-
-
 /* minimum Lua stack available to a C function */
 #define LUA_MINSTACK	20
 
 
 /* type of numbers in Lua */
-
-#ifdef TSYS_PS2
-typedef TFLOAT lua_Number;
-#define LUA_NUMBER_SCAN		"%f"
-#define LUA_NUMBER_FMT		"%.5g"
-#else
+#if !defined(TSYS_PS2)
 typedef TDOUBLE lua_Number;
-#define LUA_NUMBER_SCAN		"%lf"
-#define LUA_NUMBER_FMT		"%.14g"
+#else
+typedef TFLOAT lua_Number;
 #endif
 
+
 /* type for integer functions */
-typedef TUINTPTR lua_Integer;
+typedef TINTPTR lua_Integer;
+
+
+
+/* garbage collector definitions */
+#define LUA_GCSTOP			0
+#define LUA_GCRESTART		1
+#define LUA_GCCOLLECT		2
+#define LUA_GCCOUNT			3
+#define LUA_GCCOUNTB		4
+#define LUA_GCSTEP			5
+#define LUA_GCSETPAUSE		6
+#define LUA_GCSETSTEPMUL	7
 
 
 /*****************************************************************************/
-/* 
+/*
 **	auxlib
 */
 
-typedef struct luaL_reg {
-  TSTRPTR name;
+#define LUAL_BUFFERSIZE		2048
+
+typedef struct luaL_Reg {
+  const char *name;
   lua_CFunction func;
-} luaL_reg;
+} luaL_Reg;
+
+#define luaL_reg	luaL_Reg
+
+
+typedef struct luaL_Buffer {
+  char *p;			/* current position in buffer */
+  int lvl;  /* number of strings in the stack (level) */
+  lua_State *L;
+  char buffer[LUAL_BUFFERSIZE];
+} luaL_Buffer;
 
 
 /*****************************************************************************/
-/* 
+/*
 **	Lua instance base
 */
 
-struct TLuaUserState
+typedef union TLuaUserState
 {
-	struct TModule tlu_Module;		/* Module header */
-	TAPTR tlu_UserData;				/* Userdata */
-	TAPTR tlu_TimeRequest;			/* instance-specific */
-	TAPTR tlu_Reserved[2];			/* Private */
-};
+	struct
+	{
+		struct TModule tlu_Module;
+		/* instance-specific: */
+		TAPTR tlu_UserData;
+	} State;
 
-#define LUA_USERSTATE struct TLuaUserState
+	/* enforce sane alignment: */
+	TUINT8 Align[128];
 
-/* get pointer to the Lua super instance */
-#define LUABASE(L) (((LUA_USERSTATE *)(L))-1)
-#define LUASUPER(L)	(LUABASE(L)->tlu_Module.tmd_ModSuper)
+} LUA_USERSTATE;
+
+/* get from interpreter to instance userstate: */
+#define LUABASE(L) (&(((LUA_USERSTATE *)(L))-1)->State)
+
+/* get from interpreter to super instance: */
+#define LUASUPER(L) (LUABASE(L)->tlu_Module.tmd_ModSuper)
 
 #endif /* _TEK_MOD_LUA_H */

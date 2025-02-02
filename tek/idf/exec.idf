@@ -1,99 +1,2066 @@
 
-;
-;	$Id: exec.idf,v 1.7 2005/09/13 02:44:41 tmueller Exp $
-;	teklib/tek/idf/exec.idf - Exec interface description
-;
-;	See copyright notice in teklib/COPYRIGHT
-;
-
 .class library
 .name exec					; as in tek_init_exec
 ;.filename exec				; as in "exec.h", default name
-;.this TAPTR exec			; first/implicit argument, default "TAPTR base"
+;.this struct TExecBase *exec	; first/implicit argument, default "TAPTR base"
 ;.base exec					; function vector base, default .this
-;.author Timm S. Mueller <tmueller at neoscientists.org>
+.author Timm S. Mueller <tmueller at neoscientists.org>
 .copyright See copyright notice in teklib/COPYRIGHT
 
 .prefix TExec				; name prefix heading non-inline functions
 .iprefix T					; name prefix heading inline functions
 .ibase TAPTR TExecBase
 
-.defv TVOID					; aliases for void
-.defp TAPTR, TTASKFUNC, TINITFUNC, TSTRPTR	; ptr types
+.defv void					; aliases for void
+.defp TAPTR, TTASKFUNC, TINITFUNC, TSTRPTR ; ptr types
 .defi TINT, TUINT, TBOOL	; 32bit integer types
 .defs TUINT16				; 16bit integer types
 .defb TUINT8				; 8bit integer types
-.deft TTAG, TUINTPTR		; tag types
+.deft TTAG, TUINTPTR, TSIZE	; tag types
+
+;------------------------------------------------------------------------------
+;
+;	tek/idf/exec.idf - Exec module interface
+;	Written by Timm S. Mueller <tmueller at schulze-mueller.de>
+;	See copyright notice in COPYRIGHT
+;
+;	FUNCTIONS::
+;	- exec:TAbortIO() - Ask for abortion of an I/O packet
+;	- exec:TAckMsg() - Acknowledge a message to its sender
+;	- exec:TAlloc() - Allocate memory
+;	- exec:TAlloc0() - Allocate memory, blank
+;	- exec:TAllocMsg() - Allocate memory for a message
+;	- exec:TAllocMsg0() - Allocate memory for a message, blank
+;	- exec:TAllocPool() - Allocate memory from a pooled allocator
+;	- exec:TAllocSignal() - Allocate a signal bit from a task
+;	- exec:TAllocTimeRequest() - Allocate a timer device request
+;	- exec:TCheckIO() - Check for completion of an I/O packet
+;	- exec:TCloseModule() - Close a module or module instance
+;	- exec:TCopyMem() - Copy memory
+;	- exec:TCreateLock() - Create locking object for sharing a resource
+;	- exec:TCreateMemManager() - Create a memory manager
+;	- exec:TCreatePool() - Create pooled memory allocator
+;	- exec:TCreatePort() - Create a message port for communication
+;	- exec:TCreateSysTask() - Create Exec system task
+;	- exec:TCreateTask() - Create a new thread of execution
+;	- exec:TDoExec() - Perform initializations and service Exec system tasks
+;	- exec:TDoIO() - Send (and wait for) an I/O packet synchronously
+;	- exec:TDropMsg() - Make a message fail at its sender
+;	- exec:TFillMem() - Fill memory
+;	- exec:TFindTask() - Find own or a named task
+;	- exec:TFree() - Free memory
+;	- exec:TFreePool() - Return memory to a pool
+;	- exec:TFreeSignal() - Return an allocated signal bit to a task
+;	- exec:TFreeTimeRequest() - Free a timer device request
+;	- exec:TGetAtomData() - Get data associated with an atom
+;	- exec:TGetExecBase() - Get Exec module base pointer
+;	- exec:TGetHALBase() - Get HAL module base pointer
+;	- exec:TGetLocalDate() - Get system's local date and time
+;	- exec:TGetMemManager() - Get an allocation's memory manager
+;	- exec:TGetMsg() - Get a message from a message port
+;	- exec:TGetPortSignal() - Get a message port's underlying signal bit
+;	- exec:TGetSize() - Get size of an allocation
+;	- exec:TGetSyncPort() - Get a task's port for synchronized messages
+;	- exec:TGetSystemTime() - Get a (relative) system time
+;	- exec:TGetTaskData() - Get a task's user data pointer
+;	- exec:TGetTaskMemManager() - Get a task's memory manager
+;	- exec:TGetUniversalDate() - Get universal date and time (UTC)
+;	- exec:TGetUserPort() - Get a task's inbuilt user message port
+;	- exec:TLock() - Gain access to a shared resource
+;	- exec:TLockAtom() - Gain access to a named atom
+;	- exec:TOpenModule() - Open a module or module instance
+;	- exec:TPutIO() - Put an I/O packet to a device or handler, asynchronously
+;	- exec:TPutMsg() - Send a message to a task, asynchronously
+;	- exec:TQueryInterface() - Obtain an interface from an open module
+;	- exec:TRealloc() - Resize an allocated block of memory
+;	- exec:TReallocPool() - Resize an allocation made from a pool
+;	- exec:TReplyMsg() - Return a modified message to its sender
+;	- exec:TScanModules() - Scan available TEKlib modules
+;	- exec:TSendMsg() - Send a message synchronously
+;	- exec:TSetAtomData() - Set data associated with an atom
+;	- exec:TSetSignal() - Set and get a task's signal state
+;	- exec:TSetTaskData() - Set a task's user data pointer
+;	- exec:TSignal() - Submit signals to a task
+;	- exec:TUnlock() - Release access to a shared resource
+;	- exec:TUnlockAtom() - Release access to a named atom
+;	- exec:TWait() - Wait for signals
+;	- exec:TWaitDate() - Wait for an absolute date or a set of signals
+;	- exec:TWaitIO() - Wait for completion of an I/O packet
+;	- exec:TWaitPort() - Wait for a single message port
+;	- exec:TWaitTime() - Wait for a timeout or a set of signals
+;
+;------------------------------------------------------------------------------
+
+;------------------------------------------------------------------------------
+;
+;	TGetExecBase():
+;			TExecBase = TGetExecBase(object)
+;			struct TExecBase*        TAPTR
+;
+;	FUNCTION::
+;	This macro retrieves a pointer to the Exec module base from an Exec
+;	object. Objects provided by the Exec module are tasks, ports, memory
+;	managers, atoms, locks, and modules themselves.
+;
+;	RESULTS::
+;	- {{TExecBase}} - Pointer to the Exec module base
+;
+;	INPUTS::
+;	- {{object}} - Pointer to an Exec object
+;
+;	BACKGROUND::
+;	The TEKlib framework is free of global data and carefully designed
+;	to be fully reentrant. It is the programmer's choice to put module
+;	base pointers into global variables.
+;
+;	Initially, an application is entered with a task handle only. It
+;	is usually required to query the Exec module base pointer from that
+;	handle before anything useful can be done. The module base pointer
+;	can then be stored in a global variable, if desired. A typical
+;	application startup may look like this:
+;
+;			struct TExecBase *TExecBase;
+;			struct TUtilBase *TUtilBase;
+;
+;			void TEKMain(struct TTask *task)
+;			{
+;			    TExecBase = TGetExecBase(task);
+;			    TUtilBase = TOpenModule("util", ...
+;			    ...
+;			}
+;
+;	SEE ALSO::
+;	exec:TGetHALBase()
+;
+;------------------------------------------------------------------------------
 
 .offset 9
 /* -- Functions for bootstrapping Exec, not needed outside init code -- */
-TBOOL DoExec(TTAGITEM *tags)
-TAPTR CreateSysTask(TTASKFUNC func, TTAGITEM *tags)
+;------------------------------------------------------------------------------
+;
+;	TDoExec():
+;			success = TDoExec(cmd,  tags)
+;			TBOOL             TUINT TTAGITEM*
+;
+;	FUNCTION::
+;	Runs or initializes an Exec context. Depending on the {{cmd}}
+;	argument, TDoExec() performs missing initializations in the current task
+;	or services module opens, task creation and atom lookups.
+;	It is expected that the thread context in which this function is called
+;	was previously created using exec:TCreateSysTask().
+;
+;	RESULTS::
+;	- {{success}} - Boolean
+;
+;	INPUTS::
+;	- {{cmd}}  - Type of service to provide:
+;		* {{TEXEC_CMD_INIT}} - Performs initializations that qualify the
+;		current context as TEKlib's main application task. After returning,
+;		the user function can be called in a fully-fledged Exec context.
+;		* {{TEXEC_CMD_EXIT}} - Performs the required steps to shut down and
+;		free all resources in the application task
+;		* {{TEXEC_CMD_RUN}} - If the caller's task name is {{TTASKNAME_EXEC}}
+;		({{"exec"}}) then this function will serve module opens, task creation
+;		and atom lookups, requested through the message port
+;		{{execbase->texb_ExecPort}}. If the name is {{TTASKNAME_RAMLIB}}
+;		({{"ramlib"}}), this function will serve requests for loading
+;		modules, submitted to the task's userport. Either way, it returns to
+;		the caller when it receives the signal {{TTASK_SIG_ABORT}}.
+;	- {{tags}} - Pointer to an array of tag items (none currently defined)
+;
+;	NOTES::
+;	This function is of any use only for implementors of startup libraries.
+;
+;	SEE ALSO::
+;	exec:TCreateSysTask(), exec:TCreateTask()
+;
+;------------------------------------------------------------------------------
+TBOOL DoExec(TUINT cmd, TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TCreateSysTask():
+;			task = TCreateSysTask(func,     tags)
+;			struct TTask*         TTASKFUNC TTAGITEM*
+;
+;	FUNCTION::
+;	This function creates an Exec-internal task. If {{func}} is {{TNULL}},
+;	a TEKlib task is placed in the caller's thread context, otherwise a new
+;	thread of execution is started at the given function.
+;
+;	This function is used to setup an initial TEKlib context (or an
+;	Exec task) before TEKlib is fully initialized. This function is
+;	not entirely safe in regular applications and the only sanctioned
+;	use is in startup libraries.
+;
+;	RESULTS::
+;	- {{task}} - Task handle, or {{TNULL}} if initialization failed
+;
+;	INPUTS::
+;	- {{func}} - Pointer to a thread entry function, or {{TNULL}} for the
+;	current context
+;	- {{tags}} - Pointer to an array of tag items:
+;		* {{TTask_Name (TSTRPTR)}} - Pointer to a string for the task name.
+;		Default: {{TNULL}}
+;		* {{TTask_UserData (TAPTR)}} - Pointer to an initial user data packet.
+;		Default: {{TNULL}}
+;
+;	NOTES::
+;	* This function is for internal use only. Regular applications require
+;	only exec:TCreateTask().
+;
+;	SEE ALSO::
+;	exec:TCreateTask(), exec:TDoExec(), exec:TGetTaskData()
+;
+;------------------------------------------------------------------------------
+struct TTask *CreateSysTask(TTASKFUNC func, TTAGITEM *tags)
+
 .inline	on
-/* -- Grant access to the HAL module base, needed by device drivers -- */
-TAPTR GetHALBase()
-.offset 13
-/* -- General public Exec API -- */
-TAPTR OpenModule(TSTRPTR name, TUINT16 version, TTAGITEM *tags)
-TVOID CloseModule(TAPTR mod)
-.offset 16
-TVOID CopyMem(TAPTR src, TAPTR dst, TUINT len)
-TVOID FillMem(TAPTR dst, TUINT len, TUINT8 val)
-TVOID FillMem32(TAPTR dst, TUINT len, TUINT val)
-TAPTR CreateMMU(TAPTR object, TUINT type, TTAGITEM *tags)
-TAPTR Alloc(TAPTR mmu, TUINT size)
-TAPTR Alloc0(TAPTR mmu, TUINT size)
-.offset 24
-TVOID Free(TAPTR mem)
-TAPTR Realloc(TAPTR mem, TUINT nsize)
-TAPTR GetMMU(TAPTR mem)
-TUINT GetSize(TAPTR mem)
-TAPTR CreateLock(TTAGITEM *tags)
-TVOID Lock(TAPTR lock)
-TVOID Unlock(TAPTR lock)
+.interface on
+
+;------------------------------------------------------------------------------
+;
+;	TGetHALBase():
+;			THALBase = TGetHALBase()
+;			struct THALBase *
+;
+;	FUNCTION::
+;	Returns a pointer to the HAL module base. Access to the HAL layer is
+;	often required in device driver implementations.
+;
+;	RESULTS::
+;	- {{THALBase}} - HAL module base pointer
+;
+;	SEE ALSO::
+;	exec:TGetExecBase()
+;
+;------------------------------------------------------------------------------
+struct THALBase *GetHALBase()
+
+;------------------------------------------------------------------------------
+;
+;	TOpenModule():
+;			modbase = TOpenModule(name,   version, tags)
+;			struct TModule*       TSTRPTR TUINT16  TTAGITEM*
+;
+;	FUNCTION::
+;	Opens a module or a module instance. When the module's version is
+;	greater or equal the requested version and when the module can be
+;	loaded and initialized successfully, a pointer to the module base
+;	will be returned to the caller.
+;
+;	RESULTS::
+;	- {{modbase}} - Module base or {{TNULL}}. {{TNULL}} is returned if
+;	the module could not be found, when it failed to initialize or when
+;	the version requirement could not be satisfied.
+;
+;	INPUTS::
+;	- {{name}}    - Name of the module
+;	- {{version}} - Minimal module version for the open to succeed
+;	- {{tags}}    - Pointer to an array of tag items. Tags passed to
+;	this function are passed to the module open function and can be
+;	intercepted there. There are currently no tags defined for
+;	exec:TOpenModule() itself.
+;
+;	NOTES::
+;	* Each successful open to a module must be paired with exactly one
+;	matching call to TCloseModule(), or TEKlib will panic at exit.
+;
+;	SEE ALSO::
+;	exec:TCloseModule(), exec:TGetExecBase()
+;
+;------------------------------------------------------------------------------
+struct TModule *OpenModule(TSTRPTR name, TUINT16 version, TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TCloseModule():
+;			TCloseModule(modbase)
+;			             struct TModule *
+;	FUNCTION::
+;	Closes a module or a module instance. When applied to the last
+;	reference or instance open then the module will be deinitalized,
+;	unloaded and freed.
+;
+;	INPUTS::
+;	- {{module}} - Module or module instance. It is safe to pass {{TNULL}}.
+;
+;	SEE ALSO::
+;	exec:TOpenModule()
+;
+;------------------------------------------------------------------------------
+void CloseModule(struct TModule *mod)
+
+;------------------------------------------------------------------------------
+;
+;	TCopyMem():
+;			TCopyMem(source, dest, numbytes)
+;			         TAPTR   TAPTR TSIZE
+;
+;	FUNCTION::
+;	Copy the given number of bytes from a source to a destination address
+;	in memory.
+;
+;	INPUTS::
+;	- {{source}}   - Source address
+;	- {{dest}}     - Destination address
+;	- {{numbytes}} - Number of bytes to copy
+;
+;	NOTES::
+;		* Do not rely on overlapping copies to work with this function.
+;
+;	SEE ALSO::
+;	exec:TFillMem()
+;
+;------------------------------------------------------------------------------
+void CopyMem(TAPTR src, TAPTR dst, TSIZE len)
+
+;------------------------------------------------------------------------------
+;
+;	TFillMem():
+;			TFillMem(start, numbytes, fillval)
+;			         TAPTR  TSIZE     TUINT8
+;
+;	FUNCTION::
+;	Fill a range of memory with a 8bit value.
+;
+;	INPUTS::
+;	- {{start}}    - Start address in memory
+;	- {{numbytes}} - Number of bytes to fill
+;	- {{fillval}}  - 8bit value
+;
+;	SEE ALSO::
+;	TCopyMem()
+;
+;------------------------------------------------------------------------------
+void FillMem(TAPTR dst, TSIZE len, TUINT8 val)
+
+;------------------------------------------------------------------------------
+;
+;	TCreateMemManager():
+;			memmanager = TCreateMemManager(resource, type, tags)
+;			struct TMemManager*            TAPTR     TUINT TTAGITEM*
+;
+;	FUNCTION::
+;	Create a memory manager. A memory manager can be passed to exec:TAlloc()
+;	for allocating memory with special functionality attached to it, such as
+;	automatic cleanup, tighter packing, thread-safety, etc. Memory managers
+;	can be stacked on top of each other.
+;	A memory manager is freed with a call to teklib:TDestroy().
+;
+;	{{TNULL}} is always a valid memory manager. A {{TNULL}} memory manager
+;	will cause exec:TAlloc() to use the system's general purpose allocator.
+;	Only a {{TNULL}} memory manager is intrinsically safe to use in a
+;	multitasking environment; other allocators must implement cross-task
+;	protection explicitely. See the {{TMMT_TaskSafe}} flag for details.
+;
+;
+;	RESULTS::
+;	- {{memmanager}} - Memory manager, or {{TNULL}} if initialization failed.
+;
+;	INPUTS::
+;	- {{resource}} - Memory resource object, parent memory manager or {{TNULL}}
+;	- {{type}}     - Type of memory manager to be created:
+;		* {{TMMT_MemManager}} - Setup a memory manager on top of another,
+;		implementing no additional functionality. {{resource}} must be
+;		{{TNULL}} or point to another memory manager.
+;		* {{TMMT_TaskSafe}} - Setup a memory manager implementing
+;		thread-safety. Multiple tasks are allowed to operate on the resulting
+;		memory manager at the same time.
+;		* {{TMMT_Tracking}} - Setup a tracking memory manager. The resulting
+;		memory manager will return all pending allocations to its parent when
+;		it is being destroyed, at the cost of extra performance and resource
+;		usage. This type can be combined with {{TMMT_TaskSafe}}.
+;		* {{TMMT_Static}} - The resulting memory manager will manage a static
+;		block of memory. When the block is exhausted or fragmented, further
+;		allocations will fail, as no attempts are made to get more storage from
+;		the outside. {{resource}} must be a pointer to a block of memory or
+;		{{TNULL}}. The tag {{TMem_StaticSize}} must be specified in the
+;		taglist as well (see below). This type can be combined with
+;		{{TMMT_TaskSafe}}.
+;		* {{TMMT_Pooled}} - The resulting memory manager will group small
+;		allocations into larger ones. All pending allocations will be freed
+;		when the memory manager is being destroyed. {{resource}} must be a
+;		pointer to a pool created with exec:TCreatePool() or {{TNULL}}. In
+;		the latter case, a pooled allocator will be created and maintained
+;		internally with the resulting memory manager, and any pool-specific
+;		tags passed to this function will be used accordingly. See
+;		exec:TCreatePool() for details. This type can be combined with
+;		{{TMMT_TaskSafe}}.
+;		* {{TMMT_Void}} - The resulting memory manager will be incapable of
+;		allocating memory. Attempts to do so will always return {{TNULL}}.
+;		This type can be useful for debugging purposes.
+;	- {{tags}}     - Pointer to an array of tag items:
+;		* {{TMem_StaticSize, (TSIZE)}} - This argument is mandatory when
+;		{{type}} is {{TMMT_Static}}. The value specifies the size of the
+;		block of memory to be managed. {{resource}} must be a pointer to a
+;		block of memory of this size, or {{TNULL}}. In the latter case, a
+;		block of this size will be allocated and maintained internally, and
+;		freed when the resulting memory manager is getting destroyed.
+;		Default: {{0}}
+;		* {{TMem_LowFrag, (TBOOL)}} - This tag is considered when {{type}} is
+;		{{TMMT_Static}}. It will cause the resulting memory manager to use an
+;		allocation strategy that helps reducing the internal fragmentation, at
+;		the cost of performance. This is also known as the 'best match'
+;		strategy. The default is the 'first match' strategy.
+;		Default: {{TFALSE}}
+;
+;	SEE ALSO::
+;	teklib:TDestroy(), exec:TAlloc(), exec:TAllocMsg(),
+;	exec:TGetMemManager(), exec:TCreatePool(), exec:TGetTaskMemManager()
+;
+;------------------------------------------------------------------------------
+struct TMemManager *CreateMemManager(TAPTR object, TUINT type, TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TAlloc():
+;			mem = TAlloc(memmanager,         size)
+;			TAPTR        struct TMemManager* TSIZE
+;
+;	FUNCTION::
+;	This function allocates a block of memory from a memory manager.
+;	A pointer to the allocated block of memory is returned, or {{TNULL}}
+;	if the request cannot be satisfied. A {{TNULL}} memory manager is valid
+;	and directs requests to the system's general purpose allocator.
+;
+;	RESULTS::
+;	- {{mem}}  - Pointer to a block of memory, or {{TNULL}} if out of memory
+;
+;	INPUTS::
+;	- {{memmanager}}  - Pointer to a memory manager, or {{TNULL}}
+;	- {{size}}        - Size of the allocation [bytes]
+;
+;	NOTES::
+;	* Never rely on allocations made with this function to be blank, i.e.
+;	with all bytes set to zero. use exec:TAlloc0() to get a blank allocation.
+;	* Memory for messages must be allocated from a special class of
+;	memory manager. See exec:TAllocMsg() for details.
+;
+;	SEE ALSO::
+;	exec:TFree(), exec:TRealloc(), exec:TAlloc0(), exec:TCreateMemManager(),
+;	exec:TAllocMsg(), exec:TGetSize(), exec:TGetMemManager()
+;
+;------------------------------------------------------------------------------
+TAPTR Alloc(struct TMemManager *mm, TSIZE size)
+
+;------------------------------------------------------------------------------
+;
+;	TAlloc0():
+;			mem = TAlloc0(memmanager,         size)
+;			TAPTR         struct TMemManager* TSIZE
+;
+;	FUNCTION::
+;	Allocate a blank block of memory from a memory manager. This
+;	function is equivalent to TAlloc() except for that the returned
+;	memory is guaranteed to be filled with all bytes set to zero.
+;
+;	RESULTS::
+;	- {{mem}} - Pointer to a block of memory, or {{TNULL}} if memory resource
+;	exhausted
+;
+;	INPUTS::
+;	- {{memmanager}} - Pointer to a memory manager or TNULL
+;	- {{size}}       - Size of the allocation [bytes]
+;
+;	SEE ALSO::
+;	exec:TAlloc(), exec:TFree()
+;
+;------------------------------------------------------------------------------
+TAPTR Alloc0(struct TMemManager *mm, TSIZE size)
+
+;------------------------------------------------------------------------------
+;
+;	TQueryInterface():
+;			interface = TQueryInterface(module,         name,   version, tags)
+;			struct TInterface*          struct TModule* TSTRPTR TUINT16  TTAGITEM*
+;
+;	FUNCTION::
+;	This function queries a module for an interface of the given name and
+;	version. Returns {{TNULL}} if no interface could be found or created.
+;	The resulting interface structure must be freed with a matching
+;	call to teklib:TDestroy() prior to closing the module from which it was
+;	obtained.
+;
+;	RESULTS::
+;		- {{interface}} - Pointer to an interface structure
+;
+;	INPUTS::
+;		- {{module}}    - Module to obtain the interface from
+;		- {{name}}      - Name of the interface
+;		- {{version}}   - Minimum version of the interface
+;		- {{tags}}      - Additional tags, passed to the module dispatch hook
+;		in an object of the type {{struct TInterfaceQuery}} via the field
+;		{{object->tifq_Tags}}.
+;
+;	SEE ALSO:
+;	exec:TOpenModule(), teklib:TDestroy()
+;
+;------------------------------------------------------------------------------
+struct TInterface *QueryInterface(struct TModule *mod, TSTRPTR name, TUINT16 version, TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TFree():
+;			TFree(mem)
+;			      TAPTR
+;
+;	FUNCTION::
+;	Return a block of memory to the memory manager it was
+;	allocated from.
+;
+;	INPUTS::
+;	- {{mem}} - Block of memory to be freed. It is safe to pass {{TNULL}}.
+;
+;	NOTES::
+;	* This function is responsible for freeing memory that was
+;	allocated using exec:TAlloc() or exec:TAllocMsg(). It cannot be used
+;	for memory that was obtained from a pool or via the standard
+;	libraries.
+;
+;	SEE ALSO::
+;	exec:TAlloc(), exec:TAllocMsg(), exec:TGetSize(), exec:TGetMemManager(),
+;	exec:TRealloc(), exec:TCreateMemManager()
+;
+;------------------------------------------------------------------------------
+void Free(TAPTR mem)
+
+;------------------------------------------------------------------------------
+;
+;	TRealloc():
+;			newmem = TRealloc(oldmem, newsize)
+;			TAPTR             TAPTR   TSIZE
+;
+;	FUNCTION::
+;	Resize a block of memory that was allocated from a memory
+;	manager. If {{newsize}} is {{0}}, the block of memory will be freed
+;	and the result will be {{TNULL}}.
+;
+;	This function departs from the usual realloc semantics in that it cannot
+;	be used to allocate a fresh block of memory. If a {{TNULL}} pointer is
+;	passed as the {{oldmem}} argument, this function returns {{TNULL}}.
+;
+;	If a reallocation fails and the return value is {{TNULL}}, the old
+;	block of memory still belongs to the user.
+;
+;	RESULTS::
+;	- {{newmem}}  - Pointer to memory reallocated to newsize, or {{TNULL}}
+;
+;	INPUTS::
+;	- {{oldmem}}  - Pointer to memory allocated
+;	- {{newsize}} - New size for the allocation or {{0}}
+;
+;	NOTES::
+;	* Reallocations may require that a given block of memory needs
+;	to be moved in memory, that is, pointers to this area may become
+;	invalid.
+;
+;	* This function is responsible for resizing allocations that were
+;	allocated using exec:TAlloc(). It cannot be used for memory that
+;	was obtained from pools or via the standard libraries.
+;
+;	SEE ALSO::
+;	exec:TAlloc(), exec:TFree(), exec:TGetSize(), exec:TCreateMemManager()
+;
+;------------------------------------------------------------------------------
+TAPTR Realloc(TAPTR mem, TSIZE nsize)
+
+;------------------------------------------------------------------------------
+;
+;	TGetMemManager():
+;			memmanager = TGetMemManager(mem)
+;			struct TMemManager*         TAPTR
+;
+;	FUNCTION::
+;	Returns a pointer to the memory manager an allocation was
+;	made from.
+;
+;	RESULTS::
+;	- {{memmanager}} - Pointer to a memory manager
+;
+;	INPUTS::
+;	- {{mem}} - Pointer to a block of memory
+;
+;	NOTES::
+;	* {{TNULL}} is a valid memory manager, referring to
+;	the system's general-purpose allocator.
+;
+;	SEE ALSO::
+;	exec:TGetSize(), exec:TAlloc(), exec:TCreateMemManager()
+;
+;------------------------------------------------------------------------------
+struct TMemManager *GetMemManager(TAPTR mem)
+
+;------------------------------------------------------------------------------
+;
+;	TGetSize():
+;			size = TGetSize(mem)
+;			TSIZE           TAPTR
+;
+;	FUNCTION::
+;	This function gets the size of a block of memory (in bytes) that was
+;	allocated from a memory manager.
+;
+;	RESULTS::
+;	- {{size}} - size of the allocation [bytes]
+;
+;	INPUTS::
+;	- {{mem}} - Pointer to a block of memory
+;
+;	SEE ALSO::
+;	exec:TGetMemManager(), exec:TAlloc()
+;
+;------------------------------------------------------------------------------
+TSIZE GetSize(TAPTR mem)
+
+;------------------------------------------------------------------------------
+;
+;	TCreateLock():
+;			lock = TCreateLock(tags)
+;			struct TLock*      TTAGITEM*
+;
+;	FUNCTION::
+;	Create a locking object. A lock is a mechanism to protect
+;	resources from simultaneous accesses from multiple tasks.
+;	Only one accessor can hold the same lock at a given time.
+;
+;	A lock is destroyed with a call to teklib:TDestroy().
+;
+;	RESULTS::
+;	- {{lock}} - Lock created, or {{TNULL}} if creation failed
+;
+;	INPUTS::
+;	- {{tags}} - Pointer to an array of tag items (none defined yet)
+;
+;	NOTES::
+;	* The result is undefined if a lock is destroyed in locked state.
+;	Each call to exec:TLock() per calling task must be paired with
+;	exactly one matching call to exec:TUnlock().
+;
+;	SEE ALSO::
+;	exec:TLock(), exec:TUnlock(), teklib:TDestroy()
+;
+;------------------------------------------------------------------------------
+struct TLock *CreateLock(TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TLock():
+;			TLock(lock)
+;			      struct TLock*
+;
+;	FUNCTION::
+;	Gain exclusive access to a lock. If another task is currenty
+;	holding the lock, the caller will block until the lock is free.
+;	If no other task holds the lock, then this function returns
+;	immediately with exclusive access.
+;
+;	This function is recursive (or 'nesting'), i.e. it may be called
+;	subsequently when the lock is already held by the current owner.
+;	In that case an internal counter is increased and this function
+;	returns immediately with a lock on the shared resource.
+;
+;	Each call per task must be paired with exactly one matching call
+;	to exec:TUnlock(), which will decrease the nesting counter. When
+;	the counter reaches zero, the control is handed over to the next
+;	waiter or, if there are no waiters, the lock is being released.
+;
+;	INPUTS::
+;	- {{lock}} - Pointer to a lock created with exec:TCreateLock()
+;
+;	SEE ALSO::
+;	exec:TUnlock(), exec:TCreateLock()
+;
+;------------------------------------------------------------------------------
+void Lock(struct TLock *lock)
+
+;------------------------------------------------------------------------------
+;
+;	TUnlock():
+;			TUnlock(lock)
+;			        struct TLock*
+;
+;	FUNCTION::
+;	Release access to a lock which was previously obtained with
+;	a call to exec:TLock(). The next task currently suspended waiting
+;	for the lock will gain exclusive access to the resource and
+;	resume.
+;
+;	INPUTS::
+;	- {{lock}} - Pointer to a locking object in locked state
+;
+;	SEE ALSO::
+;	exec:TLock(), exec:TCreateLock()
+;
+;------------------------------------------------------------------------------
+void Unlock(struct TLock *lock)
+
+;------------------------------------------------------------------------------
+;
+;	TAllocSignal():
+;			signals = TAllocSignal(prefsignals)
+;			TUINT                  TUINT
+;
+;	FUNCTION::
+;	Allocate a signal (or a set of preferred signals) from the
+;	current task. If prefsignals is {{0}} then this function will try to
+;	reserve any single free signal. Otherwise, this function tries to
+;	reserve the exact set specified.
+;
+;	RESULTS::
+;	- {{signals}} - Signals allocated. {{0}} if out of signals, or if any
+;	of the signal bits in {{prefsignals}} is already in use.
+;
+;	INPUTS::
+;	- {{prefsignals}} - Preferred set of signals or {{0}} for any free signal
+;
+;	NOTES::
+;	* Signals no longer needed should be freed using exec:TFreeSignal().
+;	* The Exec module guarantees that there will always be at least 20
+;	user-allocatable signals per task.
+;
+;	SEE ALSO::
+;	exec:TFreeSignal(), exec:TSignal(), exec:TSetSignal(), exec:TWait()
+;
+;------------------------------------------------------------------------------
 TUINT AllocSignal(TUINT sig)
-TVOID FreeSignal(TUINT sig)
-TVOID Signal(TAPTR task, TUINT sig)
+
+;------------------------------------------------------------------------------
+;
+;	TFreeSignal():
+;			TFreeSignal(signals)
+;			            TUINT
+;
+;	FUNCTION::
+;	Free a single or a set of signals and return them to a task's
+;	signal pool.
+;
+;	INPUTS::
+;	- {{signals}} - Signal mask to be freed. It is safe to pass {{0}}.
+;
+;	SEE ALSO::
+;	exec:TAllocSignal(), exec:TWait()
+;
+;------------------------------------------------------------------------------
+void FreeSignal(TUINT sig)
+
+;------------------------------------------------------------------------------
+;
+;	TSignal():
+;			TSignal(task,         signals)
+;			        struct TTask* TUINT
+;
+;	FUNCTION::
+;	Submit signals to a task. The signal(s) will show up in the
+;	signalled task. When the task was suspended waiting for any of
+;	the specified signals, it will resume its operation.
+;
+;	INPUTS::
+;	- {{task}} - Task to be signalled
+;	- {{signals}} - A set of signals to be submitted
+;
+;	SEE ALSO::
+;	exec:TSetSignal(), exec:TWait(), exec:TAllocSignal()
+;
+;------------------------------------------------------------------------------
+void Signal(struct TTask *task, TUINT sig)
+
+;------------------------------------------------------------------------------
+;
+;	TSetSignal():
+;			oldsignals = TSetSignal(newsignals, sigmask)
+;			TUINT                   TUINT       TUINT
+;
+;	FUNCTION::
+;	Set the current task's signal state to the signal bits in
+;	{{newsignals}}, masked through the bits in the {{sigmask}} argument,
+;	and return the old state of the tasks's signals to the caller.
+;
+;	INPUTS::
+;	- {{newsignals}} - New set of signals
+;	- {{sigmask}} - Signal bits to be affected
+;
+;	EXAMPLES::
+;			/* get the current state of all signals, but do not modify them */
+;			signals = TSetSignal(0, 0);
+;
+;			/* clear the TTASK_SIG_ABORT signal */
+;			TSetSignal(0, TTASK_SIG_ABORT);
+;
+;	SEE ALSO::
+;	exec:TSignal(), exec:TWait(), exec:TAllocSignal()
+;
+;------------------------------------------------------------------------------
 TUINT SetSignal(TUINT newsig, TUINT sigmask)
+
+;------------------------------------------------------------------------------
+;
+;	TWait():
+;			signals = TWait(sigmask)
+;			TUINT           TUINT
+;
+;	FUNCTION::
+;	Suspend the current task to wait for one or more of the signals specified
+;	in {{sigmask}} to arrive. Those bits will be cleared from the task's
+;	signal state and returned to the caller when the function returns. If
+;	{{sigmask}} is {{0}}, this function will immediately return {{0}}.
+;
+;	RESULTS::
+;	- {{signals}} - Signals that caused returning
+;
+;	INPUTS::
+;	- {{sigmask}} - Set of signals to wait for
+;
+;	SEE ALSO::
+;	exec:TWaitPort(), exec:TSignal(), exec:TSetSignal(), exec:TAllocSignal(),
+;	exec:TWaitTime()
+;
+;------------------------------------------------------------------------------
 TUINT Wait(TUINT sig)
-.offset 37
-TAPTR CreatePort(TTAGITEM *tags)
-TVOID PutMsg(TAPTR port, TAPTR port, TAPTR msg)
-TAPTR GetMsg(TAPTR port)
-TVOID AckMsg(TAPTR msg)
-TVOID ReplyMsg(TAPTR msg)
-TVOID DropMsg(TAPTR msg)
-TUINT SendMsg(TAPTR port, TAPTR msg)
-TAPTR WaitPort(TAPTR port)
-TUINT GetPortSignal(TAPTR port)
-TAPTR GetUserPort(TAPTR task)
-TAPTR GetSyncPort(TAPTR task)
-TAPTR CreateTask(TTASKFUNC func, TINITFUNC ifunc, TTAGITEM *tags)
+
+TBOOL StrEqual(TSTRPTR s1, TSTRPTR s2)
+
+;------------------------------------------------------------------------------
+;
+;	TCreatePort():
+;			port = TCreatePort(tags)
+;			struct TMsgPort*   TTAGITEM*
+;
+;	FUNCTION::
+;	Create a message port owned by the current task.
+;
+;	A message port is an access point for messages between tasks. It
+;	can be synchronized on using exec:TWaitPort(). Use exec:TGetPortSignal()
+;	to retrieve a port's underlying signal. Using this signal, one or more
+;	message ports can be synchronized on using exec:TWait().
+;
+;	A message port is destroyed with a call to teklib:TDestroy().
+;
+;	RESULTS::
+;	- {{port}} - Message port created, or {{TNULL}} if failed
+;
+;	INPUTS::
+;	- {{tags}} - Pointer to an array of tag items (none defined yet)
+;
+;	NOTES::
+;	* Every task has an inbuilt ''user message port'' already, which can
+;	be retrieved using exec:TGetUserPort(). Use exec:TCreatePort() to create
+;	more ports if necessary.
+;
+;	SEE ALSO::
+;	exec:TWaitPort(), exec:TWait(), exec:TPutMsg(), exec:TGetMsg(),
+;	teklib:TDestroy(), exec:TGetPortSignal(), exec:TGetUserPort()
+;
+;------------------------------------------------------------------------------
+struct TMsgPort *CreatePort(TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TPutMsg():
+;			TPutMsg(msgport,         replyport,       msg)
+;			        struct TMsgPort* struct TMsgPort* TAPTR
+;
+;	FUNCTION::
+;	Put a message to a message port. If a {{replyport}} is specified, the
+;	message will be sent two-way, and there will be a reply expected at
+;	this port. If {{replyport}} is TNULL, the message will be sent
+;	one-way and does not return to the sender.
+;
+;	INPUTS::
+;	- {{msgport}} - Addressed message port
+;	- {{replyport}} - Message port for the reply or {{TNULL}}
+;	- {{msg}} - Message to be sent
+;
+;	SEE ALSO::
+;	exec:TGetMsg(), exec:TAckMsg(), exec:TReplyMsg(), exec:TDropMsg(),
+;	exec:TSendMsg(), exec:TAllocMsg()
+;
+;------------------------------------------------------------------------------
+void PutMsg(struct TMsgPort *port, struct TMsgPort *replyport, TAPTR msg)
+
+;------------------------------------------------------------------------------
+;
+;	TGetMsg():
+;			msg = TGetMsg(msgport)
+;			TAPTR         struct TMsgPort*
+;
+;	FUNCTION::
+;	Unlink the next pending message from a port's message queue and
+;	return it to the caller. This function does not block; if the
+;	message queue is empty, this function returns immediately with {{TNULL}}.
+;
+;	RESULTS::
+;	- {{msg}} - Next pending message or {{TNULL}} if the queue was empty
+;
+;	INPUTS::
+;	- {{msgport}} - Message port to get next message from
+;
+;	SEE ALSO::
+;	exec:TPutMsg(), exec:TAckMsg(), exec:TReplyMsg(), exec:TDropMsg(),
+;	exec:TAllocMsg()
+;
+;------------------------------------------------------------------------------
+TAPTR GetMsg(struct TMsgPort *port)
+
+;------------------------------------------------------------------------------
+;
+;	TAckMsg():
+;			TAckMsg(msg)
+;			        TAPTR
+;
+;	FUNCTION::
+;	Acknowledge a two-way message to its sender, i.e. return it to the
+;	replyport that was specified by the sender when the message was sent.
+;
+;	It is safe to apply this function to one-way messages as well; if
+;	the message was sent without the expectation of a reply or acknowledgement,
+;	it will silently be freed by returning the memory to its memory manager.
+;
+;	When a message is returned with this function, the sender must not
+;	rely on modifications made inside the message body. If a changed
+;	message is to be returned, then exec:TReplyMsg() should be used instead.
+;
+;	INPUTS::
+;	- {{msg}} - Message to be acknowledged or to be freed, transparently
+;
+;	NOTES::
+;	* The difference between exec:TAckMsg() and exec:TReplyMsg() is
+;	meaningless in local address space, but it may become useful in the
+;	future.
+;
+;	SEE ALSO::
+;	exec:TReplyMsg(), exec:TDropMsg(), exec:TPutMsg(), exec:TAllocMsg()
+;
+;------------------------------------------------------------------------------
+void AckMsg(TAPTR msg)
+
+;------------------------------------------------------------------------------
+;
+;	TReplyMsg():
+;			TReplyMsg(msg)
+;			          TAPTR
+;
+;	FUNCTION::
+;	Reply a two-way message to its sender, i.e. return it to the
+;	replyport that was specified by the sender when the message was sent.
+;
+;	It is safe to apply this function to one-way messages as well; if
+;	the message was sent without the expectation of a reply or acknowledgement,
+;	it will silently be freed by returning the memory to its memory manager.
+;
+;	Use this function for transferring a modified message body back to
+;	its sender. If the message was not modified and it is only required
+;	to inform the sender that it has been processed, then exec:TAckMsg()
+;	should be used instead.
+;
+;	INPUTS::
+;	- {{msg}} - Message to be replied (or to be freed, transparently)
+;
+;	NOTES::
+;	* The difference between exec:TAckMsg() and exec:TReplyMsg() is
+;	meaningless in local address space, but it may become useful in the
+;	future.
+;
+;	SEE ALSO::
+;	exec:TAckMsg(), exec:TDropMsg(), exec:TPutMsg(), exec:TAllocMsg()
+;
+;------------------------------------------------------------------------------
+void ReplyMsg(TAPTR msg)
+
+;------------------------------------------------------------------------------
+;
+;	TDropMsg():
+;			TDropMsg(msg)
+;			         TAPTR
+;
+;	FUNCTION::
+;	Abandon a two-way message, i.e. return it to its replyport with the
+;	internal message status set to {{TMSG_STATUS_FAILED}}. This function is
+;	not guaranteed to return any modifications made inside the message
+;	body, it will only indicate failure.
+;
+;	It is safe to apply this function to one-way messages as well; if
+;	the message was sent without the expectation of a reply or acknowledgement,
+;	it will silently be freed by returning the memory to its memory manager.
+;
+;	In local address space this function is particularly useful for
+;	indicating failure to the caller of exec:TSendMsg().
+;
+;	INPUTS::
+;	- {{msg}} - Message to be abandoned (or to be freed, transparently)
+;
+;	SEE ALSO::
+;	exec:TSendMsg(), exec:TAckMsg(), exec:TReplyMsg(), exec:TPutMsg(),
+;	exec:TAllocMsg()
+;
+;------------------------------------------------------------------------------
+void DropMsg(TAPTR msg)
+
+;------------------------------------------------------------------------------
+;
+;	TSendMsg():
+;			status = TSendMsg(port,            msg)
+;			TUINT             struct TMsgPort* TAPTR
+;
+;	FUNCTION::
+;	This function sends a message two-way, synchronized, waiting for
+;	a reply or an acknowledgement before it returns to the caller.
+;
+;	The return value will be set to {{TMSG_STATUS_FAILED}} if the
+;	message has been dropped, or, depending on the return method,
+;	{{TMSG_STATUS_REPLIED}} or {{TMSG_STATUS_ACKD}} if it returned
+;	successfully.
+;
+;	RESULTS::
+;	- {{status}} - delivery status of the message:
+;		* {{TMSG_STATUS_FAILED}} if the message was dropped
+;		* {{TMSG_STATUS_REPLIED}} if replied
+;		* {{TMSG_STATUS_ACKD}} if acknowledged
+;
+;	INPUTS::
+;	- {{port}} - Message port to send message to
+;	- {{msg}} - Message to be sent
+;
+;	NOTES::
+;	* Message ports in local address space have no timeout. If the
+;	message is not being dropped, replied or acknowledged then
+;	this function blocks eternally.
+;
+;	SEE ALSO::
+;	exec:TPutMsg(), exec:TAckMsg(), exec:TReplyMsg(), exec:TDropMsg(),
+;	exec:TAllocMsg(), exec:TGetSyncPort()
+;
+;------------------------------------------------------------------------------
+TUINT SendMsg(struct TMsgPort *port, TAPTR msg)
+
+;------------------------------------------------------------------------------
+;
+;	TWaitPort():
+;			msg = TWaitPort(port)
+;			TAPTR           struct TMsgPort*
+;
+;	FUNCTION::
+;	Suspend the current task to wait for a message to arrive at the
+;	given message port. When a message is already present then this
+;	function returns immediately. A pointer to the next pending
+;	message is returned to the caller, but it is not removed from
+;	the queue. Use TGetMsg() to unlink the next message from a port.
+;
+;	RESULTS::
+;	- {{msg}} - Next pending message in the queue
+;
+;	INPUTS::
+;	- {{port}} - Message port
+;
+;	NOTES::
+;	* The port must have been created in the caller's task.
+;	* Message ports in local address space have no timeout. If no message
+;	arrives at the specified port, this function will wait and block forever.
+;	* You can use exec:TGetPortSignal() to combine the signals from multiple
+;	message ports and synchronize on them using exec:TWait().
+;
+;	SEE ALSO::
+;	exec:TCreatePort(), exec:TWait(), exec:TGetPortSignal(), exec:TGetMsg()
+;
+;------------------------------------------------------------------------------
+TAPTR WaitPort(struct TMsgPort *port)
+
+;------------------------------------------------------------------------------
+;
+;	TGetPortSignal():
+;			signal = TGetPortSignal(port)
+;			TUINT                   struct TMsgPort*
+;
+;	FUNCTION::
+;	This function retrieves a message port's underlying signal.
+;	The typical use of that signal is to use exec:TWait() to combine
+;	waiting for messages from multiple ports.
+;
+;	RESULTS::
+;	- {{signal}} - The signal that shows up in the port's task
+;
+;	INPUTS::
+;	- {{port}} - Message port to get signal from
+;
+;	SEE ALSO::
+;	exec:TCreatePort(), exec:TWait(), exec:TWaitPort()
+;
+;------------------------------------------------------------------------------
+TUINT GetPortSignal(struct TMsgPort *port)
+
+;------------------------------------------------------------------------------
+;
+;	TGetUserPort():
+;			userport = TGetUserPort(task)
+;			struct TMsgPort*        struct TTask*
+;
+;	FUNCTION::
+;	Get a pointer to a task's primary, asynchronous message port,
+;	which is reserved for the user. If the task argument is {{TNULL}},
+;	the caller's own task will be queried.
+;
+;	Each task is supplied with an user port upon creation. More
+;	message ports can be created using exec:TCreatePort() during a
+;	task's lifetime.
+;
+;	RESULTS::
+;	- {{userport}} - Pointer to task's userport
+;
+;	INPUTS::
+;	- {{task}} - Task handle, or {{TNULL}}
+;
+;	NOTES::
+;	* The user port's underlying signal bit is {{TTASK_SIG_USER}}.
+;
+;	SEE ALSO::
+;	exec:TGetSyncPort(), exec:TCreatePort(), exec:TGetPortSignal()
+;
+;------------------------------------------------------------------------------
+struct TMsgPort *GetUserPort(struct TTask *task)
+
+;------------------------------------------------------------------------------
+;
+;	TGetSyncPort():
+;			syncport = TGetSyncPort(task)
+;			struct TMsgPort*        struct TTask*
+;
+;	FUNCTION::
+;	Get a pointer to a task's inbuilt syncport. If task is {{TNULL}},
+;	the caller's own task will be addressed.
+;
+;	The syncport is reserved for synchronized message replies. It
+;	can be employed by the user if its usage remains strictly limited
+;	to that purpose.
+;
+;	For instance, it is not allowed to send messages using exec:TPutMsg()
+;	expecting a reply at a syncport. This would break Exec functions
+;	that might use the syncport (or the syncport's signal) internally.
+;	For asynchronous message communication use the task's user port,
+;	or create a new port using exec:TCreatePort().
+;
+;	RESULTS::
+;	- {{syncport}} - Pointer to task's syncport
+;
+;	INPUTS::
+;	- {{task}} - Task handle, or {{TNULL}}
+;
+;	SEE ALSO::
+;	exec:TGetUserPort(), exec:TCreatePort(), exec:TGetPortSignal(),
+;
+;------------------------------------------------------------------------------
+struct TMsgPort *GetSyncPort(struct TTask *task)
+
+;------------------------------------------------------------------------------
+;
+;	TCreateTask():
+;			task = TCreateTask(hook,         taglist)
+;			struct TTask*      struct THook* TTAGITEM*
+;
+;	FUNCTION::
+;	Creates a task, launches a new thread of execution and invokes the
+;	supplied hook with the message {{TMSG_INITTASK}} in the newly
+;	created context. A return value of {{TFALSE}} from the hook function
+;	causes this function to abandon task creation and to return {{TNULL}}.
+;	If the return value is {{TTRUE}}, TCreateTask() returns the
+;	newly created task handle to the caller, and invokes the hook again,
+;	this time with the message {{TMSG_RUNTASK}}.
+;
+;	The task handle is destroyed with a call to teklib:TDestroy().
+;	This will synchronize on the task's completion and free its
+;	resources. TEKlib tasks must always leave gently through their
+;	function exit, and all task must be synchronized on properly,
+;	or the TEKlib framework panics at exit.
+;
+;	RESULTS::
+;	- {{task}} - Task handle, or {{TNULL}} if the task could not be
+;	established
+;
+;	INPUTS::
+;	- {{hook}}    - Task initialization hook. Note: TCreateTask() will
+;	operate on an internal copy of this structure, to allow the caller
+;	to place it on the stack and to throw it away after task creation.
+;	- {{taglist}} - Pointer to an array of tag items:
+;		* {{TTask_UserData, TAPTR}} - Pointer to a initial user data
+;		pointer that will be attached to the newly created task. It can
+;		be queried from the task handle using exec:TGetTaskData().
+;		Default: {{TNULL}}
+;		* {{TTask_Name, TSTRPTR}} - Pointer to the task's name. If a name is
+;		supplied, the task can be found using exec:TFindTask().
+;		Default: {{TNULL}}
+;		* {{TTask_CurrentDir, TAPTR}} - With this argument, a directory lock
+;		can be specified that will be duplicated and used as the new task's
+;		current directory. By default, tasks inherit their current directory
+;		from their parent. Default: The caller's current directory
+;		* {{TTask_InputFH, (TAPTR)}}
+;		* {{TTask_OutputFH, (TAPTR)}}
+;		* {{TTask_ErrorFH, (TAPTR)}} - These tags allow the caller to
+;		pass file handles to the newly created task for standard input,
+;		ouput and error, respectively. By default, the I/O handles for
+;		newly created tasks are unset and opened on demand, that is, by
+;		the [[io]] module in attempts to open the files "stdio:in",
+;		"stdio:out" or "stdio:err", respectively.
+;
+;	SEE ALSO::
+;	teklib:TDestroy(), exec:TFindTask(), exec:TGetTaskData(),
+;	exec:TGetUserPort(), exec:TCreateSysTask()
+;
+;------------------------------------------------------------------------------
+TAPTR CreateTask(struct THook *, TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TFindTask():
+;			task = TFindTask(name)
+;			struct TTask*    TSTRPTR
+;
+;	FUNCTION::
+;	Find a named task in the system. If name is {{TNULL}} then this function
+;	will return a pointer to the caller's own task.
+;
+;	RESULTS::
+;	- {{task}} - Pointer to a task handle or {{TNULL}} if not found
+;
+;	INPUTS::
+;	- {{name}} - Name of a task or {{TNULL}} for finding the caller's own task
+;
+;	SEE ALSO::
+;	exec:TCreateTask()
+;
+;------------------------------------------------------------------------------
 TAPTR FindTask(TSTRPTR name)
-TAPTR GetTaskData(TAPTR task)
-TAPTR SetTaskData(TAPTR task, TAPTR data)
-TAPTR GetTaskMMU(TAPTR task)
-TAPTR AllocMsg(TUINT size)
-TAPTR AllocMsg0(TUINT size)
-.offset 59
-TAPTR LockAtom(TAPTR atom, TUINT mode)
-TVOID UnlockAtom(TAPTR atom, TUINT mode)
-TTAG GetAtomData(TAPTR atom)
-TTAG SetAtomData(TAPTR atom, TTAG data)
-TAPTR CreatePool(TTAGITEM *tags)
-TAPTR AllocPool(TAPTR pool, TUINT size)
-TVOID FreePool(TAPTR pool, TAPTR mem, TUINT size)
-TAPTR ReallocPool(TAPTR pool, TAPTR mem, TUINT oldsize, TUINT newsize)
-TVOID PutIO(struct TIORequest *ioreq)
+
+;------------------------------------------------------------------------------
+;
+;	TGetTaskData():
+;			userdata = TGetTaskData(task)
+;			TAPTR                   struct TTask*
+;
+;	FUNCTION::
+;	Get a pointer to a task's user data. A user data pointer can be
+;	supplied upon task creation using the {{TTask_UserData}} tag, and be set
+;	or overwritten using exec:TSetTaskData() during a task's lifetime.
+;
+;	RESULTS::
+;	- {{userdata}} - Pointer to a task's user data
+;
+;	INPUTS::
+;	- {{task}} - Task handle or {{TNULL}} to query the caller's own task
+;
+;	SEE ALSO::
+;	exec:TSetTaskData(), exec:TCreateTask()
+;
+;------------------------------------------------------------------------------
+TAPTR GetTaskData(struct TTask *task)
+
+;------------------------------------------------------------------------------
+;
+;	TSetTaskData():
+;			olddata = TSetTaskData(task, userdata)
+;			TAPTR                  TAPTR TAPTR
+;
+;	FUNCTION::
+;	Set a task's user data pointer and return the previous user data
+;	pointer to the caller.
+;
+;	A user data pointer can be supplied upon task creation using the
+;	{{TTask_UserData}} tag and queried with exec:TGetTaskData() during
+;	a task's lifetime.
+;
+;	RESULTS::
+;	- {{olddata}} - Pointer to task's previous user data
+;
+;	INPUTS::
+;	- {{task}} - Task handle or {{TNULL}} to address the caller's own task
+;	- {{userdata}} - New data to associate with the task
+;
+;	SEE ALSO::
+;	exec:TGetTaskData(), exec:TCreateTask()
+;
+;------------------------------------------------------------------------------
+TAPTR SetTaskData(struct TTask *task, TAPTR data)
+
+;------------------------------------------------------------------------------
+;
+;	TGetTaskMemManager():
+;			memmanager = TGetTaskMemManager(task)
+;			struct TMemManager*             struct TTask*
+;
+;	FUNCTION::
+;	Get a pointer to a task's inbuilt memory manager. Allocations
+;	made from this memory manager are automatically freed when the
+;	task exits.
+;
+;	RESULTS::
+;	- {{memmanager}} - Task's memory manager
+;
+;	INPUTS::
+;	- {{task}} - Task handle, or {{TNULL}} to query the caller's own task
+;
+;	SEE ALSO::
+;	exec:TAlloc(), exec:TCreateMemManager()
+;
+;------------------------------------------------------------------------------
+TAPTR GetTaskMemManager(struct TTask *task)
+
+;------------------------------------------------------------------------------
+;
+;	TAllocMsg():
+;			msg = TAllocMsg(size)
+;			TAPTR           TSIZE
+;
+;	FUNCTION::
+;	Allocate memory for a message. Message allocations behave largely
+;	like regular allocations, but they originate from their own clsss of
+;	memory manager. Use exec:TFree() to return a message to its memory
+;	manager. exec:TGetSize() and exec:TGetMemManager() are valid also.
+;
+;	RESULTS::
+;	- {{msg}} - Pointer to message memory, or {{TNULL}} if failed
+;
+;	INPUTS::
+;	- {{size}} - Size of the requested block of memory [bytes]
+;
+;	NOTES::
+;	* Messages cannot be reallocated. The result from attempts
+;	to do so will always return {{TNULL}}.
+;
+;	* Never rely on allocations made with this function to be
+;	filled with all bytes set to zero. Use exec:TAllocMsg0() to get a
+;	blank message.
+;
+;	SEE ALSO::
+;	exec:TAllocMsg0(), exec:TAlloc(), exec:TFree(), exec:TPutMsg(),
+;	exec:TCreateMemManager()
+;
+;------------------------------------------------------------------------------
+TAPTR AllocMsg(TSIZE size)
+
+;------------------------------------------------------------------------------
+;
+;	TAllocMsg0():
+;			msg = TAllocMsg0(size)
+;			TAPTR            TSIZE
+;
+;	FUNCTION::
+;	Allocate memory for a message, blank. This function is equivalent
+;	to exec:TAllocMsg(), except for that the message returned is
+;	guaranteed to be filled with all bytes set to zero.
+;
+;	RESULTS::
+;	- {{mem}} - Pointer to message memory, or {{TNULL}} if failed
+;
+;	INPUTS::
+;	- {{size}} - Size of the requested block of memory [bytes]
+;
+;	SEE ALSO::
+;	exec:TAllocMsg()
+;
+;------------------------------------------------------------------------------
+TAPTR AllocMsg0(TSIZE size)
+
+;------------------------------------------------------------------------------
+;
+;	TLockAtom():
+;			atom = TLockAtom(data, mode)
+;			struct TAtom*    TATPR TUINT
+;
+;	FUNCTION::
+;	Depending on the mode argument, this function creates, obtains or
+;	destroys a named atom. Atoms are an extension to locks, allowing
+;	multiple accessors to create, locate and access resources by name.
+;	Also, atoms allow shared locking and locking attempts.
+;
+;	Atoms are recursive. This means the same task holding a lock on an
+;	atom is allowed to claim it subsequently, and this function
+;	returns with a nesting lock immediately. All locks per task must be
+;	paired with exactly one matching unlock operation.
+;
+;	Once locked by the caller, a data field can be associcated with an
+;	atom using exec:TSetAtomData() and retrieved with exec:TGetAtomData().
+;
+;	RESULTS::
+;	- {{atom}} - Pointer to an atom in locked state, or {{TNULL}} if failed
+;
+;	INPUTS::
+;	- {{data}} - Pointer to an existing atom or to a name
+;	- {{mode}} - Access modes and flags:
+;
+;		* {{TATOMF_NAME}} -
+;		This flag indicates that the data argument is expected to be a
+;		pointer to a name. Otherwise it's expected to be a pointer to
+;		an existing atom.
+;
+;		* {{TATOMF_KEEP}} -
+;		If data is a pointer to a name and if no atom of that name
+;		existed, {{TNULL}} is returned. Otherwise this function returns
+;		with a lock on the atom. Atom is returned.
+;
+;		* {{TATOMF_CREATE}} -
+;		If combined with {{TATOMF_NAME}} and if an atom of that name did
+;		not exist, it is created and returned in locked state. Returns
+;		{{TNULL}} if out of resources.
+;
+;		* {{TATOMF_DESTROY}} -
+;		If the atom exists then it is locked and destroyed. If the atom
+;		does not exist or if the mode is combined with {{TATOMF_TRY}} and
+;		the atom is in use elsewhere, {{TNULL}} is returned. Otherwise a
+;		non-{{TNULL}} value is returned.
+;
+;		* {{TATOMF_TRY}} -
+;		If the atom is currently locked exclusively, returns
+;		immediately with {{TNULL}}. If the atom is currently locked
+;		shared, then attempts to lock it exclusively return immediately
+;		with {{TNULL}}. Also returns {{TNULL}} if combined with
+;		{{TATOMF_CREATE}} and {{TATOMF_NAME}} and when an atom of that
+;		name already exists.
+;
+;		* {{TATOMF_SHARED}} -
+;		Lock in shared mode. Multiple tasks claiming a shared atom at
+;		the same time can succeed. If an atom is currently held
+;		exclusively then all shared lockers will block until the
+;		exclusive lock is released. If an atom is locked in shared
+;		mode, attempts to lock it exclusively will block until the atom is
+;		free.
+;
+;	By special convention, {{TATOMF_CREATE|TATOMF_SHARED}} returns with
+;	a shared lock only if an atom of that name already existed. If
+;	an atom of that name did not exist, it is created and returned
+;	in exclusively locked state; this allows to safely associate an
+;	initial data packet to an atom that is used in shared mode later.
+;
+;	NOTES::
+;	* If the caller holds an exclusive lock on an atom, it is
+;	possible to request a subsequent shared lock. The result will be
+;	another nesting lock on the atom.
+;
+;	* If the caller holds a shared lock on the atom, it is not
+;	allowed to request a subsequent exclusive lock. The results will
+;	be undefined.
+;
+;	* Not all possible combinations of the mode flags make sense;
+;	{{TATOMF_CREATE}} without {{TATOMF_NAME}} will currently return {{TNULL}}.
+;	The combination of {{TATOMF_CREATE}} and {{TATOMF_DESTROY}} is undefined.
+;
+;	SEE ALSO::
+;	exec:TUnlockAtom(), exec:TSetAtomData(), exec:TGetAtomData(),
+;	exec:TCreateLock()
+;
+;------------------------------------------------------------------------------
+struct TAtom *LockAtom(TAPTR atom, TUINT mode)
+
+;------------------------------------------------------------------------------
+;
+;	TUnlockAtom():
+;			TUnlockAtom(atom,         mode)
+;			            struct TAtom* TUINT
+;
+;	FUNCTION::
+;	Release access to an atom that has been locked with exec:TLockAtom().
+;
+;	INPUTS::
+;	- {{atom}} - Atom in locked state
+;	- {{mode}} - Unlocking modes:
+;		* {{TATOMF_KEEP}} - Release only
+;		* {{TATOMF_DESTROY}} - Release and destroy the atom
+;
+;	SEE ALSO::
+;	exec:TLockAtom()
+;
+;------------------------------------------------------------------------------
+void UnlockAtom(struct TAtom *atom, TUINT mode)
+
+;------------------------------------------------------------------------------
+;
+;	TGetAtomData():
+;			data = TGetAtomData(atom)
+;			TTAG                struct TAtom*
+;
+;	FUNCTION::
+;	Query an atom's user data tag. The atom should be in
+;	locked state and currently being owned by the caller.
+;
+;	RESULTS::
+;	- {{data}} - Atom's user data
+;
+;	INPUTS::
+;	- {{atom}} - Atom, as returned by exec:TLockAtom()
+;
+;	SEE ALSO::
+;	exec:TSetAtomData(), exec:TLockAtom()
+;
+;------------------------------------------------------------------------------
+TTAG GetAtomData(struct TAtom *atom)
+
+;------------------------------------------------------------------------------
+;
+;	TSetAtomData():
+;			olddata = TSetAtomData(atom,         data)
+;			TTAG                   struct TAtom* TTAG
+;
+;	FUNCTION::
+;	Associate a user data tag with an atom. The atom should be in
+;	exclusively locked state and currently being owned by the caller.
+;
+;	RESULTS::
+;	- {{olddata}} - Previous data tag
+;
+;	INPUTS::
+;	- {{atom}} - Atom, as returned by TLockAtom()
+;	- {{data}} - User data tag to be associated
+;
+;	SEE ALSO::
+;	exec:TGetAtomData(), exec:TLockAtom()
+;
+;------------------------------------------------------------------------------
+TTAG SetAtomData(struct TAtom *atom, TTAG data)
+
+;------------------------------------------------------------------------------
+;
+;	TCreatePool():
+;			pool = TCreatePool(tags)
+;			struct TMemPool*   TTAGITEM*
+;
+;	FUNCTION::
+;	Create a memory pool. A pool is an allocator that groups small
+;	allocations into larger ones. All pending allocations made from
+;	a pool will be returned to the pool's underlying memory manager
+;	once the pool is being destroyed with a call to teklib:TDestroy().
+;	Pools grow and shrink on demand. Two parameters constitute
+;	their behavior:
+;
+;		* Pudsize is the size of a 'puddle', i.e. a regular chunk of
+;		memory that will be allocated from an underlying memory manager
+;		when a request cannot be satisfied from the current set of
+;		puddles. Many small allocations can fit into a puddle.
+;
+;		* Thressize is the maximum size of allocations that go into
+;		regular puddles. Allocations larger than that will go into
+;		puddles of their own. Thressize must be less or equal pudsize.
+;
+;	Both pudsize and thressize can be supplied in taglist arguments
+;	and remain constant during a pool's lifetime. By default, though,
+;	TEKlib pools try to determine appropriate settings for pudsize
+;	and thressize during a pool's lifetime and adapt these parameters
+;	dynamically.
+;
+;	Pools can be useful for sections of code that mainly deal with
+;	many objects of relatively constant sizes. Allocations in a pool
+;	are more tightly packed and on smaller boundaries than
+;	general-purpose allocations.
+;
+;	RESULTS::
+;	- {{pool}} - Pointer to a pooled allocator or {{TNULL}} if failed
+;
+;	INPUTS::
+;	- {{tags}} - Pointer to an array of tag items:
+;		* {{TPool_MemManager, (TAPTR)}} - Pool's underlying memory manager -
+;		this is where puddles will be allocated from.
+;		* {{TPool_PudSize, (TUINT)}} - Initial size of puddles [bytes].
+;		When {{TPool_AutoAdapt}} is enabled, this value can change during
+;		a pool's lifetime. Default: {{1024}}
+;		* {{TPool_ThresSize, (TUINT)}} - Initial threshold size for
+;		allocations that go into regular puddles [bytes]. This value must
+;		be less than or equal pudsize. When {{TPool_AutoAdapt}} is enabled,
+;		this value can change during a pool's lifetime. Default: {{256}}
+;		* {{TPool_AutoAdapt, (TBOOL)}} - Use a simple runtime analysis to
+;		adapt a pool's pudsize and thressize to the requirements during
+;		its lifetime. Currently thressize tends to 4 times the average
+;		size of allocations and pudsize tends to 8 times of thressize.
+;		Default: {{TTRUE}}
+;		* {{TMem_LowFrag, (TBOOL)}} - Use an allocation strategy that may
+;		help to reduce a pool's internal fragmentation, at the cost of some
+;		extra performance. This is also known as the 'best match' strategy.
+;		The default is the 'first match' strategy. default: {{TFALSE}}
+;
+;	NOTES::
+;	* Pools are not inherently safe to use from multiple tasks at the
+;	same time. If multiple tasks wish to access it simultaneously then
+;	the pool must be protected with a locking mechanism.
+;	* A pool itself can serve the underlying allocator for a memory
+;	manager. See exec:TCreateMemManager() for details.
+;	* One of the possible benefits of pools is that the efficiency of
+;	exec:TReallocPool() is the same on all platforms, while the efficiency
+;	of exec:TRealloc() with a {{TNULL}} memory manager can significantly
+;	differ.
+;	* As a rule of thumb, use a general-purpose allocator when the
+;	exact requirements, costs and benefits of a special allocator
+;	cannot be estimated.
+;
+;	SEE ALSO::
+;	exec:TAllocPool(), exec:TFreePool(), exec:TReallocPool(),
+;	teklib:TDestroy(), exec:TCreateMemManager()
+;
+;------------------------------------------------------------------------------
+struct TMemPool *CreatePool(TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TAllocPool():
+;			mem = TAllocPool(pool,            size)
+;			TAPTR            struct TMemPool* TSIZE
+;
+;	FUNCTION::
+;	This function allocates a block of memory from a pool. A Pointer
+;	to the allocated block of memory is returned, or {{TNULL}} if the
+;	request cannot be satisfied.
+;
+;	RESULTS::
+;	- {{mem}} - Pointer to a block of memory, or {{TNULL}} if out of memory
+;
+;	INPUTS::
+;	- {{pool}} - Pointer to a pool created with exec:TCreatePool()
+;	- {{size}} - Size of the allocation [bytes]
+;
+;	SEE ALSO::
+;	exec:TFreePool(), exec:TReallocPool(), exec:TCreatePool()
+;
+;------------------------------------------------------------------------------
+TAPTR AllocPool(struct TMemPool *pool, TSIZE size)
+
+;------------------------------------------------------------------------------
+;
+;	TFreePool():
+;			TFreePool(pool,            mem,  size)
+;			          struct TMemPool* TUINT TSIZE
+;
+;	FUNCTION::
+;	Return a block of memory to the pool from which it was allocated.
+;
+;	INPUTS::
+;	- {{pool}} - Pointer to the pool the allocation was made from
+;	- {{mem}} - Block of memory to be freed
+;	- {{size}} - Size of the allocation
+;
+;	SEE ALSO::
+;	exec:TAllocPool(), exec:TReallocPool(), exec:TCreatePool()
+;
+;------------------------------------------------------------------------------
+void FreePool(struct TMemPool *pool, TAPTR mem, TSIZE size)
+
+;------------------------------------------------------------------------------
+;
+;	TReallocPool():
+;			newmem = TReallocPool(pool,            oldmem, oldsize, newsize)
+;			TAPTR                 struct TMemPool* TAPTR   TUINT    TSIZE
+;
+;	FUNCTION::
+;	Resize a block of memory that has been allocated from a pool. If
+;	{{newsize}} is {{0}} then the allocation will be freed, and the result
+;	will be {{TNULL}}. If {{oldmem}} is {{TNULL}} and {{oldsize}} is {{0}},
+;	a new block will be allocated.
+;
+;	RESULTS::
+;	- {{newmem}} - Pointer to resized block, or {{TNULL}} if failed
+;
+;	INPUTS::
+;	- {{pool}} - Pointer to the pool the allocation was made from
+;	- {{oldmem}} - Pointer to memory allocated
+;	- {{oldsize}} - Previous size of the allocation
+;	- {{newsize}} - New size for the allocation
+;
+;	NOTES::
+;	* Reallocation may require that the given block of memory needs to
+;	be moved in memory and pointers to this area may become invalid.
+;
+;	SEE ALSO::
+;	exec:TAllocPool(), exec:TFreePool(), exec:TCreatePool()
+;
+;------------------------------------------------------------------------------
+TAPTR ReallocPool(struct TMemPool *pool, TAPTR mem, TSIZE oize, TSIZE nsize)
+
+;------------------------------------------------------------------------------
+;
+;	TPutIO():
+;			TPutIO(ioreq)
+;			       struct TIORequest*
+;
+;	FUNCTION::
+;	This function puts an I/O request to the device or handler
+;	specified in the {{ioreq->io_Device}} field.
+;
+;	TPutIO() clears the TIOF_QUICK flag from the {{ioreq->io_Flags}}
+;	field, indicating that it prefers asynchronous execution, and
+;	forwards the request through the {{BeginIO}}-vector of the device.
+;
+;	Whether or not the request will be executed asynchronously remains
+;	transparent to the caller. After the request has been processed,
+;	it will return to the replyport specified in {{ioreq->io_ReplyPort}}
+;	and cause the replyport's signal to show up in the caller's task.
+;
+;	Always use exec:TWaitIO() to synchronize on completion of an I/O
+;	request and its removal from the replyport queue.
+;
+;	INPUTS::
+;	- {{iorequest}} - I/O request message to be processed
+;
+;	SEE ALSO::
+;	exec:TWaitIO(), exec:TDoIO(), exec:TCheckIO(), exec:TAbortIO(),
+;	exec:TPutMsg()
+;
+;------------------------------------------------------------------------------
+void PutIO(struct TIORequest *ioreq)
+
+;------------------------------------------------------------------------------
+;
+;	TWaitIO():
+;			error = TWaitIO(ioreq)
+;			TINT            struct TIORequest*
+;
+;	FUNCTION::
+;	This function waits for an I/O request to complete and unlinks it
+;	from its {{ioreq->io_ReplyPort}}. If the request has already finished
+;	or was processed synchronously then TWaitIO() drops through
+;	immediately.
+;
+;	RESULTS::
+;	- {{error}} - Contents of the iorequest's {{io_Error}} field. A return
+;	value of {{0}} indicates success.
+;
+;	INPUTS::
+;	- {{iorequest}} - I/O request message to be processed.
+;
+;	SEE ALSO::
+;	exec:TPutIO(), exec:TDoIO(), exec:TCheckIO(), exec:TAbortIO(),
+;	exec:TPutMsg()
+;
+;------------------------------------------------------------------------------
 TINT WaitIO(struct TIORequest *ioreq)
+
+;------------------------------------------------------------------------------
+;
+;	TDoIO():
+;			error = TDoIO(ioreq)
+;			TINT          struct TIORequest*
+;
+;	FUNCTION::
+;	This function performs an I/O request and waits for completion.
+;	TDoIO() indicates that it prefers synchronous execution by
+;	setting the {{TIOF_QUICK}} flag in the {{ioreq->io_Flags}} field
+;	before the request is forwarded through the {{BeginIO}}-vector of the
+;	device.
+;
+;	RESULTS::
+;	- {{error}} - Contents of the iorequest's {{io_Error}} field. A return
+;	value of zero indicates success.
+;
+;	INPUTS::
+;	- {{iorequest}} - I/O request message to be processed.
+;
+;	SEE ALSO::
+;	exec:TPutIO(), exec:TWaitIO(), exec:TCheckIO(), exec:TAbortIO(),
+;	exec:TPutMsg()
+;
+;------------------------------------------------------------------------------
 TINT DoIO(struct TIORequest *ioreq)
+
+;------------------------------------------------------------------------------
+;
+;	TCheckIO():
+;			complete = TCheckIO(ioreq)
+;			TBOOL               struct TIORequest*
+;
+;	FUNCTION::
+;	This function tests if an I/O request has been completed and
+;	returns its status to the caller.
+;
+;	Note that a finished I/O request still needs to be removed
+;	from the replyport's queue using exec:TWaitIO().
+;
+;	RESULTS::
+;	- {{complete}}  - Boolean
+;
+;	INPUTS::
+;	- {{iorequest}} - I/O request message to be processed
+;
+;	SEE ALSO::
+;	exec:TPutIO(), exec:TWaitIO(), exec:TDoIO(), exec:TAbortIO(),
+;	exec:TPutMsg()
+;
+;------------------------------------------------------------------------------
 TINT CheckIO(struct TIORequest *ioreq)
+
+;------------------------------------------------------------------------------
+;
+;	TAbortIO():
+;			error = TAbortIO(ioreq)
+;			TINT              struct TIORequest*
+;
+;	FUNCTION::
+;	Ask a device to abort an I/O request that has been initiated
+;	using exec:TPutIO(). Note that abortion is a service that
+;	may or may not be granted by the addressed device or handler.
+;	You must in no way rely on successful abortion, and you still
+;	have to synchronize on the I/O request properly using exec:TWaitIO().
+;
+;	RESULTS::
+;	- {{error}}
+;		* {{0}} if the request for abortion was sent
+;		* {{-1}} if the request is still pending
+;
+;	INPUTS::
+;	- {{iorequest}} - I/O request message to be processed
+;
+;	SEE ALSO::
+;	exec:TPutIO(), exec:TWaitIO(), exec:TDoIO(), exec:TCheckIO(),
+;	exec:TPutMsg()
+;
+;------------------------------------------------------------------------------
 TINT AbortIO(struct TIORequest *ioreq)
-.offset 74
-.inline	off
+
+.interface off
 /* -- Semi-private; to manipulate msgs in ports, not normally needed -- */
-TVOID InsertMsg(TAPTR port, TAPTR msg, TAPTR prevmsg, TUINT status)
-TVOID RemoveMsg(TAPTR port, TAPTR msg)
+void InsertMsg(struct TMsgPort *port, TAPTR msg, TAPTR prevmsg, TUINT status)
+void RemoveMsg(struct TMsgPort *port, TAPTR msg)
 TUINT GetMsgStatus(TAPTR msg)
-TUINT SetMsgReplyPort(TAPTR msg, TAPTR rport)
+TUINT SetMsgReplyPort(TAPTR msg, struct TMsgPort *rport)
+struct THook *SetPortHook(struct TMsgPort *port, struct THook *hook)
+
+/* -- on with public functions -- */
+.interface on
+;------------------------------------------------------------------------------
+;
+;
+;------------------------------------------------------------------------------
+TBOOL AddModules(struct TModInitNode *im, TUINT flags)
+
+;------------------------------------------------------------------------------
+;
+;
+;------------------------------------------------------------------------------
+TBOOL RemModules(struct TModInitNode *im, TUINT flags)
+
+;------------------------------------------------------------------------------
+;
+;	TAllocTimeRequest():
+;			timereq = TAllocTimeRequest(tags)
+;			struct TTimeRequest*        TTAGITEM*
+;
+;	FUNCTION::
+;	This function opens the timer device and returns a pointer to a
+;	time request.
+;
+;	Each time request allocated by this function must be freed using
+;	exec:TFreeTimeRequest().
+;
+;	RESULTS::
+;	- {{timereq}} - Pointer to a time request structure, or {{TNULL}} if
+;	the device open or allocation failed
+;
+;	INPUTS::
+;	- {{tags}} - Pointer to an array of tag items (none defined yet)
+;
+;	NOTES::
+;	* A single time request cannot be used by multiple tasks
+;	at the same time. If required, allocate one request per task.
+;
+;	SEE ALSO::
+;	exec:TFreeTimeRequest()
+;
+;------------------------------------------------------------------------------
+struct TTimeRequest *AllocTimeRequest(TTAGITEM *tags)
+
+;------------------------------------------------------------------------------
+;
+;	TFreeTimeRequest():
+;			TFreeTimeRequest(timereq)
+;			                 struct TTimeRequest*
+;
+;	FUNCTION::
+;	This function frees a time request that was allocated with
+;	exec:TAllocTimeRequest().
+;
+;	INPUTS::
+;	- {{timereq}} - Pointer to a time request
+;
+;	SEE ALSO::
+;	exec:TAllocTimeRequest()
+;
+;------------------------------------------------------------------------------
+void FreeTimeRequest(struct TTimeRequest *req)
+
+;------------------------------------------------------------------------------
+;
+;	TGetSystemTime():
+;			TGetSystemTime(timep)
+;			               TTIME*
+;
+;	FUNCTION::
+;	This function queries a (relative) system time and inserts it into
+;	the time structure being pointed to by {{timep}}.
+;
+;	INPUTS::
+;	- {{timep}} - Pointer to a time structure to be filled
+;
+;	NOTES::
+;	* It is important to note that a {{TTIME}} is a relative quantity.
+;	It might appear as if the fields filled in by this function could
+;	in some way reflect an absolute time or date, but this would be
+;	entirely misleading as the base for a {{TTIME}} structure can differ
+;	among different hosts. For getting an absolute date and time use
+;	the more expensive date functions.
+;
+;	SEE ALSO::
+;	exec:TGetUniversalDate(), exec:TGetLocalDate()
+;
+;------------------------------------------------------------------------------
+void GetSystemTime(TTIME *t)
+
+;------------------------------------------------------------------------------
+;
+;	TGetUniversalDate():
+;			error = TGetUniversalDate(datep)
+;			TINT                      TDATE*
+;
+;	FUNCTION::
+;	This function queries the system's absolute time and date in UTC
+;	(Universal Time Coordinated) and inserts it into the {{TDATE}} being
+;	pointed to by {{datep}}.
+;
+;	RESULTS::
+;	- {{error}}  - Error value, indicating
+;		* {{0}}  - for success
+;		* {{-1}} - invalid arguments
+;		* {{-2}} - no date resource available
+;
+;	INPUTS::
+;	- {{datep}} - Pointer to a {{TDATE}} receiving the date and time
+;
+;	NOTES::
+;	* For measuring a relative time it can be sufficient to use a {{TTIME}}
+;	structure, which is better accessible by applications and requires
+;	less complex internal calculations. See exec:TGetSystemTime() and
+;	teklib:TSubTime() for details.
+;
+;	SEE ALSO::
+;	exec:TGetLocalDate(), exec:TGetSystemTime()
+;
+;------------------------------------------------------------------------------
+TINT GetUniversalDate(TDATE *dt)
+
+;------------------------------------------------------------------------------
+;
+;	TGetLocalDate():
+;			error = TGetLocalDate(datep)
+;			TINT                  TDATE*
+;
+;	FUNCTION::
+;	This function queries the system's local time and date and inserts it
+;	into the {{TDATE}} being pointed to by {{datep}}.
+;
+;	RESULTS::
+;	- {{error}}  - Error value, indicating
+;		* {{0}}  - for success
+;		* {{-1}} - invalid arguments
+;		* {{-2}} - no date resource available
+;
+;	INPUTS::
+;	- {{datep}} - Pointer to a {{TDATE}} receiving the date and time
+;
+;	SEE ALSO::
+;	exec:TGetUniversalDate(), exec:TGetSystemTime()
+;
+;------------------------------------------------------------------------------
+TINT GetLocalDate(TDATE *dt)
+
+;------------------------------------------------------------------------------
+;
+;	TWaitTime():
+;			signals = TWaitTime(timeout, sigmask)
+;			TUINT               TTIME*   TUINT
+;
+;	FUNCTION::
+;	Suspend the current task to wait for a set of signals or for a
+;	timeout. Any signals causing this function to return will be
+;	returned to the caller and cleared from the task's signal state.
+;	If a timeout causes the return then the return value is {{0}}. If
+;	timeout is {{TNULL}} then this function is equivalent to exec:TWait().
+;
+;	INPUTS::
+;	- {{timeout}} - Pointer to a {{TTIME}} structure
+;	- {{sigmask}} - Set of signals to wait for
+;
+;	RESULTS::
+;	- {{signals}} - Signals that caused returning, or {{0}} if a timeout
+;	occured
+;
+;	SEE ALSO::
+;	exec:TWaitDate(), exec:TAllocTimeRequest(), exec:TGetSystemTime(),
+;	exec:TWait()
+;
+;------------------------------------------------------------------------------
+TUINT WaitTime(TTIME *t, TUINT sig)
+
+;------------------------------------------------------------------------------
+;
+;	TWaitDate():
+;			signals = TWaitDate(datep, sigmask)
+;			TUINT               TDATE* TUINT
+;
+;	FUNCTION::
+;	Suspend the current task to wait for a set of signals or for an
+;	absolute date. Any signals causing this function to return will be
+;	returned to the caller and cleared from the task's signal state.
+;	If an expiring date causes the return then this function returns {{0}}.
+;	If {{datep}} is {{TNULL}} then this function is equivalent to exec:TWait().
+;
+;	- {{absdate}} - Pointer to a TDATE structure
+;	- {{sigmask}} - Set of signals to wait for
+;
+;	RESULTS::
+;	- {{signals}} - Signals that caused returning, or {{0}} if a timeout
+;	occured
+;
+;	SEE ALSO::
+;	exec:TWaitTime(), exec:TAllocTimeRequest(), exec:TGetSystemDate()
+;
+;------------------------------------------------------------------------------
+TUINT WaitDate(TDATE *dt, TUINT sig)
+
+;------------------------------------------------------------------------------
+;
+;	TScanModules():
+;			handle = TScanModules(tags)
+;			struct THandle*       TTAGITEM*
+;
+;	FUNCTION::
+;	This function searches for modules that are available to TEKlib's module
+;	open function and, if successful, returns a handle that can be queried
+;	using teklib:TGetNextEntry().
+;	Each invocation of teklib:TGetNextEntry() on the resulting handle returns
+;	a pointer to a taglist, or {{TNULL}} when there are no more entries
+;	available. Possible tags in this taglist, as currently defined, are:
+;		* {{TExec_ModuleName, (TSTRPTR)}} - Name of a module that would
+;		be available to exec:TOpenModule().
+;	When you are done scanning for modules, the handle should be destroyed
+;	with teklib:TDestroy().
+;
+;	RESULTS::
+;	- {{handle}} - A handle that can be passed to teklib:TGetNextEntry(),
+;	or {{TNULL}} if scanning failed.
+;
+;	INPUTS::
+;	- {{tags}} - Pointer to an array of tag items:
+;		* {{TExec_ModulePrefix (TSTRPTR)}} - Pointer to a prefix string.
+;		If specified, only modules whose names begin with this prefix will
+;		be returned. Default: {{TNULL}}
+;
+;	EXAMPLE::
+;	Scan the system for TEKlib modules with the prefix {{"io"}}:
+;
+;			TTAGITEM tags[2];
+;			tags[0].tti_Tag = TExec_ModulePrefix;
+;			tags[0].tti_Value = (TTAG) "io";
+;			tags[1].tti_Tag = TTAG_DONE;
+;			struct THandle *handle = TScanModules(tags);
+;			if (handle)
+;			{
+;			    TTAGITEM *entry;
+;			    while ((entry = TGetNextEntry(handle)))
+;			        printf("%s\n", (TSTRPTR) TGetTag(entry, TExec_ModuleName, TNULL));
+;			}
+;			TDestroy(handle);
+;
+;------------------------------------------------------------------------------
+struct THandle *ScanModules(TTAGITEM *tags)
+
 .end

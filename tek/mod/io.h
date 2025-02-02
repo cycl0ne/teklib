@@ -1,20 +1,29 @@
-
 #ifndef _TEK_MOD_IO_H
 #define _TEK_MOD_IO_H
 
 /*
-**	$Id: io.h,v 1.5 2005/09/08 00:08:04 tmueller Exp $
+**	$Id: io.h,v 1.1.1.1 2006/08/20 22:15:25 tmueller Exp $
 **	tek/mod/io.h - Filesystem I/O interface
 */
 
 #include <tek/exec.h>
-#include <tek/mod/time.h>
+
+/*****************************************************************************/
+/*
+**	Forward declarations
+*/
+
+/* IO module base structure: */
+struct TIOBase;
 
 /*****************************************************************************/
 
+/* File structure: */
+typedef struct TIOPacket *TFILE;
+
 #define TEOF	(-1)
 
-/* 
+/*
 **	File attribute tags - these can be passed to
 **	io_examine() and io_exnext() for attribute queries.
 **
@@ -29,7 +38,7 @@
 #define TFATTR_DateBox	(TTAG_USER + 0x4004)	/* Datebox structure */
 #define TFATTR_SizeHigh	(TTAG_USER + 0x4005)	/* High-order 32 bit of size */
 
-/* 
+/*
 **	Object types
 */
 
@@ -63,7 +72,7 @@
 #define TFPOS_BEGIN			1		/* Seek from beginning */
 #define TFPOS_END			(-1)	/* Seek from end */
 
-/* 
+/*
 **	I/O Error codes -
 **	see exec.h for device-specific codes
 */
@@ -92,20 +101,14 @@
 #define TIOERR_DIRECTORY_NOT_EMPTY	82
 #define TIOERR_TOO_MANY_LEVELS		83
 
-/* 
+/*
 **	Name conversion modes
 */
 
-#define	TPPF_TOTEK			0x0001	/* render to TEK naming conventions */
-#define TPPF_TOHOST			0x0002	/* render to HOST naming conventions */
-#define TPPF_PREFERTEK		0x0004	/* when ambiguous, use TEK, else fail */
-#define TPPF_PREFERHOST		0x0008	/* when ambiguous, use HOST, else fail */
-#define TPPF_FROMTEK		0x0010	/* explicit from TEK, else fail */
-#define TPPF_FROMHOST		0x0020	/* explicit from HOST, else fail */
+#define TPPF_TEK2HOST		0x0012	/* convert to HOST naming convention */
+#define TPPF_HOST2TEK		0x0021	/* convert to TEK naming convention */
 
-#define TPPF_HOST2TEK		0x0021	/* currently the only mode supported */
-
-/* 
+/*
 **	Tags for opening and mounting
 */
 
@@ -117,12 +120,15 @@
 #define TIOMount_IOBase		(TTAG_USER + 0x410f)	/* Internal use */
 #define TIOMount_Extended	(TTAG_USER + 0x4110)	/* User-defined tags */
 
-/* 
+/* Tags for locking */
+
+#define TIOLock_NamePart	(TTAG_USER + 0x4200)	/* Passed to handler */
+
+/*
 **	Mount action codes
 */
 
 #define TIOMNT_REMOVE	0
 #define TIOMNT_ADD		1
-
 
 #endif
